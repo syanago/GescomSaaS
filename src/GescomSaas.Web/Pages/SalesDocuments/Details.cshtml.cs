@@ -12,7 +12,8 @@ public class DetailsModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
     ICommercialDocumentWorkflowService workflowService,
-    ICommercialDocumentPdfService pdfService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ICommercialDocumentPdfService pdfService,
+    IInventoryService inventoryService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
@@ -38,7 +39,21 @@ public class DetailsModel(
 
             if (target.DocumentType == CommercialDocumentType.DeliveryNote)
             {
-                await CreateStockIssuesAsync(target, tenantId);
+                try
+                {
+                    await inventoryService.CreateStockIssuesAsync(tenantId, target, HttpContext.RequestAborted);
+                    target.Status = CommercialDocumentStatus.Completed;
+                    await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+                    StatusMessage = $"{SalesDocumentCatalog.Label(target.DocumentType)} {target.Number} cree et sortie de stock validee.";
+                    return RedirectToPage("/SalesDocuments/Details", new { id = target.Id });
+                }
+                catch (InvalidOperationException)
+                {
+                    target.Status = CommercialDocumentStatus.Open;
+                    await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+                    StatusMessage = $"{SalesDocumentCatalog.Label(target.DocumentType)} {target.Number} cree. Complete les numeros de serie requis puis valide la sortie de stock.";
+                    return RedirectToPage("/SalesDocuments/Edit", new { id = target.Id });
+                }
             }
 
             StatusMessage = $"{SalesDocumentCatalog.Label(target.DocumentType)} {target.Number} cree.";
@@ -49,6 +64,45 @@ public class DetailsModel(
             StatusMessage = exception.Message;
             return RedirectToPage(new { id = Id });
         }
+    }
+
+    public async Task<IActionResult> OnPostPostStockAsync()
+    {
+        var tenantId = await GetTenantIdAsync();
+        var document = await DbContext.CommercialDocuments
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == Id && x.TenantId == tenantId, HttpContext.RequestAborted);
+
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        if (document.DocumentType != CommercialDocumentType.DeliveryNote)
+        {
+            StatusMessage = "Seuls les bons de livraison peuvent declencher une sortie de stock.";
+            return RedirectToPage(new { id = Id });
+        }
+
+        if (document.Status == CommercialDocumentStatus.Completed)
+        {
+            StatusMessage = "La sortie de stock de ce bon de livraison est deja validee.";
+            return RedirectToPage(new { id = Id });
+        }
+
+        try
+        {
+            await inventoryService.CreateStockIssuesAsync(tenantId, document, HttpContext.RequestAborted);
+            document.Status = CommercialDocumentStatus.Completed;
+            await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+            StatusMessage = "Sortie de stock validee.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            StatusMessage = exception.Message;
+        }
+
+        return RedirectToPage(new { id = Id });
     }
 
     private async Task<IActionResult> LoadAsync()
@@ -84,44 +138,12 @@ public class DetailsModel(
                     line.UnitPriceExcludingTax,
                     line.DiscountRate,
                     line.TaxRate,
-                    line.LineTotalIncludingTax)).ToList()))
+                    line.LineTotalIncludingTax,
+                    line.LotNumber,
+                    line.SerialNumber)).ToList()))
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
         return Document is null ? NotFound() : Page();
-    }
-
-    private async Task CreateStockIssuesAsync(Domain.Entities.Commercial.CommercialDocument deliveryNote, Guid tenantId)
-    {
-        if (!deliveryNote.WarehouseId.HasValue)
-        {
-            return;
-        }
-
-        foreach (var line in deliveryNote.Lines.Where(x => x.ProductId.HasValue))
-        {
-            var product = await DbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == line.ProductId && x.TenantId == tenantId, HttpContext.RequestAborted);
-
-            if (product is null || !product.TrackStock)
-            {
-                continue;
-            }
-
-            DbContext.StockMovements.Add(new Domain.Entities.Commercial.StockMovement
-            {
-                TenantId = tenantId,
-                ProductId = product.Id,
-                WarehouseId = deliveryNote.WarehouseId.Value,
-                MovementDate = deliveryNote.DocumentDate,
-                MovementType = StockMovementType.Issue,
-                Quantity = -line.Quantity,
-                UnitCost = product.PurchasePrice,
-                ReferenceNumber = deliveryNote.Number
-            });
-        }
-
-        await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
     }
 }
 
@@ -149,4 +171,6 @@ public sealed record SalesDocumentDetailsLine(
     decimal UnitPriceExcludingTax,
     decimal DiscountRate,
     decimal TaxRate,
-    decimal TotalIncludingTax);
+    decimal TotalIncludingTax,
+    string? LotNumber,
+    string? SerialNumber);

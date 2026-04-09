@@ -36,6 +36,8 @@ public static class ApiMappingHelpers
             product.ProductType,
             product.UnitOfMeasure,
             product.TrackStock,
+            product.StockValuationMethod,
+            product.StockIdentityTrackingMode,
             product.IsActive,
             product.ProductCategoryId,
             product.ProductCategory?.Label,
@@ -77,6 +79,8 @@ public static class ApiMappingHelpers
         product.ProductType = request.ProductType;
         product.UnitOfMeasure = request.UnitOfMeasure.Trim().ToUpperInvariant();
         product.TrackStock = request.TrackStock;
+        product.StockValuationMethod = request.StockValuationMethod;
+        product.StockIdentityTrackingMode = request.StockIdentityTrackingMode;
         product.IsActive = request.IsActive;
         product.ProductCategoryId = request.ProductCategoryId;
         product.TaxCodeId = request.TaxCodeId;
@@ -116,7 +120,10 @@ public static class ApiMappingHelpers
                 Quantity = line.Quantity,
                 UnitPriceExcludingTax = line.UnitPriceExcludingTax,
                 DiscountRate = line.DiscountRate,
-                TaxRate = line.TaxRate
+                TaxRate = line.TaxRate,
+                LotNumber = NormalizeOptional(line.LotNumber)?.ToUpperInvariant(),
+                SerialNumber = NormalizeOptional(line.SerialNumber)?.ToUpperInvariant(),
+                ExpirationDate = line.ExpirationDate
             });
         }
     }
@@ -166,7 +173,10 @@ public static class ApiMappingHelpers
                         line.TaxRate,
                         line.LineTotalExcludingTax,
                         line.LineTaxAmount,
-                        line.LineTotalIncludingTax))
+                        line.LineTotalIncludingTax,
+                        line.LotNumber,
+                        line.SerialNumber,
+                        line.ExpirationDate))
                     .ToList()))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -206,74 +216,6 @@ public static class ApiMappingHelpers
         }
 
         return new ResolvedTenantResult(tenant, user, null);
-    }
-
-    public static async Task CreateStockIssuesAsync(ApplicationDbContext dbContext, CommercialDocument deliveryNote, Guid tenantId, CancellationToken cancellationToken)
-    {
-        if (!deliveryNote.WarehouseId.HasValue)
-        {
-            return;
-        }
-
-        foreach (var line in deliveryNote.Lines.Where(x => x.ProductId.HasValue))
-        {
-            var product = await dbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == line.ProductId && x.TenantId == tenantId, cancellationToken);
-
-            if (product is null || !product.TrackStock)
-            {
-                continue;
-            }
-
-            dbContext.StockMovements.Add(new StockMovement
-            {
-                TenantId = tenantId,
-                ProductId = product.Id,
-                WarehouseId = deliveryNote.WarehouseId.Value,
-                MovementDate = deliveryNote.DocumentDate,
-                MovementType = StockMovementType.Issue,
-                Quantity = -line.Quantity,
-                UnitCost = product.PurchasePrice,
-                ReferenceNumber = deliveryNote.Number
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public static async Task CreateStockReceiptsAsync(ApplicationDbContext dbContext, CommercialDocument goodsReceipt, Guid tenantId, CancellationToken cancellationToken)
-    {
-        if (!goodsReceipt.WarehouseId.HasValue)
-        {
-            return;
-        }
-
-        foreach (var line in goodsReceipt.Lines.Where(x => x.ProductId.HasValue))
-        {
-            var product = await dbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == line.ProductId && x.TenantId == tenantId, cancellationToken);
-
-            if (product is null || !product.TrackStock)
-            {
-                continue;
-            }
-
-            dbContext.StockMovements.Add(new StockMovement
-            {
-                TenantId = tenantId,
-                ProductId = product.Id,
-                WarehouseId = goodsReceipt.WarehouseId.Value,
-                MovementDate = goodsReceipt.DocumentDate,
-                MovementType = StockMovementType.Receipt,
-                Quantity = line.Quantity,
-                UnitCost = line.UnitPriceExcludingTax,
-                ReferenceNumber = goodsReceipt.Number
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public static string NormalizePartnerScope(string? scope) => scope?.Trim().ToLowerInvariant() switch

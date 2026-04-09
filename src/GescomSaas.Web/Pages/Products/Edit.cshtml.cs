@@ -33,6 +33,20 @@ public class EditModel(
         new("Nomenclature", ProductType.Bundle.ToString())
     ];
 
+    public IReadOnlyList<SelectListItem> StockValuationMethodOptions { get; } =
+    [
+        new("CMUP", StockValuationMethod.Cmup.ToString()),
+        new("FIFO", StockValuationMethod.Fifo.ToString()),
+        new("Dernier prix d'achat", StockValuationMethod.LastPurchaseCost.ToString())
+    ];
+
+    public IReadOnlyList<SelectListItem> StockIdentityTrackingModeOptions { get; } =
+    [
+        new("Aucun", StockIdentityTrackingMode.None.ToString()),
+        new("Par lot", StockIdentityTrackingMode.Lot.ToString()),
+        new("Par numero de serie", StockIdentityTrackingMode.SerialNumber.ToString())
+    ];
+
     public async Task<IActionResult> OnGetAsync()
     {
         var tenantId = await GetTenantIdAsync();

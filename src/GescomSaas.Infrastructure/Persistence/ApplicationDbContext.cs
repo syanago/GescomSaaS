@@ -22,6 +22,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<StockDocument> StockDocuments => Set<StockDocument>();
+    public DbSet<StockDocumentLine> StockDocumentLines => Set<StockDocumentLine>();
     public DbSet<PlatformInvoice> PlatformInvoices => Set<PlatformInvoice>();
     public DbSet<PlatformInvoiceLine> PlatformInvoiceLines => Set<PlatformInvoiceLine>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
@@ -294,6 +296,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.LineTotalExcludingTax).HasPrecision(18, 2);
             entity.Property(x => x.LineTaxAmount).HasPrecision(18, 2);
             entity.Property(x => x.LineTotalIncludingTax).HasPrecision(18, 2);
+            entity.Property(x => x.LotNumber).HasMaxLength(60);
+            entity.Property(x => x.SerialNumber).HasMaxLength(120);
         });
 
         builder.Entity<StockMovement>(entity =>
@@ -301,6 +305,40 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.Quantity).HasPrecision(18, 3);
             entity.Property(x => x.UnitCost).HasPrecision(18, 2);
             entity.Property(x => x.ReferenceNumber).HasMaxLength(40);
+            entity.Property(x => x.LotNumber).HasMaxLength(60);
+            entity.Property(x => x.SerialNumber).HasMaxLength(120);
+        });
+
+        builder.Entity<StockDocument>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantId, x.Number }).IsUnique();
+            entity.Property(x => x.Number).HasMaxLength(40);
+            entity.Property(x => x.Notes).HasMaxLength(1000);
+            entity.HasOne(x => x.SourceWarehouse)
+                .WithMany()
+                .HasForeignKey(x => x.SourceWarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.DestinationWarehouse)
+                .WithMany()
+                .HasForeignKey(x => x.DestinationWarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<StockDocumentLine>(entity =>
+        {
+            entity.Property(x => x.Description).HasMaxLength(240);
+            entity.Property(x => x.Quantity).HasPrecision(18, 3);
+            entity.Property(x => x.UnitCost).HasPrecision(18, 2);
+            entity.Property(x => x.LotNumber).HasMaxLength(60);
+            entity.Property(x => x.SerialNumber).HasMaxLength(120);
+            entity.HasOne(x => x.StockDocument)
+                .WithMany(x => x.Lines)
+                .HasForeignKey(x => x.StockDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Product)
+                .WithMany()
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ApplicationUser>(entity =>

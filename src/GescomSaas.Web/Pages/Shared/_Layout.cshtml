@@ -15,16 +15,31 @@
 @{
     var uiSettings = DisplayFormatter.GetSettings();
 }
-<body class="@uiSettings.ThemeCssClass">
+<body class="@uiSettings.ThemeCssClass"
+      data-tenant-currency-code="@uiSettings.CurrencyCode"
+      data-tenant-cash-currency-code="@uiSettings.CashCurrencyCode"
+      data-currency-symbol="@uiSettings.CurrencySymbol"
+      data-currency-symbol-position="@uiSettings.CurrencySymbolPosition"
+      data-money-decimals="@uiSettings.MoneyDecimalPlaces"
+      data-money-decimal-separator="@uiSettings.MoneyDecimalSeparator"
+      data-money-group-separator="@uiSettings.MoneyGroupSeparator"
+      data-quantity-decimals="@uiSettings.QuantityDecimalPlaces"
+      data-quantity-decimal-separator="@uiSettings.QuantityDecimalSeparator"
+      data-quantity-group-separator="@uiSettings.QuantityGroupSeparator"
+      data-server-decimal-separator="@System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator">
     <div class="app-shell">
         <header class="topbar">
-            <div class="container chrome">
-                <a class="brand-mark" asp-area="" asp-page="/Index">
-                    <span class="brand-kicker">ERP SaaS</span>
-                    <strong>LigCom</strong>
+            <div class="container chrome topbar-shell">
+                <a class="brand-mark brand-shell" asp-area="" asp-page="/Index">
+                    <span class="brand-orb">LG</span>
+                    <span class="tenant-context">
+                        <span class="brand-kicker">ERP SaaS</span>
+                        <strong>LigCom</strong>
+                        <small>@uiSettings.CompanyName</small>
+                    </span>
                 </a>
 
-                <nav class="main-nav">
+                <nav class="main-nav nav-cluster">
                     <a asp-area="" asp-page="/Index">Cockpit</a>
                     @if (User.IsInRole("PlatformAdmin"))
                     {
@@ -64,7 +79,10 @@
                     <a asp-area="" asp-page="/Privacy">Confidentialite</a>
                 </nav>
 
-                <partial name="_LoginPartial" />
+                <div class="auth-actions">
+                    <span class="context-chip">@uiSettings.ThemeLabel</span>
+                    <partial name="_LoginPartial" />
+                </div>
             </div>
         </header>
 

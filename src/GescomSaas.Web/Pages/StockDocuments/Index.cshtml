@@ -1,0 +1,78 @@
+@page
+@model GescomSaas.Web.Pages.StockDocuments.IndexModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>@Model.Title</h1>
+        <p class="muted-copy">Pilote les entrees, sorties et transferts de stock avec une vraie piece de mouvement.</p>
+    </div>
+    <div class="header-actions">
+        <div class="segmented-control">
+            @foreach (var type in Enum.GetValues<GescomSaas.Domain.Enums.StockDocumentType>())
+            {
+                <a class="chip @(type == Model.CurrentType ? "chip-active" : "")" asp-page="/StockDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.ShortLabel(type)</a>
+            }
+        </div>
+        <a class="btn btn-primary-soft" asp-page="/StockDocuments/Create" asp-route-type="@Model.CurrentType">Nouveau</a>
+    </div>
+</section>
+
+@if (Model.DocumentQuota is not null)
+{
+    <div class="quota-inline-card @(Model.DocumentQuota.IsExceeded ? "quota-danger" : "")">
+        <strong>Documents du mois :</strong> @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
+        <span>@Math.Max(Model.DocumentQuota.Limit - Model.DocumentQuota.Used, 0) restant(s)</span>
+    </div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Date</th>
+                    <th>Depot source</th>
+                    <th>Depot destination</th>
+                    <th class="text-end">Quantite</th>
+                    <th class="text-end">Lignes</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Documents.Count == 0)
+            {
+                <tr><td colspan="8" class="empty-cell">Aucun document de stock pour ce type.</td></tr>
+            }
+            else
+            {
+                @foreach (var document in Model.Documents)
+                {
+                    <tr>
+                        <td>@document.Number</td>
+                        <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
+                        <td>@(document.SourceWarehouseLabel ?? "-")</td>
+                        <td>@(document.DestinationWarehouseLabel ?? "-")</td>
+                        <td class="text-end">@DisplayFormatter.Quantity(document.TotalQuantity)</td>
+                        <td class="text-end">@document.LineCount</td>
+                        <td>@document.Status</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-link" asp-page="/StockDocuments/Details" asp-route-id="@document.Id">Voir</a>
+                            @if (document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft)
+                            {
+                                <a class="btn btn-sm btn-link" asp-page="/StockDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
+                                <a class="btn btn-sm btn-link text-danger" asp-page="/StockDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

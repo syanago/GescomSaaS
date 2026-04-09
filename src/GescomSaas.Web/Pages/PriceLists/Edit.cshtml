@@ -64,8 +64,10 @@
                 </div>
                 <div>
                     <label asp-for="NewLine.UnitPrice" class="form-label"></label>
-                    <input asp-for="NewLine.UnitPrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                    <div class="table-meta">Exemple : @DisplayFormatter.Money(149.9m, Model.Input.CurrencyCode)</div>
+                    <input asp-for="NewLine.UnitPrice" type="hidden" />
+                    <input type="text" id="NewLine_UnitPrice_display" value="@DisplayFormatter.MoneyEditor(Model.NewLine.UnitPrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="NewLine_UnitPrice" data-format-currency-code="@Model.Input.CurrencyCode" />
+                    <div class="table-meta" data-format-preview-for="NewLine_UnitPrice_display">Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPrice, Model.Input.CurrencyCode)</div>
+                    <span asp-validation-for="NewLine.UnitPrice" class="text-danger"></span>
                 </div>
                 <div><label asp-for="NewLine.ValidFrom" class="form-label"></label><input asp-for="NewLine.ValidFrom" class="form-control" /></div>
                 <div><label asp-for="NewLine.ValidTo" class="form-label"></label><input asp-for="NewLine.ValidTo" class="form-control" /></div>

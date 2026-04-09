@@ -1,4 +1,5 @@
 using GescomSaas.Application.Contracts;
+using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +20,9 @@ public class IndexModel(
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId)
             .OrderBy(x => x.Code)
-            .Select(x => new ProductCategoryListItem(x.Id, x.Code, x.Label))
+            .Select(x => new ProductCategoryListItem(x.Id, x.Code, x.Label, x.StockValuationMethod, x.StockIdentityTrackingMode))
             .ToListAsync(HttpContext.RequestAborted);
     }
 }
 
-public sealed record ProductCategoryListItem(Guid Id, string Code, string Label);
+public sealed record ProductCategoryListItem(Guid Id, string Code, string Label, StockValuationMethod StockValuationMethod, StockIdentityTrackingMode StockIdentityTrackingMode);

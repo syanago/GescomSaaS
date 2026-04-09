@@ -26,6 +26,12 @@ public class ProductInputModel
     [Display(Name = "Suivi de stock")]
     public bool TrackStock { get; set; } = true;
 
+    [Display(Name = "Valorisation stock")]
+    public StockValuationMethod StockValuationMethod { get; set; } = StockValuationMethod.Cmup;
+
+    [Display(Name = "Gestion lot / serie")]
+    public StockIdentityTrackingMode StockIdentityTrackingMode { get; set; } = StockIdentityTrackingMode.None;
+
     [Display(Name = "Actif")]
     public bool IsActive { get; set; } = true;
 
@@ -50,6 +56,8 @@ public class ProductInputModel
             ProductType = entity.ProductType,
             UnitOfMeasure = entity.UnitOfMeasure,
             TrackStock = entity.TrackStock,
+            StockValuationMethod = entity.StockValuationMethod,
+            StockIdentityTrackingMode = entity.StockIdentityTrackingMode,
             IsActive = entity.IsActive,
             ProductCategoryId = entity.ProductCategoryId,
             TaxCodeId = entity.TaxCodeId,
@@ -65,6 +73,8 @@ public class ProductInputModel
         entity.ProductType = ProductType;
         entity.UnitOfMeasure = string.IsNullOrWhiteSpace(UnitOfMeasure) ? "UN" : UnitOfMeasure.Trim().ToUpperInvariant();
         entity.TrackStock = TrackStock;
+        entity.StockValuationMethod = StockValuationMethod;
+        entity.StockIdentityTrackingMode = StockIdentityTrackingMode;
         entity.IsActive = IsActive;
         entity.ProductCategoryId = ProductCategoryId;
         entity.TaxCodeId = TaxCodeId;

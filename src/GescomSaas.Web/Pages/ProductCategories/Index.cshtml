@@ -27,13 +27,15 @@
                 <tr>
                     <th>Code</th>
                     <th>Libelle</th>
+                    <th>Suivi stock</th>
+                    <th>Lot / serie</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
             @if (Model.Categories.Count == 0)
             {
-                <tr><td colspan="3" class="empty-cell">Aucune famille d'articles.</td></tr>
+                <tr><td colspan="5" class="empty-cell">Aucune famille d'articles.</td></tr>
             }
             else
             {
@@ -42,6 +44,8 @@
                     <tr>
                         <td>@item.Code</td>
                         <td>@item.Label</td>
+                        <td>@GetValuationLabel(item.StockValuationMethod)</td>
+                        <td>@GetIdentityLabel(item.StockIdentityTrackingMode)</td>
                         <td class="text-end action-cell">
                             <a asp-page="/ProductCategories/Edit" asp-route-id="@item.Id">Modifier</a>
                             <a asp-page="/ProductCategories/Delete" asp-route-id="@item.Id">Supprimer</a>
@@ -53,3 +57,21 @@
         </table>
     </div>
 </section>
+
+@functions {
+    private static string GetValuationLabel(GescomSaas.Domain.Enums.StockValuationMethod method) => method switch
+    {
+        GescomSaas.Domain.Enums.StockValuationMethod.Cmup => "CMUP",
+        GescomSaas.Domain.Enums.StockValuationMethod.Fifo => "FIFO",
+        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix d'achat",
+        _ => method.ToString()
+    };
+
+    private static string GetIdentityLabel(GescomSaas.Domain.Enums.StockIdentityTrackingMode mode) => mode switch
+    {
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "Aucun",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.Lot => "Par lot",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par numero de serie",
+        _ => mode.ToString()
+    };
+}

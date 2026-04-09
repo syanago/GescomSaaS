@@ -84,6 +84,12 @@ public class CompanyInputModel
     [Display(Name = "Decimales quantites")]
     public int QuantityDecimalPlaces { get; set; } = 3;
 
+    [Display(Name = "Autoriser le stock negatif")]
+    public bool AllowNegativeStock { get; set; }
+
+    [Display(Name = "Suivi de stock par defaut")]
+    public StockValuationMethod DefaultStockValuationMethod { get; set; } = StockValuationMethod.Cmup;
+
     [Display(Name = "Gabarit d'interface")]
     public ApplicationTheme VisualTheme { get; set; } = ApplicationTheme.LigComMidnight;
 
@@ -104,12 +110,14 @@ public class CompanyInputModel
             CashCurrencyCode = tenant.CashCurrencyCode,
             CurrencySymbol = tenant.CurrencySymbol,
             CurrencySymbolPosition = tenant.CurrencySymbolPosition,
-            MoneyDecimalSeparator = tenant.MoneyDecimalSeparator,
-            MoneyGroupSeparator = tenant.MoneyGroupSeparator,
+            MoneyDecimalSeparator = ToInputSeparator(tenant.MoneyDecimalSeparator),
+            MoneyGroupSeparator = ToInputSeparator(tenant.MoneyGroupSeparator),
             MoneyDecimalPlaces = tenant.MoneyDecimalPlaces,
-            QuantityDecimalSeparator = tenant.QuantityDecimalSeparator,
-            QuantityGroupSeparator = tenant.QuantityGroupSeparator,
+            QuantityDecimalSeparator = ToInputSeparator(tenant.QuantityDecimalSeparator),
+            QuantityGroupSeparator = ToInputSeparator(tenant.QuantityGroupSeparator),
             QuantityDecimalPlaces = tenant.QuantityDecimalPlaces,
+            AllowNegativeStock = tenant.AllowNegativeStock,
+            DefaultStockValuationMethod = tenant.DefaultStockValuationMethod,
             VisualTheme = tenant.VisualTheme
         };
 
@@ -135,6 +143,8 @@ public class CompanyInputModel
         tenant.QuantityDecimalSeparator = NormalizeSeparator(QuantityDecimalSeparator);
         tenant.QuantityGroupSeparator = NormalizeSeparator(QuantityGroupSeparator);
         tenant.QuantityDecimalPlaces = QuantityDecimalPlaces;
+        tenant.AllowNegativeStock = AllowNegativeStock;
+        tenant.DefaultStockValuationMethod = DefaultStockValuationMethod;
         tenant.VisualTheme = VisualTheme;
     }
 
@@ -143,5 +153,12 @@ public class CompanyInputModel
         "space" => " ",
         "none" => string.Empty,
         _ => value.Trim()
+    };
+
+    private static string ToInputSeparator(string value) => value switch
+    {
+        " " => "space",
+        "" => "none",
+        _ => value
     };
 }

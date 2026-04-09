@@ -1,0 +1,90 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.StockDocuments.DetailsModel
+@{
+    ViewData["Title"] = "Detail document de stock";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.Document!.DocumentType) @Model.Document.Number</h1>
+    </div>
+    <div class="header-actions">
+        @if (Model.Document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft)
+        {
+            <a class="btn btn-outline-light" asp-page="/StockDocuments/Edit" asp-route-id="@Model.Document.Id">Modifier</a>
+            <form method="post" asp-page-handler="Post" class="inline-form">
+                <button type="submit" class="btn btn-primary-soft">Valider</button>
+            </form>
+        }
+        <a class="btn btn-outline-light" asp-page="/StockDocuments/Index" asp-route-type="@Model.Document.DocumentType">Retour a la liste</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="content-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Resume</span>
+                <h2>Informations generales</h2>
+            </div>
+        </div>
+        <dl class="details-grid">
+            <div><dt>Numero</dt><dd>@Model.Document.Number</dd></div>
+            <div><dt>Statut</dt><dd>@Model.Document.Status</dd></div>
+            <div><dt>Date</dt><dd>@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</dd></div>
+            <div><dt>Depot source</dt><dd>@(Model.Document.SourceWarehouseLabel ?? "-")</dd></div>
+            <div><dt>Depot destination</dt><dd>@(Model.Document.DestinationWarehouseLabel ?? "-")</dd></div>
+            <div><dt>Date validation</dt><dd>@(Model.Document.PostedOnUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</dd></div>
+            <div class="full-span"><dt>Notes</dt><dd>@(string.IsNullOrWhiteSpace(Model.Document.Notes) ? "-" : Model.Document.Notes)</dd></div>
+        </dl>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="panel-header">
+        <div>
+            <span class="eyebrow">Lignes</span>
+            <h2>Articles du document</h2>
+        </div>
+    </div>
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Description</th>
+                    <th class="text-end">Qte</th>
+                    <th class="text-end">Cout</th>
+                    <th>Lot / Serie</th>
+                    <th>Peremption</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Document.Lines.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-cell">Aucune ligne.</td></tr>
+            }
+            else
+            {
+                @foreach (var line in Model.Document.Lines)
+                {
+                    <tr>
+                        <td>@line.ProductCode</td>
+                        <td>@line.Description</td>
+                        <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.UnitCost)</td>
+                        <td>@(line.LotNumber ?? line.SerialNumber ?? "-")</td>
+                        <td>@(line.ExpirationDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

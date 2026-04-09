@@ -74,6 +74,12 @@ public class TenantDisplayFormatter(
             : $"{sign}{number} {symbol}";
     }
 
+    public string MoneyEditor(decimal amount)
+    {
+        var current = GetSettings();
+        return FormatValue(amount, current.MoneyDecimalPlaces, current.MoneyDecimalSeparator, current.MoneyGroupSeparator);
+    }
+
     public string Quantity(decimal quantity, string? unitOfMeasure = null)
     {
         var current = GetSettings();
@@ -81,7 +87,19 @@ public class TenantDisplayFormatter(
         return string.IsNullOrWhiteSpace(unitOfMeasure) ? formatted : $"{formatted} {unitOfMeasure}";
     }
 
+    public string QuantityEditor(decimal quantity)
+    {
+        var current = GetSettings();
+        return FormatValue(quantity, current.QuantityDecimalPlaces, current.QuantityDecimalSeparator, current.QuantityGroupSeparator);
+    }
+
     public string Number(decimal value, int decimals)
+    {
+        var current = GetSettings();
+        return FormatValue(value, decimals, current.QuantityDecimalSeparator, current.QuantityGroupSeparator);
+    }
+
+    public string RateEditor(decimal value, int decimals = 2)
     {
         var current = GetSettings();
         return FormatValue(value, decimals, current.QuantityDecimalSeparator, current.QuantityGroupSeparator);

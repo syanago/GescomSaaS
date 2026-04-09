@@ -12,6 +12,8 @@ public sealed record ApiContextResponse(
     Guid TenantId,
     string TenantName,
     string CurrencyCode,
+    bool AllowNegativeStock,
+    StockValuationMethod DefaultStockValuationMethod,
     IReadOnlyList<string> Roles,
     IReadOnlyList<ApiQuotaResponse> Quotas,
     int ExceededQuotaCount);
@@ -89,6 +91,8 @@ public sealed record ApiProductRequest(
     ProductType ProductType,
     string UnitOfMeasure,
     bool TrackStock,
+    StockValuationMethod StockValuationMethod,
+    StockIdentityTrackingMode StockIdentityTrackingMode,
     bool IsActive,
     Guid? ProductCategoryId,
     Guid? TaxCodeId,
@@ -103,6 +107,8 @@ public sealed record ApiProductResponse(
     ProductType ProductType,
     string UnitOfMeasure,
     bool TrackStock,
+    StockValuationMethod StockValuationMethod,
+    StockIdentityTrackingMode StockIdentityTrackingMode,
     bool IsActive,
     Guid? ProductCategoryId,
     string? ProductCategoryLabel,
@@ -119,7 +125,10 @@ public sealed record ApiDocumentLineRequest(
     decimal Quantity,
     decimal UnitPriceExcludingTax,
     decimal DiscountRate,
-    decimal TaxRate);
+    decimal TaxRate,
+    string? LotNumber,
+    string? SerialNumber,
+    DateOnly? ExpirationDate);
 
 public sealed record ApiDocumentCreateRequest(
     CommercialDocumentType DocumentType,
@@ -167,7 +176,10 @@ public sealed record ApiDocumentLineResponse(
     decimal TaxRate,
     decimal LineTotalExcludingTax,
     decimal LineTaxAmount,
-    decimal LineTotalIncludingTax);
+    decimal LineTotalIncludingTax,
+    string? LotNumber,
+    string? SerialNumber,
+    DateOnly? ExpirationDate);
 
 public sealed record ApiDocumentResponse(
     Guid Id,
@@ -204,4 +216,7 @@ public sealed record ApiStockAdjustmentRequest(
     StockMovementType MovementType,
     decimal Quantity,
     decimal UnitCost,
-    string? ReferenceNumber);
+    string? ReferenceNumber,
+    string? LotNumber,
+    string? SerialNumber,
+    DateOnly? ExpirationDate);

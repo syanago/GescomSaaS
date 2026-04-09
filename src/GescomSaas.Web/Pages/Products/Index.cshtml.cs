@@ -39,6 +39,8 @@ public class IndexModel(
                 x.PurchasePrice,
                 x.SalesPrice,
                 x.TrackStock,
+                x.StockValuationMethod,
+                x.StockIdentityTrackingMode,
                 x.IsActive))
             .ToListAsync(HttpContext.RequestAborted);
     }
@@ -55,4 +57,6 @@ public sealed record ProductListItem(
     decimal PurchasePrice,
     decimal SalesPrice,
     bool TrackStock,
+    StockValuationMethod StockValuationMethod,
+    StockIdentityTrackingMode StockIdentityTrackingMode,
     bool IsActive);

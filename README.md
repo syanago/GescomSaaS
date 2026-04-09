@@ -59,3 +59,4 @@ Base de solution Visual Studio pour une application web de gestion commerciale S
 - Si le modele evolue fortement, il est recommande de regenerer la base pour aligner le schema.
 - La prochaine etape recommandee est la mise en place de migrations EF Core versionnees et des ecrans CRUD par module.
 - Le cadrage fonctionnel est detaille dans `docs/FunctionalCoverage.md`.
+- Le design system et la direction UI de la branche `UI_UX` sont poses dans `docs/DesignSystem.md`.

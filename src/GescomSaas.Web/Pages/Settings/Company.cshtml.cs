@@ -47,8 +47,8 @@ public class CompanyModel(
     {
         ["CAD"] = "$",
         ["USD"] = "$",
-        ["EUR"] = "€",
-        ["GBP"] = "£",
+        ["EUR"] = "\u20AC",
+        ["GBP"] = "\u00A3",
         ["CHF"] = "CHF",
         ["XOF"] = "F",
         ["XAF"] = "F",
@@ -57,8 +57,8 @@ public class CompanyModel(
         ["TND"] = "DT",
         ["GNF"] = "FG",
         ["CDF"] = "FC",
-        ["NGN"] = "₦",
-        ["GHS"] = "GH₵",
+        ["NGN"] = "\u20A6",
+        ["GHS"] = "GH\u20B5",
         ["ZAR"] = "R"
     };
 
@@ -74,6 +74,13 @@ public class CompanyModel(
         new("Apres le montant", CurrencySymbolPosition.AfterAmount.ToString())
     ];
 
+    public IReadOnlyList<SelectListItem> StockValuationMethodOptions { get; } =
+    [
+        new("CMUP", StockValuationMethod.Cmup.ToString()),
+        new("FIFO", StockValuationMethod.Fifo.ToString()),
+        new("Dernier prix d'achat", StockValuationMethod.LastPurchaseCost.ToString())
+    ];
+
     public async Task<IActionResult> OnGetAsync()
     {
         var tenant = await LoadTenantAsync();
@@ -85,16 +92,15 @@ public class CompanyModel(
     {
         var tenant = await LoadTenantAsync();
         var previousCurrencyCode = tenant.CurrencyCode;
+        var normalizedMoney = NormalizeSeparators(Input.MoneyDecimalSeparator, Input.MoneyGroupSeparator, Input.MoneyDecimalPlaces);
+        var normalizedQuantity = NormalizeSeparators(Input.QuantityDecimalSeparator, Input.QuantityGroupSeparator, Input.QuantityDecimalPlaces);
+        var autoAdjustedMoneyGroup = !string.Equals(Input.MoneyGroupSeparator, normalizedMoney.GroupSeparator, StringComparison.Ordinal);
+        var autoAdjustedQuantityGroup = !string.Equals(Input.QuantityGroupSeparator, normalizedQuantity.GroupSeparator, StringComparison.Ordinal);
 
-        if (Input.MoneyDecimalPlaces > 0 && NormalizeSeparator(Input.MoneyDecimalSeparator) == NormalizeSeparator(Input.MoneyGroupSeparator))
-        {
-            ModelState.AddModelError(nameof(Input.MoneyGroupSeparator), "Les separateurs de la monnaie doivent etre differents.");
-        }
-
-        if (Input.QuantityDecimalPlaces > 0 && NormalizeSeparator(Input.QuantityDecimalSeparator) == NormalizeSeparator(Input.QuantityGroupSeparator))
-        {
-            ModelState.AddModelError(nameof(Input.QuantityGroupSeparator), "Les separateurs des quantites doivent etre differents.");
-        }
+        Input.MoneyDecimalSeparator = normalizedMoney.DecimalSeparator;
+        Input.MoneyGroupSeparator = normalizedMoney.GroupSeparator;
+        Input.QuantityDecimalSeparator = normalizedQuantity.DecimalSeparator;
+        Input.QuantityGroupSeparator = normalizedQuantity.GroupSeparator;
 
         if (!ModelState.IsValid)
         {
@@ -111,9 +117,7 @@ public class CompanyModel(
 
         await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
 
-        StatusMessage = currencyWasChanged
-            ? "Parametres de societe mis a jour et devise synchronisee sur les donnees existantes du tenant."
-            : "Parametres de societe mis a jour.";
+        StatusMessage = BuildStatusMessage(currencyWasChanged, autoAdjustedMoneyGroup, autoAdjustedQuantityGroup);
         return RedirectToPage();
     }
 
@@ -234,4 +238,37 @@ public class CompanyModel(
         "none" => string.Empty,
         _ => value
     };
+
+    private static (string DecimalSeparator, string GroupSeparator) NormalizeSeparators(string decimalSeparator, string groupSeparator, int decimalPlaces)
+    {
+        if (decimalPlaces <= 0)
+        {
+            return (decimalSeparator, groupSeparator);
+        }
+
+        return NormalizeSeparator(decimalSeparator) == NormalizeSeparator(groupSeparator)
+            ? (decimalSeparator, "none")
+            : (decimalSeparator, groupSeparator);
+    }
+
+    private static string BuildStatusMessage(bool currencyWasChanged, bool autoAdjustedMoneyGroup, bool autoAdjustedQuantityGroup)
+    {
+        var messages = new List<string>();
+
+        messages.Add(currencyWasChanged
+            ? "Parametres de societe mis a jour et devise synchronisee sur les donnees existantes du tenant."
+            : "Parametres de societe mis a jour.");
+
+        if (autoAdjustedMoneyGroup)
+        {
+            messages.Add("Le separateur de milliers de la monnaie a ete bascule sur 'Aucun' pour eviter un conflit avec le separateur decimal.");
+        }
+
+        if (autoAdjustedQuantityGroup)
+        {
+            messages.Add("Le separateur de milliers des quantites a ete bascule sur 'Aucun' pour eviter un conflit avec le separateur decimal.");
+        }
+
+        return string.Join(" ", messages);
+    }
 }

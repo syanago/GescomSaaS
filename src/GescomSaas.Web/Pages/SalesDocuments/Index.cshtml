@@ -4,84 +4,107 @@
     ViewData["Title"] = Model.Title;
 }
 
-<section class="page-header-card">
-    <div>
-        <span class="eyebrow">Cycle de vente</span>
-        <h1>@Model.Title</h1>
-        <p class="muted-copy">Gerez les pieces commerciales et leur progression dans le flux Gescom.</p>
-    </div>
-    <div class="header-actions">
-        @foreach (var type in GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.SalesTypes)
-        {
-            <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(type)</a>
-        }
-        <a class="btn btn-primary-soft" asp-page="/SalesDocuments/Create" asp-route-type="@Model.CurrentType">Nouveau</a>
-    </div>
-</section>
-
-@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
-{
-    <div class="app-alert">@Model.StatusMessage</div>
-}
-
-@if (Model.DocumentQuota is not null)
-{
-    <section class="quota-badge-row">
-        <span class="tag-pill @(Model.DocumentQuota.IsExceeded ? "tag-pill-danger" : (Model.DocumentQuota.Used >= Model.DocumentQuota.Limit ? "tag-pill-warning" : string.Empty))">
-            Documents du mois : @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
-        </span>
-        <span class="table-meta">
-            @if (Model.DocumentQuota.IsExceeded)
-            {
-                <text>Depasse de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</text>
-            }
-            else
-            {
-                <text>@(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</text>
-            }
-        </span>
-    </section>
-}
-
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Numero</th>
-                    <th>Date</th>
-                    <th>Client</th>
-                    <th>Source</th>
-                    <th>Statut</th>
-                    <th class="text-end">Montant TTC</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Documents.Count == 0)
-            {
-                <tr><td colspan="7" class="empty-cell">Aucune piece pour ce type.</td></tr>
-            }
-            else
-            {
-                @foreach (var document in Model.Documents)
+<div class="workspace-shell">
+    <section class="workspace-hero">
+        <div class="workspace-copy">
+            <span class="workspace-kicker">Traitements commerciaux</span>
+            <h1>@Model.Title</h1>
+            <p class="muted-copy">Piloter les pieces du cycle de vente avec une lecture plus rapide des statuts, montants et actions a venir.</p>
+            <div class="workspace-actions">
+                <a class="btn btn-primary-soft" asp-page="/SalesDocuments/Create" asp-route-type="@Model.CurrentType">Nouveau @Model.Title.ToLowerInvariant()</a>
+                <a class="btn btn-outline-light" asp-page="/CommercialOperations/Index">Retour aux traitements</a>
+            </div>
+            <div class="segment-bar">
+                @foreach (var type in GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.SalesTypes)
                 {
-                    <tr>
-                        <td>@document.Number</td>
-                        <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
-                        <td>@document.PartnerName</td>
-                        <td>@(document.SourceNumber ?? "-")</td>
-                        <td><span class="badge rounded-pill status-pill">@document.Status</span></td>
-                        <td class="text-end">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/SalesDocuments/Details" asp-route-id="@document.Id">Voir</a>
-                            <a asp-page="/SalesDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
-                            <a asp-page="/SalesDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
-                        </td>
-                    </tr>
+                    var isActive = type == Model.CurrentType;
+                    <a class="segment-link @(isActive ? "is-active" : string.Empty)" asp-page="/SalesDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(type)</a>
                 }
+            </div>
+        </div>
+        <div class="workspace-summary-grid">
+            <article class="workspace-summary-card">
+                <span class="signal-label">Pieces visibles</span>
+                <strong>@DisplayFormatter.Number(Model.Documents.Count, 0)</strong>
+                <span class="table-meta">documents du type @Model.Title.ToLowerInvariant()</span>
+            </article>
+            <article class="workspace-summary-card">
+                <span class="signal-label">Montant cumule</span>
+                <strong>@DisplayFormatter.Money(Model.Documents.Sum(x => x.TotalIncludingTax), Model.Documents.FirstOrDefault()?.CurrencyCode)</strong>
+                <span class="table-meta">total des pieces chargees a l'ecran</span>
+            </article>
+            @if (Model.DocumentQuota is not null)
+            {
+                <article class="workspace-summary-card">
+                    <span class="signal-label">Documents du mois</span>
+                    <strong>@Model.DocumentQuota.Used / @Model.DocumentQuota.Limit</strong>
+                    <span class="table-meta">
+                        @if (Model.DocumentQuota.IsExceeded)
+                        {
+                            <text>depassement de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</text>
+                        }
+                        else
+                        {
+                            <text>@(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</text>
+                        }
+                    </span>
+                </article>
             }
-            </tbody>
-        </table>
-    </div>
-</section>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="app-alert">@Model.StatusMessage</div>
+    }
+
+    <section class="workspace-table">
+        <div class="table-shell">
+            <table class="table table-darkless align-middle app-table">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Source</th>
+                        <th>Statut</th>
+                        <th class="text-end">Montant TTC</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Documents.Count == 0)
+                {
+                    <tr><td colspan="7" class="empty-cell">Aucune piece pour ce type.</td></tr>
+                }
+                else
+                {
+                    @foreach (var document in Model.Documents)
+                    {
+                        <tr>
+                            <td>
+                                <div class="doc-number">
+                                    <strong>@document.Number</strong>
+                                    <span class="doc-meta">@Model.Title · @document.DocumentDate.ToString("dd MMM yyyy")</span>
+                                </div>
+                            </td>
+                            <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
+                            <td>@document.PartnerName</td>
+                            <td>@(document.SourceNumber ?? "-")</td>
+                            <td><span class="badge rounded-pill status-pill">@document.Status</span></td>
+                            <td class="text-end">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
+                            <td class="text-end">
+                                <div class="row-actions">
+                                    <a class="action-link" asp-page="/SalesDocuments/Details" asp-route-id="@document.Id">Voir</a>
+                                    <a class="action-link" asp-page="/SalesDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
+                                    <a class="action-link" asp-page="/SalesDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

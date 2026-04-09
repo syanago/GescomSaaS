@@ -1,0 +1,55 @@
+@page
+@model GescomSaas.Web.Pages.StockDocuments.CreateModel
+@{
+    ViewData["Title"] = "Nouveau document de stock";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>Nouveau @GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.CurrentType).ToLowerInvariant()</h1>
+        <p class="muted-copy">Cree d'abord l'en-tete du document, puis ajoute les lignes d'article sur l'ecran suivant.</p>
+    </div>
+    <div class="header-actions">
+        <div class="segmented-control">
+            @foreach (var type in Enum.GetValues<GescomSaas.Domain.Enums.StockDocumentType>())
+            {
+                <a class="chip @(type == Model.CurrentType ? "chip-active" : "")" asp-page="/StockDocuments/Create" asp-route-type="@type">@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.ShortLabel(type)</a>
+            }
+        </div>
+    </div>
+</section>
+
+@if (Model.DocumentQuota is not null)
+{
+    <div class="quota-inline-card @(Model.DocumentQuota.IsExceeded ? "quota-danger" : "")">
+        <strong>Documents du mois :</strong> @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
+    </div>
+}
+
+<section class="panel-card">
+    <form method="post" class="stack-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-grid">
+            <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
+            <div><label asp-for="Input.DocumentDate" class="form-label"></label><input asp-for="Input.DocumentDate" class="form-control" /></div>
+            @if (Model.UsesSourceWarehouse)
+            {
+                <div><label asp-for="Input.SourceWarehouseId" class="form-label"></label><select asp-for="Input.SourceWarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Choisir un depot</option></select><span asp-validation-for="Input.SourceWarehouseId" class="text-danger"></span></div>
+            }
+            @if (Model.UsesDestinationWarehouse)
+            {
+                <div><label asp-for="Input.DestinationWarehouseId" class="form-label"></label><select asp-for="Input.DestinationWarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Choisir un depot</option></select><span asp-validation-for="Input.DestinationWarehouseId" class="text-danger"></span></div>
+            }
+            <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Creer le document</button>
+            <a class="btn btn-outline-light" asp-page="/StockDocuments/Index" asp-route-type="@Model.CurrentType">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

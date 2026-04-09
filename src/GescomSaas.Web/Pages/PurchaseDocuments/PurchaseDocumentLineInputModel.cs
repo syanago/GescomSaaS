@@ -25,6 +25,16 @@ public class PurchaseDocumentLineInputModel
     [Display(Name = "Taxe %")]
     public decimal TaxRate { get; set; }
 
+    [Display(Name = "Lot")]
+    public string? LotNumber { get; set; }
+
+    [Display(Name = "Numero de serie")]
+    public string? SerialNumber { get; set; }
+
+    [Display(Name = "Peremption")]
+    [DataType(DataType.Date)]
+    public DateOnly? ExpirationDate { get; set; }
+
     public void ApplyTo(CommercialDocumentLine entity)
     {
         entity.ProductId = ProductId;
@@ -33,5 +43,8 @@ public class PurchaseDocumentLineInputModel
         entity.UnitPriceExcludingTax = UnitPriceExcludingTax;
         entity.DiscountRate = DiscountRate;
         entity.TaxRate = TaxRate;
+        entity.LotNumber = string.IsNullOrWhiteSpace(LotNumber) ? null : LotNumber.Trim().ToUpperInvariant();
+        entity.SerialNumber = string.IsNullOrWhiteSpace(SerialNumber) ? null : SerialNumber.Trim().ToUpperInvariant();
+        entity.ExpirationDate = ExpirationDate;
     }
 }

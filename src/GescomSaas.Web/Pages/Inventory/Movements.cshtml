@@ -8,10 +8,13 @@
     <div>
         <span class="eyebrow">Stock</span>
         <h1>Mouvements de stock</h1>
-        <p class="muted-copy">Journal complet des entrées, sorties et ajustements d’inventaire.</p>
+        <p class="muted-copy">Journal complet des entrees, sorties, ajustements et traces lot / serie.</p>
     </div>
     <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthèse</a>
+        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthese</a>
+        <a class="btn btn-outline-light" asp-page="/StockDocuments/Index">Documents</a>
+        <a class="btn btn-outline-light" asp-page="/Inventory/Lots">Lots</a>
+        <a class="btn btn-outline-light" asp-page="/Inventory/SerialNumbers">Series</a>
         <a class="btn btn-primary-soft" asp-page="/Inventory/Adjustments">Ajustement</a>
     </div>
 </section>
@@ -26,15 +29,15 @@
                 </select>
             </div>
             <div>
-                <label asp-for="WarehouseId" class="form-label">Dépôt</label>
+                <label asp-for="WarehouseId" class="form-label">Depot</label>
                 <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select">
-                    <option value="">Tous les dépôts</option>
+                    <option value="">Tous les depots</option>
                 </select>
             </div>
         </div>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary-soft">Filtrer</button>
-            <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Réinitialiser</a>
+            <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Reinitialiser</a>
         </div>
     </form>
 </section>
@@ -46,18 +49,19 @@
                 <tr>
                     <th>Date</th>
                     <th>Article</th>
-                    <th>Dépôt</th>
+                    <th>Depot</th>
                     <th>Type</th>
-                    <th class="text-end">Qté</th>
-                    <th class="text-end">Coût</th>
+                    <th class="text-end">Qte</th>
+                    <th class="text-end">Cout</th>
                     <th class="text-end">Valeur</th>
-                    <th>Référence</th>
+                    <th>Lot / Serie</th>
+                    <th>Reference</th>
                 </tr>
             </thead>
             <tbody>
             @if (Model.Movements.Count == 0)
             {
-                <tr><td colspan="8" class="empty-cell">Aucun mouvement trouvé.</td></tr>
+                <tr><td colspan="9" class="empty-cell">Aucun mouvement trouve.</td></tr>
             }
             else
             {
@@ -71,6 +75,20 @@
                         <td class="text-end">@DisplayFormatter.Quantity(movement.Quantity)</td>
                         <td class="text-end">@DisplayFormatter.Money(movement.UnitCost)</td>
                         <td class="text-end">@DisplayFormatter.Money(movement.ExtendedValue)</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(movement.LotNumber) || !string.IsNullOrWhiteSpace(movement.SerialNumber))
+                            {
+                                <span>@(movement.LotNumber ?? movement.SerialNumber)</span>
+                                @if (movement.ExpirationDate.HasValue)
+                                {
+                                    <div class="table-meta">Peremption @movement.ExpirationDate.Value.ToString("dd/MM/yyyy")</div>
+                                }
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
                         <td>@(movement.ReferenceNumber ?? "-")</td>
                     </tr>
                 }

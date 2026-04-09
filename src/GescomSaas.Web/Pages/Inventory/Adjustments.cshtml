@@ -22,12 +22,12 @@
 }
 
 <section class="panel-card">
-    <form method="post" class="stack-form compact-form">
+    <form method="post" class="stack-form compact-form" data-stock-tracking-form data-stock-tracking-source-id="inventory-adjustment-tracking-data">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-grid">
             <div>
                 <label asp-for="Input.ProductId" class="form-label"></label>
-                <select asp-for="Input.ProductId" asp-items="Model.Products" class="form-select">
+                <select asp-for="Input.ProductId" asp-items="Model.Products" class="form-select" data-stock-tracking-select>
                     <option value="">Choisir un article</option>
                 </select>
                 <span asp-validation-for="Input.ProductId" class="text-danger"></span>
@@ -43,14 +43,23 @@
             <div><label asp-for="Input.MovementType" class="form-label"></label><select asp-for="Input.MovementType" asp-items="Model.AdjustmentTypes" class="form-select"></select></div>
             <div>
                 <label asp-for="Input.Quantity" class="form-label"></label>
-                <input asp-for="Input.Quantity" class="form-control" type="number" step="@DisplayFormatter.QuantityInputStep()" inputmode="decimal" />
-                <div class="table-meta">Exemple : @DisplayFormatter.Quantity(12.345m)</div>
+                <input asp-for="Input.Quantity" type="hidden" />
+                <input type="text" id="Input_Quantity_display" value="@DisplayFormatter.QuantityEditor(Model.Input.Quantity)" class="form-control" inputmode="decimal" data-format-kind="quantity" data-format-target="Input_Quantity" data-stock-tracking-quantity />
+                <div class="table-meta" data-format-preview-for="Input_Quantity_display">Rendu : @DisplayFormatter.Quantity(Model.Input.Quantity)</div>
+                <div class="table-meta" data-stock-tracking-quantity-hint></div>
+                <span asp-validation-for="Input.Quantity" class="text-danger"></span>
             </div>
             <div>
                 <label asp-for="Input.UnitCost" class="form-label"></label>
-                <input asp-for="Input.UnitCost" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                <div class="table-meta">Exemple : @DisplayFormatter.Money(48.75m)</div>
+                <input asp-for="Input.UnitCost" type="hidden" />
+                <input type="text" id="Input_UnitCost_display" value="@DisplayFormatter.MoneyEditor(Model.Input.UnitCost)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_UnitCost" />
+                <div class="table-meta" data-format-preview-for="Input_UnitCost_display">Rendu : @DisplayFormatter.Money(Model.Input.UnitCost)</div>
+                <span asp-validation-for="Input.UnitCost" class="text-danger"></span>
             </div>
+            <div class="full-span table-meta" data-stock-tracking-hint></div>
+            <div data-stock-tracking-field="lot"><label asp-for="Input.LotNumber" class="form-label"></label><input asp-for="Input.LotNumber" class="form-control" /><span asp-validation-for="Input.LotNumber" class="text-danger"></span></div>
+            <div data-stock-tracking-field="serial"><label asp-for="Input.SerialNumber" class="form-label"></label><input asp-for="Input.SerialNumber" class="form-control" /><span asp-validation-for="Input.SerialNumber" class="text-danger"></span></div>
+            <div data-stock-tracking-field="expiration"><label asp-for="Input.ExpirationDate" class="form-label"></label><input asp-for="Input.ExpirationDate" class="form-control" /></div>
             <div class="full-span"><label asp-for="Input.ReferenceNumber" class="form-label"></label><input asp-for="Input.ReferenceNumber" class="form-control" /></div>
         </div>
         <div class="form-actions">
@@ -61,5 +70,6 @@
 </section>
 
 @section Scripts {
+    <script id="inventory-adjustment-tracking-data" type="application/json">@Html.Raw(Model.ProductTrackingMetadataJson)</script>
     <partial name="_ValidationScriptsPartial" />
 }

@@ -16,4 +16,7 @@ public class StockMovement : TenantEntity
     public decimal Quantity { get; set; }
     public decimal UnitCost { get; set; }
     public string? ReferenceNumber { get; set; }
+    public string? LotNumber { get; set; }
+    public string? SerialNumber { get; set; }
+    public DateOnly? ExpirationDate { get; set; }
 }

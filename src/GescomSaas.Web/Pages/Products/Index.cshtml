@@ -49,6 +49,8 @@
                     <th>Type</th>
                     <th>Famille</th>
                     <th>TVA</th>
+                    <th>Suivi stock</th>
+                    <th>Lot / serie</th>
                     <th class="text-end">Achat</th>
                     <th class="text-end">Vente</th>
                     <th>Etat</th>
@@ -59,7 +61,7 @@
             @if (Model.Products.Count == 0)
             {
                 <tr>
-                    <td colspan="9" class="empty-cell">Aucun article n'est encore defini.</td>
+                    <td colspan="11" class="empty-cell">Aucun article n'est encore defini.</td>
                 </tr>
             }
             else
@@ -75,6 +77,8 @@
                         <td>@GetTypeLabel(product.ProductType)</td>
                         <td>@product.CategoryLabel</td>
                         <td>@product.TaxCode</td>
+                        <td>@GetValuationLabel(product.StockValuationMethod)</td>
+                        <td>@GetIdentityLabel(product.StockIdentityTrackingMode)</td>
                         <td class="text-end">@DisplayFormatter.Money(product.PurchasePrice)</td>
                         <td class="text-end">@DisplayFormatter.Money(product.SalesPrice)</td>
                         <td>
@@ -101,5 +105,21 @@
         GescomSaas.Domain.Enums.ProductType.Service => "Service",
         GescomSaas.Domain.Enums.ProductType.Bundle => "Nomenclature",
         _ => type.ToString()
+    };
+
+    private static string GetValuationLabel(GescomSaas.Domain.Enums.StockValuationMethod method) => method switch
+    {
+        GescomSaas.Domain.Enums.StockValuationMethod.Cmup => "CMUP",
+        GescomSaas.Domain.Enums.StockValuationMethod.Fifo => "FIFO",
+        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix d'achat",
+        _ => method.ToString()
+    };
+
+    private static string GetIdentityLabel(GescomSaas.Domain.Enums.StockIdentityTrackingMode mode) => mode switch
+    {
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "Aucun",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.Lot => "Par lot",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par numero de serie",
+        _ => mode.ToString()
     };
 }

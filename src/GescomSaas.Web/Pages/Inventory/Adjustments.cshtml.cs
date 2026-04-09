@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GescomSaas.Web.Pages.Inventory;
 
@@ -19,6 +20,7 @@ public class AdjustmentsModel(
 
     public IReadOnlyList<SelectListItem> Products { get; private set; } = [];
     public IReadOnlyList<SelectListItem> Warehouses { get; private set; } = [];
+    public string ProductTrackingMetadataJson { get; private set; } = "{}";
 
     public IReadOnlyList<SelectListItem> AdjustmentTypes { get; } =
     [
@@ -63,7 +65,10 @@ public class AdjustmentsModel(
                     Input.MovementType,
                     Input.Quantity,
                     Input.UnitCost,
-                    Input.ReferenceNumber),
+                    Input.ReferenceNumber,
+                    Input.LotNumber,
+                    Input.SerialNumber,
+                    Input.ExpirationDate),
                 HttpContext.RequestAborted);
         }
         catch (InvalidOperationException ex)
@@ -80,12 +85,30 @@ public class AdjustmentsModel(
     {
         var tenantId = await GetTenantIdAsync();
 
-        Products = await DbContext.Products
+        var products = await DbContext.Products
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId && x.TrackStock && x.IsActive)
             .OrderBy(x => x.Sku)
-            .Select(x => new SelectListItem($"{x.Sku} - {x.Label}", x.Id.ToString()))
+            .Select(x => new ProductTrackingOption(
+                x.Id,
+                x.Sku,
+                x.Label,
+                x.UnitOfMeasure,
+                x.StockIdentityTrackingMode))
             .ToListAsync(HttpContext.RequestAborted);
+
+        Products = products
+            .Select(x => new SelectListItem($"{x.Sku} - {x.Label}", x.Id.ToString()))
+            .ToList();
+
+        ProductTrackingMetadataJson = JsonSerializer.Serialize(products.ToDictionary(
+            x => x.Id.ToString(),
+            x => new
+            {
+                mode = x.TrackingMode.ToString(),
+                sku = x.Sku,
+                unit = x.UnitOfMeasure
+            }));
 
         Warehouses = await DbContext.Warehouses
             .AsNoTracking()
@@ -94,4 +117,11 @@ public class AdjustmentsModel(
             .Select(x => new SelectListItem($"{x.Code} - {x.Label}", x.Id.ToString()))
             .ToListAsync(HttpContext.RequestAborted);
     }
+
+    private sealed record ProductTrackingOption(
+        Guid Id,
+        string Sku,
+        string Label,
+        string UnitOfMeasure,
+        StockIdentityTrackingMode TrackingMode);
 }

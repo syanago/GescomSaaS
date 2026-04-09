@@ -46,7 +46,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
             .AsNoTracking()
             .CountAsync(x => x.TenantId == tenantId, cancellationToken);
 
-        var monthlyDocumentCount = await dbContext.CommercialDocuments
+        var monthlyCommercialDocuments = await dbContext.CommercialDocuments
             .AsNoTracking()
             .CountAsync(
                 x => x.TenantId == tenantId &&
@@ -54,6 +54,17 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
                      x.DocumentDate <= monthEnd &&
                      x.Status != CommercialDocumentStatus.Cancelled,
                 cancellationToken);
+
+        var monthlyStockDocuments = await dbContext.StockDocuments
+            .AsNoTracking()
+            .CountAsync(
+                x => x.TenantId == tenantId &&
+                     x.DocumentDate >= monthStart &&
+                     x.DocumentDate <= monthEnd &&
+                     x.Status != StockDocumentStatus.Cancelled,
+                cancellationToken);
+
+        var monthlyDocumentCount = monthlyCommercialDocuments + monthlyStockDocuments;
 
         return
         [
@@ -197,7 +208,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
         var monthStart = new DateOnly(documentDate.Year, documentDate.Month, 1);
         var monthEnd = new DateOnly(documentDate.Year, documentDate.Month, DateTime.DaysInMonth(documentDate.Year, documentDate.Month));
 
-        var monthlyDocuments = await dbContext.CommercialDocuments
+        var monthlyCommercialDocuments = await dbContext.CommercialDocuments
             .AsNoTracking()
             .CountAsync(
                 x => x.TenantId == tenantId &&
@@ -205,6 +216,17 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
                      x.DocumentDate <= monthEnd &&
                      x.Status != CommercialDocumentStatus.Cancelled,
                 cancellationToken);
+
+        var monthlyStockDocuments = await dbContext.StockDocuments
+            .AsNoTracking()
+            .CountAsync(
+                x => x.TenantId == tenantId &&
+                     x.DocumentDate >= monthStart &&
+                     x.DocumentDate <= monthEnd &&
+                     x.Status != StockDocumentStatus.Cancelled,
+                cancellationToken);
+
+        var monthlyDocuments = monthlyCommercialDocuments + monthlyStockDocuments;
 
         EnsureQuota(
             "Documents du mois",

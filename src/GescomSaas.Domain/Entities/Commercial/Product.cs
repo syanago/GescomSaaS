@@ -11,6 +11,8 @@ public class Product : TenantEntity
     public ProductType ProductType { get; set; } = ProductType.StockItem;
     public string UnitOfMeasure { get; set; } = "UN";
     public bool TrackStock { get; set; } = true;
+    public StockValuationMethod StockValuationMethod { get; set; } = StockValuationMethod.Cmup;
+    public StockIdentityTrackingMode StockIdentityTrackingMode { get; set; } = StockIdentityTrackingMode.None;
     public bool IsActive { get; set; } = true;
 
     public Guid? ProductCategoryId { get; set; }

@@ -9,4 +9,7 @@ public sealed record StockAdjustmentRequest(
     StockMovementType MovementType,
     decimal Quantity,
     decimal UnitCost,
-    string? ReferenceNumber);
+    string? ReferenceNumber,
+    string? LotNumber,
+    string? SerialNumber,
+    DateOnly? ExpirationDate);

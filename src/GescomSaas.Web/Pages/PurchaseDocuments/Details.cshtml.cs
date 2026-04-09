@@ -13,7 +13,8 @@ public class DetailsModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
     ICommercialDocumentWorkflowService workflowService,
-    ICommercialDocumentPdfService pdfService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ICommercialDocumentPdfService pdfService,
+    IInventoryService inventoryService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
@@ -39,7 +40,7 @@ public class DetailsModel(
 
             if (target.DocumentType == CommercialDocumentType.GoodsReceipt)
             {
-                await CreateStockReceiptsAsync(target, tenantId);
+                await inventoryService.CreateStockReceiptsAsync(tenantId, target, HttpContext.RequestAborted);
             }
 
             StatusMessage = $"{PurchaseDocumentCatalog.Label(target.DocumentType)} {target.Number} cree.";
@@ -89,40 +90,6 @@ public class DetailsModel(
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
         return Document is null ? NotFound() : Page();
-    }
-
-    private async Task CreateStockReceiptsAsync(CommercialDocument goodsReceipt, Guid tenantId)
-    {
-        if (!goodsReceipt.WarehouseId.HasValue)
-        {
-            return;
-        }
-
-        foreach (var line in goodsReceipt.Lines.Where(x => x.ProductId.HasValue))
-        {
-            var product = await DbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == line.ProductId && x.TenantId == tenantId, HttpContext.RequestAborted);
-
-            if (product is null || !product.TrackStock)
-            {
-                continue;
-            }
-
-            DbContext.StockMovements.Add(new StockMovement
-            {
-                TenantId = tenantId,
-                ProductId = product.Id,
-                WarehouseId = goodsReceipt.WarehouseId.Value,
-                MovementDate = goodsReceipt.DocumentDate,
-                MovementType = StockMovementType.Receipt,
-                Quantity = line.Quantity,
-                UnitCost = line.UnitPriceExcludingTax,
-                ReferenceNumber = goodsReceipt.Number
-            });
-        }
-
-        await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
     }
 }
 

@@ -25,15 +25,21 @@
             <div><label asp-for="Input.UnitOfMeasure" class="form-label"></label><input asp-for="Input.UnitOfMeasure" class="form-control" /></div>
             <div><label asp-for="Input.ProductCategoryId" class="form-label"></label><select asp-for="Input.ProductCategoryId" asp-items="Model.Categories" class="form-select"><option value="">Aucune</option></select></div>
             <div><label asp-for="Input.TaxCodeId" class="form-label"></label><select asp-for="Input.TaxCodeId" asp-items="Model.TaxCodes" class="form-select"><option value="">Aucune</option></select></div>
+            <div><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
+            <div><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
             <div>
                 <label asp-for="Input.PurchasePrice" class="form-label"></label>
-                <input asp-for="Input.PurchasePrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                <div class="table-meta">Exemple : @DisplayFormatter.Money(1234.56m)</div>
+                <input asp-for="Input.PurchasePrice" type="hidden" />
+                <input type="text" id="Input_PurchasePrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.PurchasePrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_PurchasePrice" />
+                <div class="table-meta" data-format-preview-for="Input_PurchasePrice_display">Rendu : @DisplayFormatter.Money(Model.Input.PurchasePrice)</div>
+                <span asp-validation-for="Input.PurchasePrice" class="text-danger"></span>
             </div>
             <div>
                 <label asp-for="Input.SalesPrice" class="form-label"></label>
-                <input asp-for="Input.SalesPrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                <div class="table-meta">Exemple : @DisplayFormatter.Money(1999.99m)</div>
+                <input asp-for="Input.SalesPrice" type="hidden" />
+                <input type="text" id="Input_SalesPrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.SalesPrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_SalesPrice" />
+                <div class="table-meta" data-format-preview-for="Input_SalesPrice_display">Rendu : @DisplayFormatter.Money(Model.Input.SalesPrice)</div>
+                <span asp-validation-for="Input.SalesPrice" class="text-danger"></span>
             </div>
             <div class="full-span"><label asp-for="Input.Description" class="form-label"></label><textarea asp-for="Input.Description" rows="4" class="form-control"></textarea></div>
         </div>

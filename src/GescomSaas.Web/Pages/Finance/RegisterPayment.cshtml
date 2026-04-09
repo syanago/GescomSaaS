@@ -30,8 +30,10 @@
             <div><label asp-for="Input.Method" class="form-label"></label><select asp-for="Input.Method" asp-items="Model.Methods" class="form-select"></select></div>
             <div>
                 <label asp-for="Input.Amount" class="form-label"></label>
-                <input asp-for="Input.Amount" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                <div class="table-meta">Exemple : @DisplayFormatter.Money(2500m)</div>
+                <input asp-for="Input.Amount" type="hidden" />
+                <input type="text" id="Input_Amount_display" value="@DisplayFormatter.MoneyEditor(Model.Input.Amount)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_Amount" />
+                <div class="table-meta" data-format-preview-for="Input_Amount_display">Rendu : @DisplayFormatter.Money(Model.Input.Amount)</div>
+                <span asp-validation-for="Input.Amount" class="text-danger"></span>
             </div>
             <div><label asp-for="Input.ReferenceNumber" class="form-label"></label><input asp-for="Input.ReferenceNumber" class="form-control" /></div>
             <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>

@@ -13,4 +13,7 @@ public sealed record InventoryMovementItem(
     decimal Quantity,
     decimal UnitCost,
     decimal ExtendedValue,
-    string? ReferenceNumber);
+    string? ReferenceNumber,
+    string? LotNumber,
+    string? SerialNumber,
+    DateOnly? ExpirationDate);

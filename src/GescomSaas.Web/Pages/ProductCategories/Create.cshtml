@@ -15,6 +15,8 @@
         <div class="form-grid">
             <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
             <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
+            <div><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
+            <div><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
         </div>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary-soft">Enregistrer</button>

@@ -107,6 +107,8 @@ public static class RestApiEndpoints
             resolvedTenant.Id,
             resolvedTenant.CompanyName,
             resolvedTenant.CurrencyCode,
+            resolvedTenant.AllowNegativeStock,
+            resolvedTenant.DefaultStockValuationMethod,
             user.Claims
                 .Where(x => x.Type == ClaimTypes.Role)
                 .Select(x => x.Value)
@@ -645,6 +647,7 @@ public static class RestApiEndpoints
         ApplicationDbContext dbContext,
         ICurrentTenantAccessor currentTenantAccessor,
         ICommercialDocumentWorkflowService workflowService,
+        IInventoryService inventoryService,
         CancellationToken cancellationToken)
     {
         var tenantResult = await ApiMappingHelpers.ResolveTenantAsync(user, userManager, dbContext, currentTenantAccessor, cancellationToken);
@@ -689,6 +692,7 @@ public static class RestApiEndpoints
         ApplicationDbContext dbContext,
         ICurrentTenantAccessor currentTenantAccessor,
         ICommercialDocumentWorkflowService workflowService,
+        IInventoryService inventoryService,
         CancellationToken cancellationToken)
     {
         var tenantResult = await ApiMappingHelpers.ResolveTenantAsync(user, userManager, dbContext, currentTenantAccessor, cancellationToken);
@@ -714,12 +718,12 @@ public static class RestApiEndpoints
 
             if (target.DocumentType == CommercialDocumentType.DeliveryNote)
             {
-                await ApiMappingHelpers.CreateStockIssuesAsync(dbContext, target, tenantId, cancellationToken);
+                await inventoryService.CreateStockIssuesAsync(tenantId, target, cancellationToken);
             }
 
             if (target.DocumentType == CommercialDocumentType.GoodsReceipt)
             {
-                await ApiMappingHelpers.CreateStockReceiptsAsync(dbContext, target, tenantId, cancellationToken);
+                await inventoryService.CreateStockReceiptsAsync(tenantId, target, cancellationToken);
             }
 
             var response = await ApiMappingHelpers.LoadDocumentResponseAsync(dbContext, tenantId, target.Id, cancellationToken);
@@ -930,7 +934,10 @@ public static class RestApiEndpoints
                     request.MovementType,
                     request.Quantity,
                     request.UnitCost,
-                    request.ReferenceNumber),
+                    request.ReferenceNumber,
+                    request.LotNumber,
+                    request.SerialNumber,
+                    request.ExpirationDate),
                 cancellationToken);
 
             return Results.Created("/api/v1/inventory/movements", new { message = "Ajustement d'inventaire enregistre." });

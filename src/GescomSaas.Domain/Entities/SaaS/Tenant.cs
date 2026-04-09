@@ -26,6 +26,8 @@ public class Tenant : AuditableEntity
     public string QuantityDecimalSeparator { get; set; } = ",";
     public string QuantityGroupSeparator { get; set; } = " ";
     public int QuantityDecimalPlaces { get; set; } = 3;
+    public bool AllowNegativeStock { get; set; }
+    public StockValuationMethod DefaultStockValuationMethod { get; set; } = StockValuationMethod.Cmup;
     public ApplicationTheme VisualTheme { get; set; } = ApplicationTheme.LigComMidnight;
     public bool IsActive { get; set; } = true;
 

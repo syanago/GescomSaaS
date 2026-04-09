@@ -61,7 +61,10 @@ public class CommercialDocumentWorkflowService(
                 TaxRate = line.TaxRate,
                 LineTotalExcludingTax = line.LineTotalExcludingTax,
                 LineTaxAmount = line.LineTaxAmount,
-                LineTotalIncludingTax = line.LineTotalIncludingTax
+                LineTotalIncludingTax = line.LineTotalIncludingTax,
+                LotNumber = line.LotNumber,
+                SerialNumber = line.SerialNumber,
+                ExpirationDate = line.ExpirationDate
             });
         }
 

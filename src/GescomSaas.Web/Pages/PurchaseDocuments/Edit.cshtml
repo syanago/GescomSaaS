@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <form method="post" class="stack-form">
+        <form method="post" asp-route-id="@Model.Id" class="stack-form">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-grid">
                 <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
@@ -54,30 +54,43 @@
                 <h2>Ajouter un article</h2>
             </div>
         </div>
-        <form method="post" asp-page-handler="AddLine" class="stack-form">
+        <form method="post" asp-page-handler="AddLine" asp-route-id="@Model.Id" class="stack-form" data-stock-tracking-form data-stock-tracking-source-id="purchase-line-tracking-data">
             <div class="form-grid">
-                <div class="full-span"><label asp-for="NewLine.ProductId" class="form-label"></label><select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select"><option value="">Choisir un article</option></select><span asp-validation-for="NewLine.ProductId" class="text-danger"></span></div>
+                <div class="full-span"><label asp-for="NewLine.ProductId" class="form-label"></label><select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select" data-stock-tracking-select><option value="">Choisir un article</option></select><span asp-validation-for="NewLine.ProductId" class="text-danger"></span></div>
                 <div class="full-span"><label asp-for="NewLine.Description" class="form-label"></label><input asp-for="NewLine.Description" class="form-control" /><span asp-validation-for="NewLine.Description" class="text-danger"></span></div>
                 <div>
                     <label asp-for="NewLine.Quantity" class="form-label"></label>
-                    <input asp-for="NewLine.Quantity" class="form-control" type="number" step="@DisplayFormatter.QuantityInputStep()" inputmode="decimal" />
-                    <div class="table-meta">Exemple : @DisplayFormatter.Quantity(25m)</div>
+                    <input asp-for="NewLine.Quantity" type="hidden" />
+                    <input type="text" id="NewLine_Quantity_display" value="@DisplayFormatter.QuantityEditor(Model.NewLine.Quantity)" class="form-control" inputmode="decimal" data-format-kind="quantity" data-format-target="NewLine_Quantity" data-stock-tracking-quantity />
+                    <div class="table-meta" data-format-preview-for="NewLine_Quantity_display">Rendu : @DisplayFormatter.Quantity(Model.NewLine.Quantity)</div>
+                    <div class="table-meta" data-stock-tracking-quantity-hint></div>
+                    <span asp-validation-for="NewLine.Quantity" class="text-danger"></span>
                 </div>
                 <div>
                     <label asp-for="NewLine.UnitPriceExcludingTax" class="form-label"></label>
-                    <input asp-for="NewLine.UnitPriceExcludingTax" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
-                    <div class="table-meta">Exemple : @DisplayFormatter.Money(87.4m, Model.Input.CurrencyCode)</div>
+                    <input asp-for="NewLine.UnitPriceExcludingTax" type="hidden" />
+                    <input type="text" id="NewLine_UnitPriceExcludingTax_display" value="@DisplayFormatter.MoneyEditor(Model.NewLine.UnitPriceExcludingTax)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="NewLine_UnitPriceExcludingTax" data-format-currency-code="@Model.Input.CurrencyCode" />
+                    <div class="table-meta" data-format-preview-for="NewLine_UnitPriceExcludingTax_display">Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPriceExcludingTax, Model.Input.CurrencyCode)</div>
+                    <span asp-validation-for="NewLine.UnitPriceExcludingTax" class="text-danger"></span>
                 </div>
                 <div>
                     <label asp-for="NewLine.DiscountRate" class="form-label"></label>
-                    <input asp-for="NewLine.DiscountRate" class="form-control" type="number" step="@DisplayFormatter.RateInputStep()" inputmode="decimal" />
-                    <div class="table-meta">Exemple : @DisplayFormatter.Number(2.5m, 2) %</div>
+                    <input asp-for="NewLine.DiscountRate" type="hidden" />
+                    <input type="text" id="NewLine_DiscountRate_display" value="@DisplayFormatter.RateEditor(Model.NewLine.DiscountRate)" class="form-control" inputmode="decimal" data-format-kind="rate" data-format-target="NewLine_DiscountRate" data-format-decimals="2" />
+                    <div class="table-meta" data-format-preview-for="NewLine_DiscountRate_display">Rendu : @DisplayFormatter.Number(Model.NewLine.DiscountRate, 2) %</div>
+                    <span asp-validation-for="NewLine.DiscountRate" class="text-danger"></span>
                 </div>
                 <div>
                     <label asp-for="NewLine.TaxRate" class="form-label"></label>
-                    <input asp-for="NewLine.TaxRate" class="form-control" type="number" step="@DisplayFormatter.RateInputStep()" inputmode="decimal" />
-                    <div class="table-meta">Exemple : @DisplayFormatter.Number(19.25m, 2) %</div>
+                    <input asp-for="NewLine.TaxRate" type="hidden" />
+                    <input type="text" id="NewLine_TaxRate_display" value="@DisplayFormatter.RateEditor(Model.NewLine.TaxRate)" class="form-control" inputmode="decimal" data-format-kind="rate" data-format-target="NewLine_TaxRate" data-format-decimals="2" />
+                    <div class="table-meta" data-format-preview-for="NewLine_TaxRate_display">Rendu : @DisplayFormatter.Number(Model.NewLine.TaxRate, 2) %</div>
+                    <span asp-validation-for="NewLine.TaxRate" class="text-danger"></span>
                 </div>
+                <div class="full-span table-meta" data-stock-tracking-hint></div>
+                <div data-stock-tracking-field="lot"><label asp-for="NewLine.LotNumber" class="form-label"></label><input asp-for="NewLine.LotNumber" class="form-control" /><span asp-validation-for="NewLine.LotNumber" class="text-danger"></span></div>
+                <div data-stock-tracking-field="serial"><label asp-for="NewLine.SerialNumber" class="form-label"></label><input asp-for="NewLine.SerialNumber" class="form-control" /><span asp-validation-for="NewLine.SerialNumber" class="text-danger"></span></div>
+                <div data-stock-tracking-field="expiration"><label asp-for="NewLine.ExpirationDate" class="form-label"></label><input asp-for="NewLine.ExpirationDate" class="form-control" /></div>
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary-soft">Ajouter la ligne</button>
@@ -104,6 +117,7 @@
                     <th class="text-end">PU HT</th>
                     <th class="text-end">Remise</th>
                     <th class="text-end">Taxe</th>
+                    <th>Lot / Serie</th>
                     <th class="text-end">TTC</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -111,7 +125,7 @@
             <tbody>
             @if (Model.Lines.Count == 0)
             {
-                <tr><td colspan="8" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
+                <tr><td colspan="9" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
             }
             else
             {
@@ -124,9 +138,10 @@
                         <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Input.CurrencyCode)</td>
                         <td class="text-end">@DisplayFormatter.Number(line.DiscountRate, 2) %</td>
                         <td class="text-end">@DisplayFormatter.Number(line.TaxRate, 2) %</td>
+                        <td>@(line.LotNumber ?? line.SerialNumber ?? "-")</td>
                         <td class="text-end">@DisplayFormatter.Money(line.TotalIncludingTax, Model.Input.CurrencyCode)</td>
                         <td class="text-end">
-                            <form method="post" asp-page-handler="DeleteLine" class="inline-form">
+                            <form method="post" asp-page-handler="DeleteLine" asp-route-id="@Model.Id" class="inline-form">
                                 <input type="hidden" name="lineId" value="@line.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-light">Supprimer</button>
                             </form>
@@ -140,5 +155,6 @@
 </section>
 
 @section Scripts {
+    <script id="purchase-line-tracking-data" type="application/json">@Html.Raw(Model.ProductTrackingMetadataJson)</script>
     <partial name="_ValidationScriptsPartial" />
 }

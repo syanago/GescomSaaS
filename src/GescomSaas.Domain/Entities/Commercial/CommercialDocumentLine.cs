@@ -18,4 +18,7 @@ public class CommercialDocumentLine : AuditableEntity
     public decimal LineTotalExcludingTax { get; set; }
     public decimal LineTaxAmount { get; set; }
     public decimal LineTotalIncludingTax { get; set; }
+    public string? LotNumber { get; set; }
+    public string? SerialNumber { get; set; }
+    public DateOnly? ExpirationDate { get; set; }
 }

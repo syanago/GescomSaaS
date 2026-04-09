@@ -198,36 +198,70 @@ public static class ApplicationDbContextSeed
         string currencyCode)
     {
         var tenant = await context.Tenants.FirstOrDefaultAsync(x => x.Slug == slug);
+        var isNewTenant = tenant is null;
         if (tenant is null)
         {
             tenant = new Tenant { Slug = slug };
             context.Tenants.Add(tenant);
         }
 
-        tenant.CompanyName = companyName;
-        tenant.CompanyLegalName = companyLegalName;
-        tenant.PrimaryContactEmail = primaryContactEmail;
-        tenant.PhoneNumber = phoneNumber;
-        tenant.AddressLine1 = addressLine1;
-        tenant.AddressLine2 = addressLine2;
-        tenant.PostalCode = postalCode;
-        tenant.City = city;
-        tenant.State = state;
-        tenant.CountryCode = countryCode;
-        tenant.CurrencyCode = currencyCode;
-        tenant.CashCurrencyCode = currencyCode;
-        tenant.CurrencySymbol = "$";
-        tenant.CurrencySymbolPosition = CurrencySymbolPosition.BeforeAmount;
-        tenant.MoneyDecimalSeparator = ",";
-        tenant.MoneyGroupSeparator = " ";
-        tenant.MoneyDecimalPlaces = 2;
-        tenant.QuantityDecimalSeparator = ",";
-        tenant.QuantityGroupSeparator = " ";
-        tenant.QuantityDecimalPlaces = 3;
-        tenant.VisualTheme = ApplicationTheme.LigComMidnight;
-        tenant.IsActive = true;
+        if (isNewTenant)
+        {
+            tenant.CompanyName = companyName;
+            tenant.CompanyLegalName = companyLegalName;
+            tenant.PrimaryContactEmail = primaryContactEmail;
+            tenant.PhoneNumber = phoneNumber;
+            tenant.AddressLine1 = addressLine1;
+            tenant.AddressLine2 = addressLine2;
+            tenant.PostalCode = postalCode;
+            tenant.City = city;
+            tenant.State = state;
+            tenant.CountryCode = countryCode;
+            tenant.CurrencyCode = currencyCode;
+            tenant.CashCurrencyCode = currencyCode;
+            tenant.CurrencySymbol = "$";
+            tenant.CurrencySymbolPosition = CurrencySymbolPosition.BeforeAmount;
+            tenant.MoneyDecimalSeparator = ",";
+            tenant.MoneyGroupSeparator = " ";
+            tenant.MoneyDecimalPlaces = 2;
+            tenant.QuantityDecimalSeparator = ",";
+            tenant.QuantityGroupSeparator = " ";
+            tenant.QuantityDecimalPlaces = 3;
+            tenant.AllowNegativeStock = false;
+            tenant.DefaultStockValuationMethod = StockValuationMethod.Cmup;
+            tenant.VisualTheme = ApplicationTheme.LigComMidnight;
+            tenant.IsActive = true;
+        }
+        else
+        {
+            tenant.CompanyName = string.IsNullOrWhiteSpace(tenant.CompanyName) ? companyName : tenant.CompanyName;
+            tenant.CompanyLegalName = string.IsNullOrWhiteSpace(tenant.CompanyLegalName) ? companyLegalName : tenant.CompanyLegalName;
+            tenant.PrimaryContactEmail = string.IsNullOrWhiteSpace(tenant.PrimaryContactEmail) ? primaryContactEmail : tenant.PrimaryContactEmail;
+            tenant.PhoneNumber = string.IsNullOrWhiteSpace(tenant.PhoneNumber) ? phoneNumber : tenant.PhoneNumber;
+            tenant.AddressLine1 = string.IsNullOrWhiteSpace(tenant.AddressLine1) ? addressLine1 : tenant.AddressLine1;
+            tenant.AddressLine2 = string.IsNullOrWhiteSpace(tenant.AddressLine2) ? addressLine2 : tenant.AddressLine2;
+            tenant.PostalCode = string.IsNullOrWhiteSpace(tenant.PostalCode) ? postalCode : tenant.PostalCode;
+            tenant.City = string.IsNullOrWhiteSpace(tenant.City) ? city : tenant.City;
+            tenant.State = string.IsNullOrWhiteSpace(tenant.State) ? state : tenant.State;
+            tenant.CountryCode = string.IsNullOrWhiteSpace(tenant.CountryCode) ? countryCode : tenant.CountryCode;
+            tenant.CurrencyCode = string.IsNullOrWhiteSpace(tenant.CurrencyCode) ? currencyCode : tenant.CurrencyCode;
+            tenant.CashCurrencyCode = string.IsNullOrWhiteSpace(tenant.CashCurrencyCode) ? tenant.CurrencyCode : tenant.CashCurrencyCode;
+            tenant.CurrencySymbol = string.IsNullOrWhiteSpace(tenant.CurrencySymbol) ? "$" : tenant.CurrencySymbol;
+            tenant.MoneyDecimalSeparator = string.IsNullOrEmpty(tenant.MoneyDecimalSeparator) ? "," : tenant.MoneyDecimalSeparator;
+            tenant.MoneyGroupSeparator ??= " ";
+            tenant.MoneyDecimalPlaces = tenant.MoneyDecimalPlaces < 0 ? 2 : tenant.MoneyDecimalPlaces;
+            tenant.QuantityDecimalSeparator = string.IsNullOrEmpty(tenant.QuantityDecimalSeparator) ? "," : tenant.QuantityDecimalSeparator;
+            tenant.QuantityGroupSeparator ??= " ";
+            tenant.QuantityDecimalPlaces = tenant.QuantityDecimalPlaces < 0 ? 3 : tenant.QuantityDecimalPlaces;
+            tenant.DefaultStockValuationMethod = tenant.DefaultStockValuationMethod;
+            tenant.IsActive = true;
+        }
 
-        await context.SaveChangesAsync();
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+
         return tenant;
     }
 
@@ -301,7 +335,7 @@ public static class ApplicationDbContextSeed
             new CategorySeed("MATERIEL", "Materiel"),
             new CategorySeed("ACCESS", "Accessoires"),
             new CategorySeed("SERVICE", "Services"),
-            new CategorySeed("CONSOM", "Consommables")
+            new CategorySeed("CONSOM", "Consommables", StockValuationMethod.LastPurchaseCost, StockIdentityTrackingMode.Lot)
         });
 
         var warehouses = await EnsureWarehousesAsync(context, tenant.Id, new[]
@@ -317,8 +351,8 @@ public static class ApplicationDbContextSeed
             new ProductSeed("ART-002", "Moniteur 27 pouces", ProductType.StockItem, true, "UN", "MATERIEL", "TPS", 210m, 329m, "Ecran bureautique 27 pouces"),
             new ProductSeed("ART-003", "Station d'accueil USB-C", ProductType.StockItem, true, "UN", "ACCESS", "TPS", 85m, 149m, "Dock universel"),
             new ProductSeed("ART-004", "Appliance reseau securisee", ProductType.StockItem, true, "UN", "MATERIEL", "TPS", 310m, 549m, "Pare-feu pour PME"),
-            new ProductSeed("ART-005", "Imprimante laser compacte", ProductType.StockItem, true, "UN", "MATERIEL", "TPS", 175m, 289m, "Imprimante laser A4"),
-            new ProductSeed("CONS-001", "Cartouche toner noir", ProductType.StockItem, true, "UN", "CONSOM", "TPS", 22m, 39m, "Consommable laser"),
+            new ProductSeed("ART-005", "Imprimante laser compacte", ProductType.StockItem, true, "UN", "MATERIEL", "TPS", 175m, 289m, "Imprimante laser A4", StockValuationMethod.Fifo, StockIdentityTrackingMode.SerialNumber),
+            new ProductSeed("CONS-001", "Cartouche toner noir", ProductType.StockItem, true, "UN", "CONSOM", "TPS", 22m, 39m, "Consommable laser", StockValuationMethod.LastPurchaseCost, StockIdentityTrackingMode.Lot),
             new ProductSeed("SERV-INST", "Installation sur site", ProductType.Service, false, "H", "SERVICE", "TPS", 0m, 250m, "Prestation de deploiement"),
             new ProductSeed("SERV-MAINT", "Maintenance annuelle", ProductType.Service, false, "AN", "SERVICE", "TPS", 0m, 420m, "Contrat annuel")
         });
@@ -372,7 +406,7 @@ public static class ApplicationDbContextSeed
 
         var quote1 = await EnsureDocumentAsync(context, tenant.Id, "DEV-2026-0001", CommercialDocumentType.SalesQuote, CommercialDocumentStatus.Open, partners["CLI-002"], warehouses["PRINCIPAL"], today.AddDays(-20), today.AddDays(10), tenant.CurrencyCode, "Devis pour equiper deux postes de travail", null, products, new[]
         {
-            new DocumentLineSeed("ART-001", 2m, 1290m, 5m),
+            new DocumentLineSeed("ART-001", 2m, 1290m, 5m, 0m, null, null, "SN-LIG-ART001-0001"),
             new DocumentLineSeed("ART-003", 2m, 149m, 5m)
         });
 
@@ -384,7 +418,7 @@ public static class ApplicationDbContextSeed
 
         var salesOrder1 = await EnsureDocumentAsync(context, tenant.Id, "CMD-2026-0001", CommercialDocumentType.SalesOrder, CommercialDocumentStatus.PartiallyProcessed, partners["CLI-002"], warehouses["PRINCIPAL"], today.AddDays(-16), today.AddDays(14), tenant.CurrencyCode, "Commande issue du devis DEV-2026-0001", quote1, products, new[]
         {
-            new DocumentLineSeed("ART-001", 2m, 1290m, 5m),
+            new DocumentLineSeed("ART-001", 2m, 1290m, 5m, 0m, null, null, "SN-LIG-ART001-0001"),
             new DocumentLineSeed("ART-003", 2m, 149m, 5m)
         });
 
@@ -395,7 +429,7 @@ public static class ApplicationDbContextSeed
 
         var delivery1 = await EnsureDocumentAsync(context, tenant.Id, "BL-2026-0001", CommercialDocumentType.DeliveryNote, CommercialDocumentStatus.Completed, partners["CLI-002"], warehouses["PRINCIPAL"], today.AddDays(-14), null, tenant.CurrencyCode, "Livraison complete de la commande CMD-2026-0001", salesOrder1, products, new[]
         {
-            new DocumentLineSeed("ART-001", 2m, 1290m, 5m),
+            new DocumentLineSeed("ART-001", 2m, 1290m, 5m, 0m, null, null, "SN-LIG-ART001-0001"),
             new DocumentLineSeed("ART-003", 2m, 149m, 5m)
         });
 
@@ -426,13 +460,13 @@ public static class ApplicationDbContextSeed
         var purchaseRequest1 = await EnsureDocumentAsync(context, tenant.Id, "DAP-2026-0001", CommercialDocumentType.PurchaseRequest, CommercialDocumentStatus.Open, partners["FOU-002"], warehouses["PRINCIPAL"], today.AddDays(-18), null, tenant.CurrencyCode, "Demande d'achat de materiel reseau et consommables", null, products, new[]
         {
             new DocumentLineSeed("ART-001", 3m, 980m, 5m),
-            new DocumentLineSeed("CONS-001", 20m, 22m, 5m)
+            new DocumentLineSeed("CONS-001", 20m, 22m, 5m, 0m, null, "LOT-TONER-2026-A")
         });
 
         var purchaseOrder1 = await EnsureDocumentAsync(context, tenant.Id, "ACH-2026-0001", CommercialDocumentType.PurchaseOrder, CommercialDocumentStatus.PartiallyProcessed, partners["FOU-002"], warehouses["PRINCIPAL"], today.AddDays(-15), null, tenant.CurrencyCode, "Commande fournisseur issue de DAP-2026-0001", purchaseRequest1, products, new[]
         {
             new DocumentLineSeed("ART-001", 3m, 980m, 5m),
-            new DocumentLineSeed("CONS-001", 20m, 22m, 5m)
+            new DocumentLineSeed("CONS-001", 20m, 22m, 5m, 0m, null, "LOT-TONER-2026-A")
         });
 
         await EnsureDocumentAsync(context, tenant.Id, "ACH-2026-0002", CommercialDocumentType.PurchaseOrder, CommercialDocumentStatus.Open, partners["FOU-001"], warehouses["SAV"], today.AddDays(-1), null, tenant.CurrencyCode, "Commande fournisseur encore ouverte", null, products, new[]
@@ -443,13 +477,13 @@ public static class ApplicationDbContextSeed
         var receipt1 = await EnsureDocumentAsync(context, tenant.Id, "REC-2026-0001", CommercialDocumentType.GoodsReceipt, CommercialDocumentStatus.Completed, partners["FOU-002"], warehouses["PRINCIPAL"], today.AddDays(-12), null, tenant.CurrencyCode, "Reception complete de la commande ACH-2026-0001", purchaseOrder1, products, new[]
         {
             new DocumentLineSeed("ART-001", 3m, 980m, 5m),
-            new DocumentLineSeed("CONS-001", 20m, 22m, 5m)
+            new DocumentLineSeed("CONS-001", 20m, 22m, 5m, 0m, null, "LOT-TONER-2026-A", null, today.AddMonths(10))
         });
 
         var purchaseInvoice1 = await EnsureDocumentAsync(context, tenant.Id, "FAF-2026-0001", CommercialDocumentType.PurchaseInvoice, CommercialDocumentStatus.PartiallyProcessed, partners["FOU-002"], warehouses["PRINCIPAL"], today.AddDays(-9), today.AddDays(6), tenant.CurrencyCode, "Facture fournisseur issue de REC-2026-0001", receipt1, products, new[]
         {
             new DocumentLineSeed("ART-001", 3m, 980m, 5m),
-            new DocumentLineSeed("CONS-001", 20m, 22m, 5m)
+            new DocumentLineSeed("CONS-001", 20m, 22m, 5m, 0m, null, "LOT-TONER-2026-A", null, today.AddMonths(10))
         });
 
         await EnsureDocumentAsync(context, tenant.Id, "AVF-2026-0001", CommercialDocumentType.SupplierCreditNote, CommercialDocumentStatus.Completed, partners["FOU-002"], warehouses["PRINCIPAL"], today.AddDays(-6), null, tenant.CurrencyCode, "Avoir fournisseur sur des consommables endommages", purchaseInvoice1, products, new[]
@@ -464,14 +498,17 @@ public static class ApplicationDbContextSeed
             new StockMovementSeed("ART-003", "SHOWROOM", StockMovementType.OpeningBalance, today.AddDays(-60), 14m, 85m, "OUV-2026-ART-003"),
             new StockMovementSeed("ART-004", "PRINCIPAL", StockMovementType.OpeningBalance, today.AddDays(-60), 6m, 310m, "OUV-2026-ART-004"),
             new StockMovementSeed("ART-005", "SAV", StockMovementType.OpeningBalance, today.AddDays(-60), 4m, 175m, "OUV-2026-ART-005"),
-            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.OpeningBalance, today.AddDays(-60), 40m, 22m, "OUV-2026-CONS-001"),
-            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 3m, 980m, "REC-2026-0001"),
-            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 20m, 22m, "REC-2026-0001"),
-            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-14), -2m, 980m, "BL-2026-0001"),
+            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.OpeningBalance, today.AddDays(-60), 40m, 22m, "OUV-2026-CONS-001", "LOT-TONER-2025-Z"),
+            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 1m, 980m, "REC-2026-0001", null, "SN-LIG-ART001-0001"),
+            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 1m, 980m, "REC-2026-0001", null, "SN-LIG-ART001-0002"),
+            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 1m, 980m, "REC-2026-0001", null, "SN-LIG-ART001-0003"),
+            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.Receipt, today.AddDays(-12), 20m, 22m, "REC-2026-0001", "LOT-TONER-2026-A", null, today.AddMonths(10)),
+            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-14), -1m, 980m, "BL-2026-0001", null, "SN-LIG-ART001-0001"),
+            new StockMovementSeed("ART-001", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-14), -1m, 980m, "BL-2026-0001", null, "SN-LIG-ART001-0002"),
             new StockMovementSeed("ART-003", "SHOWROOM", StockMovementType.Issue, today.AddDays(-14), -2m, 85m, "BL-2026-0001"),
             new StockMovementSeed("ART-002", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-30), -3m, 210m, "FAC-2026-0002"),
-            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-30), -6m, 22m, "FAC-2026-0002"),
-            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.AdjustmentOut, today.AddDays(-4), -2m, 22m, "ADJ-2026-0001"),
+            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.Issue, today.AddDays(-30), -6m, 22m, "FAC-2026-0002", "LOT-TONER-2025-Z"),
+            new StockMovementSeed("CONS-001", "PRINCIPAL", StockMovementType.AdjustmentOut, today.AddDays(-4), -2m, 22m, "ADJ-2026-0001", "LOT-TONER-2025-Z"),
             new StockMovementSeed("ART-005", "SAV", StockMovementType.AdjustmentIn, today.AddDays(-3), 1m, 175m, "ADJ-2026-0002"),
             new StockMovementSeed("ART-004", "PRINCIPAL", StockMovementType.Reservation, today.AddDays(-2), -1m, 310m, "RES-2026-0001"),
             new StockMovementSeed("ART-004", "PRINCIPAL", StockMovementType.Release, today.AddDays(-1), 1m, 310m, "RES-2026-0001")
@@ -675,6 +712,8 @@ public static class ApplicationDbContextSeed
             }
 
             item.Label = seed.Label;
+            item.StockValuationMethod = seed.StockValuationMethod;
+            item.StockIdentityTrackingMode = seed.StockIdentityTrackingMode;
         }
 
         if (context.ChangeTracker.HasChanges())
@@ -732,6 +771,8 @@ public static class ApplicationDbContextSeed
             item.Description = seed.Description;
             item.ProductType = seed.ProductType;
             item.TrackStock = seed.TrackStock;
+            item.StockValuationMethod = seed.StockValuationMethod;
+            item.StockIdentityTrackingMode = seed.StockIdentityTrackingMode;
             item.IsActive = true;
             item.UnitOfMeasure = seed.UnitOfMeasure;
             item.ProductCategoryId = categories[seed.CategoryCode].Id;
@@ -921,7 +962,10 @@ public static class ApplicationDbContextSeed
                 TaxRate = seed.TaxRate,
                 LineTotalExcludingTax = netAmount,
                 LineTaxAmount = taxAmount,
-                LineTotalIncludingTax = netAmount + taxAmount
+                LineTotalIncludingTax = netAmount + taxAmount,
+                LotNumber = seed.LotNumber,
+                SerialNumber = seed.SerialNumber,
+                ExpirationDate = seed.ExpirationDate
             });
         }
 
@@ -943,7 +987,7 @@ public static class ApplicationDbContextSeed
     {
         var existingKeys = await context.StockMovements
             .Where(x => x.TenantId == tenantId)
-            .Select(x => new StockMovementKey(x.ProductId, x.WarehouseId, x.MovementType, x.MovementDate, x.Quantity, x.ReferenceNumber ?? string.Empty))
+            .Select(x => new StockMovementKey(x.ProductId, x.WarehouseId, x.MovementType, x.MovementDate, x.Quantity, x.ReferenceNumber ?? string.Empty, x.LotNumber ?? string.Empty, x.SerialNumber ?? string.Empty))
             .ToListAsync();
 
         var keySet = existingKeys.ToHashSet();
@@ -956,7 +1000,9 @@ public static class ApplicationDbContextSeed
                 seed.MovementType,
                 seed.MovementDate,
                 seed.Quantity,
-                seed.ReferenceNumber);
+                seed.ReferenceNumber,
+                seed.LotNumber ?? string.Empty,
+                seed.SerialNumber ?? string.Empty);
 
             if (keySet.Contains(key))
             {
@@ -972,7 +1018,10 @@ public static class ApplicationDbContextSeed
                 MovementDate = seed.MovementDate,
                 Quantity = seed.Quantity,
                 UnitCost = seed.UnitCost,
-                ReferenceNumber = seed.ReferenceNumber
+                ReferenceNumber = seed.ReferenceNumber,
+                LotNumber = seed.LotNumber,
+                SerialNumber = seed.SerialNumber,
+                ExpirationDate = seed.ExpirationDate
             });
 
             keySet.Add(key);
@@ -1214,16 +1263,16 @@ public static class ApplicationDbContextSeed
     private sealed record SubscriptionPlanSpec(string Code, string Label, TenantEdition Edition, decimal MonthlyPrice, int MaxUsers, int MaxCustomers, int MaxSuppliers, int MaxProducts, int MaxWarehouses, int MaxMonthlyDocuments, decimal OverageUserPrice, decimal OverageProductPrice, decimal OverageDocumentPrice, bool IncludesAdvancedStock, bool IncludesPurchasing, bool IncludesBusinessIntelligence);
     private sealed record PaymentTermSeed(string Code, string Label, int DueInDays);
     private sealed record TaxCodeSeed(string Code, string Label, decimal Rate);
-    private sealed record CategorySeed(string Code, string Label);
+    private sealed record CategorySeed(string Code, string Label, StockValuationMethod StockValuationMethod = StockValuationMethod.Cmup, StockIdentityTrackingMode StockIdentityTrackingMode = StockIdentityTrackingMode.None);
     private sealed record WarehouseSeed(string Code, string Label, bool IsDefault);
-    private sealed record ProductSeed(string Sku, string Label, ProductType ProductType, bool TrackStock, string UnitOfMeasure, string CategoryCode, string TaxCodeCode, decimal PurchasePrice, decimal SalesPrice, string? Description);
+    private sealed record ProductSeed(string Sku, string Label, ProductType ProductType, bool TrackStock, string UnitOfMeasure, string CategoryCode, string TaxCodeCode, decimal PurchasePrice, decimal SalesPrice, string? Description, StockValuationMethod StockValuationMethod = StockValuationMethod.Cmup, StockIdentityTrackingMode StockIdentityTrackingMode = StockIdentityTrackingMode.None);
     private sealed record PartnerSeed(string Code, string Name, BusinessPartnerType PartnerType, string Email, string PaymentTermCode, decimal CreditLimit, string City, string Country, bool IsActive = true);
     private sealed record DocumentSequenceSeed(CommercialDocumentType DocumentType, string Prefix, int NextValue);
     private sealed record PriceListSeed(string Code, string Label, bool IsDefault, params PriceListLineSeed[] Lines);
     private sealed record PriceListLineSeed(string ProductSku, decimal UnitPrice, DateOnly? ValidFrom = null, DateOnly? ValidTo = null);
-    private sealed record DocumentLineSeed(string ProductSku, decimal Quantity, decimal UnitPriceExcludingTax, decimal TaxRate, decimal DiscountRate = 0m, string? Description = null);
-    private sealed record StockMovementSeed(string ProductSku, string WarehouseCode, StockMovementType MovementType, DateOnly MovementDate, decimal Quantity, decimal UnitCost, string ReferenceNumber);
-    private sealed record StockMovementKey(Guid ProductId, Guid WarehouseId, StockMovementType MovementType, DateOnly MovementDate, decimal Quantity, string ReferenceNumber);
+    private sealed record DocumentLineSeed(string ProductSku, decimal Quantity, decimal UnitPriceExcludingTax, decimal TaxRate, decimal DiscountRate = 0m, string? Description = null, string? LotNumber = null, string? SerialNumber = null, DateOnly? ExpirationDate = null);
+    private sealed record StockMovementSeed(string ProductSku, string WarehouseCode, StockMovementType MovementType, DateOnly MovementDate, decimal Quantity, decimal UnitCost, string ReferenceNumber, string? LotNumber = null, string? SerialNumber = null, DateOnly? ExpirationDate = null);
+    private sealed record StockMovementKey(Guid ProductId, Guid WarehouseId, StockMovementType MovementType, DateOnly MovementDate, decimal Quantity, string ReferenceNumber, string LotNumber, string SerialNumber);
     private sealed record PaymentSeed(string ReferenceNumber, DateOnly PaymentDate, PaymentDirection Direction, PaymentMethod Method, string PartnerCode, decimal Amount, string Notes, IReadOnlyCollection<PaymentAllocationSeed> Allocations);
     private sealed record PaymentAllocationSeed(string DocumentNumber, decimal AllocatedAmount);
     private sealed record ReminderSeed(string DocumentNumber, ReminderLevel ReminderLevel, DateTime SentOnUtc, string Channel, string Notes);

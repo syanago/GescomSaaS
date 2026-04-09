@@ -28,4 +28,14 @@ public class StockAdjustmentInputModel
 
     [Display(Name = "Reference")]
     public string? ReferenceNumber { get; set; }
+
+    [Display(Name = "Numero de lot")]
+    public string? LotNumber { get; set; }
+
+    [Display(Name = "Numero de serie")]
+    public string? SerialNumber { get; set; }
+
+    [Display(Name = "Date de peremption")]
+    [DataType(DataType.Date)]
+    public DateOnly? ExpirationDate { get; set; }
 }

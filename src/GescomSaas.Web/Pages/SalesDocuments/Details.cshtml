@@ -57,9 +57,16 @@
         else
         {
             <div class="form-actions">
+                @if (Model.Document.DocumentType == GescomSaas.Domain.Enums.CommercialDocumentType.DeliveryNote
+                    && Model.Document.Status != GescomSaas.Domain.Enums.CommercialDocumentStatus.Completed)
+                {
+                    <form method="post" asp-page-handler="PostStock" asp-route-id="@Model.Document.Id" class="inline-form">
+                        <button type="submit" class="btn btn-primary-soft">Valider la sortie de stock</button>
+                    </form>
+                }
                 @foreach (var target in GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.GetTargets(Model.Document.DocumentType))
                 {
-                    <form method="post" asp-page-handler="Transform" class="inline-form">
+                    <form method="post" asp-page-handler="Transform" asp-route-id="@Model.Document.Id" class="inline-form">
                         <input type="hidden" name="targetType" value="@target" />
                         <button type="submit" class="btn btn-primary-soft">Creer @GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(target)</button>
                     </form>
@@ -93,13 +100,14 @@
                     <th class="text-end">PU HT</th>
                     <th class="text-end">Remise</th>
                     <th class="text-end">Taxe</th>
+                    <th>Lot / Serie</th>
                     <th class="text-end">TTC</th>
                 </tr>
             </thead>
             <tbody>
             @if (Model.Document.Lines.Count == 0)
             {
-                <tr><td colspan="7" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
+                <tr><td colspan="8" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
             }
             else
             {
@@ -112,6 +120,7 @@
                         <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Document.CurrencyCode)</td>
                         <td class="text-end">@DisplayFormatter.Number(line.DiscountRate, 2) %</td>
                         <td class="text-end">@DisplayFormatter.Number(line.TaxRate, 2) %</td>
+                        <td>@(line.LotNumber ?? line.SerialNumber ?? "-")</td>
                         <td class="text-end">@DisplayFormatter.Money(line.TotalIncludingTax, Model.Document.CurrencyCode)</td>
                     </tr>
                 }
