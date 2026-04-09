@@ -1,0 +1,82 @@
+@page
+@model GescomSaas.Web.Pages.Products.CreateModel
+@{
+    ViewData["Title"] = "Nouvel article";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Creation</span>
+        <h1>Nouvel article</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Products/Index">Retour a la liste</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <form method="post" class="stack-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div id="product-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
+        <div class="form-grid">
+            <div><label asp-for="Input.Sku" class="form-label"></label><input asp-for="Input.Sku" class="form-control" /><span asp-validation-for="Input.Sku" class="text-danger"></span></div>
+            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
+            <div><label asp-for="Input.ProductType" class="form-label"></label><select asp-for="Input.ProductType" asp-items="Model.ProductTypes" class="form-select"></select></div>
+            <div><label asp-for="Input.UnitOfMeasure" class="form-label"></label><input asp-for="Input.UnitOfMeasure" class="form-control" /></div>
+            <div><label asp-for="Input.ProductCategoryId" class="form-label"></label><select asp-for="Input.ProductCategoryId" asp-items="Model.Categories" class="form-select"><option value="">Aucune</option></select></div>
+            <div><label asp-for="Input.TaxCodeId" class="form-label"></label><select asp-for="Input.TaxCodeId" asp-items="Model.TaxCodes" class="form-select"><option value="">Aucune</option></select></div>
+            <div>
+                <label asp-for="Input.PurchasePrice" class="form-label"></label>
+                <input asp-for="Input.PurchasePrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                <div class="table-meta">Exemple : @DisplayFormatter.Money(1234.56m)</div>
+            </div>
+            <div>
+                <label asp-for="Input.SalesPrice" class="form-label"></label>
+                <input asp-for="Input.SalesPrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                <div class="table-meta">Exemple : @DisplayFormatter.Money(1999.99m)</div>
+            </div>
+            <div class="full-span"><label asp-for="Input.Description" class="form-label"></label><textarea asp-for="Input.Description" rows="4" class="form-control"></textarea></div>
+        </div>
+
+        <div class="inline-checks">
+            <div class="form-check form-switch">
+                <input asp-for="Input.TrackStock" class="form-check-input" />
+                <label asp-for="Input.TrackStock" class="form-check-label"></label>
+            </div>
+            <div class="form-check form-switch">
+                <input asp-for="Input.IsActive" class="form-check-input" />
+                <label asp-for="Input.IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" id="product-submit-button" class="btn btn-primary-soft">Enregistrer</button>
+            <a class="btn btn-outline-light" asp-page="/Products/Index">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const isActive = document.getElementById('Input_IsActive');
+            const submitButton = document.getElementById('product-submit-button');
+            const warning = document.getElementById('product-quota-warning');
+            const used = @((Model.ProductQuota?.Used ?? 0));
+            const limit = @((Model.ProductQuota?.Limit ?? 0));
+
+            function refreshQuotaGuard() {
+                const blocked = (isActive?.checked ?? false) && used >= limit;
+                submitButton.disabled = blocked;
+                warning.hidden = !blocked;
+                warning.textContent = blocked
+                    ? `Creation bloquee avant soumission : quota articles atteint (${used}/${limit}). Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.`
+                    : '';
+            }
+
+            isActive?.addEventListener('change', refreshQuotaGuard);
+            refreshQuotaGuard();
+        })();
+    </script>
+}

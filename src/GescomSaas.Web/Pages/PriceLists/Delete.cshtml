@@ -1,0 +1,34 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.PriceLists.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer une liste de prix";
+}
+
+<section class="page-header-card">
+    <div><span class="eyebrow">Suppression</span><h1>Supprimer @Model.PriceList?.Code</h1></div>
+    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/PriceLists/Index">Retour a la liste</a></div>
+</section>
+
+<section class="panel-card">
+    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
+    {
+        <div class="app-alert warning">@Model.BlockingReason</div>
+    }
+    else
+    {
+        <p>La liste de prix <strong>@Model.PriceList?.Label</strong> sera supprimee, avec ses @Model.LineCount ligne(s).</p>
+    }
+    <dl class="detail-list">
+        <div><dt>Code</dt><dd>@Model.PriceList?.Code</dd></div>
+        <div><dt>Libelle</dt><dd>@Model.PriceList?.Label</dd></div>
+        <div><dt>Devise</dt><dd>@Model.PriceList?.CurrencyCode</dd></div>
+        <div><dt>Lignes</dt><dd>@Model.LineCount</dd></div>
+    </dl>
+    <form method="post" class="form-actions">
+        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
+        {
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+        }
+        <a class="btn btn-outline-light" asp-page="/PriceLists/Index">Annuler</a>
+    </form>
+</section>

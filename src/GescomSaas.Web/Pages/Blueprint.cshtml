@@ -1,0 +1,70 @@
+@page
+@model BlueprintModel
+@{
+    ViewData["Title"] = "Architecture";
+}
+
+<section class="plain-panel">
+    <span class="eyebrow">Blueprint</span>
+    <h1>Architecture cible de la solution Gescom SaaS</h1>
+    <p>
+        Le projet est pense comme une gestion commerciale web moderne inspirée de Sage Gescom 100,
+        avec une couche SaaS native pour gerer les comptes clients, leurs abonnements et l'isolation de leurs donnees.
+    </p>
+</section>
+
+<section class="content-grid blueprint-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Piliers techniques</span>
+                <h2>Choix structurants</h2>
+            </div>
+        </div>
+        <ul class="feature-list">
+            @foreach (var item in Model.TechnicalDecisions)
+            {
+                <li>@item</li>
+            }
+        </ul>
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Roadmap</span>
+                <h2>Prochaines briques prioritaires</h2>
+            </div>
+        </div>
+        <ul class="feature-list">
+            @foreach (var item in Model.Roadmap)
+            {
+                <li>@item</li>
+            }
+        </ul>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="panel-header">
+        <div>
+            <span class="eyebrow">Modules Gescom</span>
+            <h2>Couverture fonctionnelle visee</h2>
+        </div>
+    </div>
+    <div class="module-stack">
+        @foreach (var module in Model.Modules)
+        {
+            <div class="module-card">
+                <h3>@module.Title</h3>
+                <p>@module.Description</p>
+                <ul>
+                    @foreach (var feature in module.Features)
+                    {
+                        <li>@feature</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</section>

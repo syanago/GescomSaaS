@@ -1,0 +1,69 @@
+@page
+@model GescomSaas.Web.Pages.SalesDocuments.CreateModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Creation</span>
+        <h1>@Model.Title</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">Retour a la liste</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <form method="post" class="stack-form">
+        <input type="hidden" asp-for="Type" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div id="sales-document-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
+        <div class="form-grid">
+            <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
+            <div><label asp-for="Input.PartnerId" class="form-label"></label><select asp-for="Input.PartnerId" asp-items="Model.Partners" class="form-select"><option value="">Choisir un client</option></select><span asp-validation-for="Input.PartnerId" class="text-danger"></span></div>
+            <div><label asp-for="Input.WarehouseId" class="form-label"></label><select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Aucun depot</option></select></div>
+            <div><label asp-for="Input.Status" class="form-label"></label><select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select></div>
+            <div><label asp-for="Input.DocumentDate" class="form-label"></label><input asp-for="Input.DocumentDate" class="form-control" /></div>
+            <div><label asp-for="Input.DueDate" class="form-label"></label><input asp-for="Input.DueDate" class="form-control" /></div>
+            <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
+            <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" id="sales-document-submit-button" class="btn btn-primary-soft">Creer la piece</button>
+            <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const dateInput = document.getElementById('Input_DocumentDate');
+            const submitButton = document.getElementById('sales-document-submit-button');
+            const warning = document.getElementById('sales-document-quota-warning');
+            const used = @((Model.DocumentQuota?.Used ?? 0));
+            const limit = @((Model.DocumentQuota?.Limit ?? 0));
+            const referenceYear = @Model.QuotaReferenceDate.Year;
+            const referenceMonth = @Model.QuotaReferenceDate.Month;
+
+            function refreshQuotaGuard() {
+                const selectedDate = dateInput?.value ? new Date(dateInput.value + 'T00:00:00') : null;
+                const samePeriod = selectedDate
+                    && selectedDate.getFullYear() === referenceYear
+                    && (selectedDate.getMonth() + 1) === referenceMonth;
+
+                const blocked = samePeriod && used >= limit;
+                submitButton.disabled = blocked;
+                warning.hidden = !(blocked || !samePeriod);
+                warning.textContent = blocked
+                    ? `Creation bloquee avant soumission : quota documents du mois atteint (${used}/${limit}) pour la periode selectionnee. Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.`
+                    : `Le blocage visuel couvre la periode @Model.QuotaReferenceDate.ToString("MM/yyyy"). Si tu changes de mois, la validation definitive sera faite a l'enregistrement.`;
+            }
+
+            dateInput?.addEventListener('change', refreshQuotaGuard);
+            refreshQuotaGuard();
+        })();
+    </script>
+}

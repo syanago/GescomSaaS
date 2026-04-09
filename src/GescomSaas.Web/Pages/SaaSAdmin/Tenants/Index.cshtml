@@ -1,0 +1,86 @@
+@page
+@model GescomSaas.Web.Pages.SaaSAdmin.Tenants.IndexModel
+@{
+    ViewData["Title"] = "Tenants SaaS";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>Tenants SaaS</h1>
+        <p class="muted-copy">Supervisez les comptes clients, leur abonnement et leurs quotas effectifs.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Index">Cockpit</a>
+        <a class="btn btn-primary-soft" asp-page="/SaaSAdmin/Tenants/Create">Nouveau tenant</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Tenant</th>
+                    <th>Plan</th>
+                    <th>Statut</th>
+                    <th>Utilisateurs</th>
+                    <th>Articles</th>
+                    <th>Docs/mois</th>
+                    <th class="text-end">MRR</th>
+                    <th>Alertes</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Tenants.Count == 0)
+            {
+                <tr><td colspan="9" class="empty-cell">Aucun tenant configure.</td></tr>
+            }
+            else
+            {
+                @foreach (var tenant in Model.Tenants)
+                {
+                    <tr>
+                        <td>
+                            <strong>@tenant.CompanyName</strong>
+                            <div class="table-meta">@tenant.PrimaryContactEmail</div>
+                            <div class="table-meta">@tenant.Slug</div>
+                        </td>
+                        <td>@tenant.PlanName</td>
+                        <td>
+                            <span class="badge rounded-pill status-pill">@tenant.SubscriptionStatus</span>
+                        </td>
+                        <td>@tenant.UserCount</td>
+                        <td>@tenant.ProductCount</td>
+                        <td>@tenant.MonthlyDocumentCount</td>
+                        <td class="text-end">@DisplayFormatter.Money(tenant.RecurringCharge)</td>
+                        <td>
+                            @if (tenant.QuotaAlertCount > 0)
+                            {
+                                <span class="badge rounded-pill overdue-pill">@tenant.QuotaAlertCount</span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill status-pill">OK</span>
+                            }
+                        </td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@tenant.TenantId">Editer</a>
+                            <form method="post" asp-page-handler="GenerateInvoice" class="inline-form">
+                                <input type="hidden" name="tenantId" value="@tenant.TenantId" />
+                                <button type="submit" class="btn btn-sm btn-outline-light">Facturer</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

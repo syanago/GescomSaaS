@@ -1,0 +1,82 @@
+@page
+@model GescomSaas.Web.Pages.Warehouses.IndexModel
+@{
+    ViewData["Title"] = "Depots";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stocks</span>
+        <h1>Depots</h1>
+        <p class="muted-copy">Organisez les points de stockage et identifiez le depot par defaut.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/Warehouses/Create">Nouveau depot</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (Model.WarehouseQuota is not null)
+{
+    <section class="quota-badge-row">
+        <span class="tag-pill @(Model.WarehouseQuota.IsExceeded ? "tag-pill-danger" : (Model.WarehouseQuota.Used >= Model.WarehouseQuota.Limit ? "tag-pill-warning" : string.Empty))">
+            Depots : @Model.WarehouseQuota.Used / @Model.WarehouseQuota.Limit
+        </span>
+        <span class="table-meta">
+            @if (Model.WarehouseQuota.IsExceeded)
+            {
+                <text>Depasse de @(Model.WarehouseQuota.Used - Model.WarehouseQuota.Limit)</text>
+            }
+            else
+            {
+                <text>@(Model.WarehouseQuota.Limit - Model.WarehouseQuota.Used) restant(s)</text>
+            }
+        </span>
+    </section>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libelle</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Warehouses.Count == 0)
+            {
+                <tr>
+                    <td colspan="4" class="empty-cell">Aucun depot n'est encore defini.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var warehouse in Model.Warehouses)
+                {
+                    <tr>
+                        <td>@warehouse.Code</td>
+                        <td>@warehouse.Label</td>
+                        <td>
+                            <span class="badge rounded-pill @(warehouse.IsDefault ? "status-pill" : "status-pill-off")">
+                                @(warehouse.IsDefault ? "Par defaut" : "Secondaire")
+                            </span>
+                        </td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/Warehouses/Edit" asp-route-id="@warehouse.Id">Modifier</a>
+                            <a asp-page="/Warehouses/Delete" asp-route-id="@warehouse.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

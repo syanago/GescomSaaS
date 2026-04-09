@@ -1,0 +1,40 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.Warehouses.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer un depot";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Suppression</span>
+        <h1>Supprimer @Model.Warehouse?.Code</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Retour a la liste</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
+    {
+        <div class="app-alert warning">@Model.BlockingReason</div>
+    }
+    else
+    {
+        <p>Le depot <strong>@Model.Warehouse?.Label</strong> sera supprime definitivement.</p>
+    }
+
+    <dl class="detail-list">
+        <div><dt>Code</dt><dd>@Model.Warehouse?.Code</dd></div>
+        <div><dt>Libelle</dt><dd>@Model.Warehouse?.Label</dd></div>
+        <div><dt>Depot par defaut</dt><dd>@(Model.Warehouse?.IsDefault == true ? "Oui" : "Non")</dd></div>
+    </dl>
+
+    <form method="post" class="form-actions">
+        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
+        {
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+        }
+        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Annuler</a>
+    </form>
+</section>

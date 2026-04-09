@@ -1,0 +1,55 @@
+@page
+@model GescomSaas.Web.Pages.ProductCategories.IndexModel
+@{
+    ViewData["Title"] = "Familles d'articles";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Referentiel</span>
+        <h1>Familles d'articles</h1>
+        <p class="muted-copy">Structurez le catalogue par famille pour faciliter tarifs, reporting et recherche.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/ProductCategories/Create">Nouvelle famille</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libelle</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Categories.Count == 0)
+            {
+                <tr><td colspan="3" class="empty-cell">Aucune famille d'articles.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Categories)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Label</td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/ProductCategories/Edit" asp-route-id="@item.Id">Modifier</a>
+                            <a asp-page="/ProductCategories/Delete" asp-route-id="@item.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

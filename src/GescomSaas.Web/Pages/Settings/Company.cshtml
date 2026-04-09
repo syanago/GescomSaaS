@@ -1,0 +1,204 @@
+@page
+@model GescomSaas.Web.Pages.Settings.CompanyModel
+@{
+    ViewData["Title"] = "Societe et formats";
+    var currentSettings = DisplayFormatter.GetSettings();
+    var currencySymbolMapJson = System.Text.Json.JsonSerializer.Serialize(Model.CurrencySymbolMap);
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Parametres</span>
+        <h1>Societe et formats d'affichage</h1>
+        <p class="muted-copy">Pilotez les informations de societe, les regles de presentation et le gabarit visuel de LigCom.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Settings/Index">Retour</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="app-alert warning">
+        Certains formats ne peuvent pas etre enregistres tels quels. Les separateurs decimal et milliers doivent etre differents lorsqu'il y a des decimales.
+    </div>
+}
+
+<section class="content-grid dashboard-grid">
+    <form method="post" class="panel-card stack-form compact-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <fieldset class="subpanel">
+            <legend>Gabarit</legend>
+            <div class="form-grid">
+                <div class="full-span">
+                    <label asp-for="Input.VisualTheme" class="form-label"></label>
+                    <select asp-for="Input.VisualTheme" asp-items="Model.ThemeOptions" class="form-select"></select>
+                    <div class="table-meta">Le gabarit clair reprend majoritairement les tons de l'image vert 2, avec des accents emeraude et dore inspires de l'image vert 1.</div>
+                </div>
+            </div>
+            <div class="theme-option-grid">
+                <article class="theme-option-card">
+                    <span class="theme-chip theme-chip-midnight">LigCom Nuit</span>
+                    <strong>Gabarit actuel</strong>
+                    <p class="muted-copy">Ambiance sombre, contraste fort et accent ambre pour les usages intensifs.</p>
+                </article>
+                <article class="theme-option-card theme-option-card-light">
+                    <span class="theme-chip theme-chip-emerald">LigCom Vert Clair</span>
+                    <strong>25 % vert 1, 75 % vert 2</strong>
+                    <p class="muted-copy">Fond clair mineral, surfaces sauge et accents emeraude pour un rendu plus doux en journee.</p>
+                </article>
+            </div>
+        </fieldset>
+
+        <fieldset class="subpanel">
+            <legend>Societe</legend>
+            <div class="form-grid">
+                <div><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger"></span></div>
+                <div><label asp-for="Input.CompanyLegalName" class="form-label"></label><input asp-for="Input.CompanyLegalName" class="form-control" /><span asp-validation-for="Input.CompanyLegalName" class="text-danger"></span></div>
+                <div><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger"></span></div>
+                <div><label asp-for="Input.PhoneNumber" class="form-label"></label><input asp-for="Input.PhoneNumber" class="form-control" /></div>
+                <div><label asp-for="Input.AddressLine1" class="form-label"></label><input asp-for="Input.AddressLine1" class="form-control" /></div>
+                <div><label asp-for="Input.AddressLine2" class="form-label"></label><input asp-for="Input.AddressLine2" class="form-control" /></div>
+                <div><label asp-for="Input.PostalCode" class="form-label"></label><input asp-for="Input.PostalCode" class="form-control" /></div>
+                <div><label asp-for="Input.City" class="form-label"></label><input asp-for="Input.City" class="form-control" /></div>
+                <div><label asp-for="Input.State" class="form-label"></label><input asp-for="Input.State" class="form-control" /></div>
+                <div><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
+            </div>
+        </fieldset>
+
+        <fieldset class="subpanel">
+            <legend>Devise</legend>
+            <div class="form-grid">
+                <div>
+                    <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                    <select asp-for="Input.CurrencyCode" asp-items="Model.CurrencyOptions" class="form-select" data-currency-select="company"></select>
+                    <span asp-validation-for="Input.CurrencyCode" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CashCurrencyCode" class="form-label"></label>
+                    <select asp-for="Input.CashCurrencyCode" asp-items="Model.CurrencyOptions" class="form-select"></select>
+                    <span asp-validation-for="Input.CashCurrencyCode" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CurrencySymbol" class="form-label"></label>
+                    <input asp-for="Input.CurrencySymbol" class="form-control" data-currency-symbol-input="true" />
+                    <span asp-validation-for="Input.CurrencySymbol" class="text-danger"></span>
+                    <div class="table-meta">Le symbole se met a jour automatiquement quand la devise societe change, puis reste modifiable si besoin.</div>
+                </div>
+                <div><label asp-for="Input.CurrencySymbolPosition" class="form-label"></label><select asp-for="Input.CurrencySymbolPosition" asp-items="Model.CurrencySymbolPositionOptions" class="form-select"></select><span asp-validation-for="Input.CurrencySymbolPosition" class="text-danger"></span></div>
+            </div>
+            <div class="table-meta">Tu peux choisir une devise de tenue generale et une devise specifique de caisse.</div>
+        </fieldset>
+
+        <fieldset class="subpanel">
+            <legend>Formats d'affichage</legend>
+            <div class="form-grid">
+                <div>
+                    <label asp-for="Input.MoneyDecimalSeparator" class="form-label"></label>
+                    <select asp-for="Input.MoneyDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                    <span asp-validation-for="Input.MoneyDecimalSeparator" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.MoneyGroupSeparator" class="form-label"></label>
+                    <select asp-for="Input.MoneyGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                    <span asp-validation-for="Input.MoneyGroupSeparator" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.MoneyDecimalPlaces" class="form-label"></label>
+                    <input asp-for="Input.MoneyDecimalPlaces" class="form-control" />
+                    <span asp-validation-for="Input.MoneyDecimalPlaces" class="text-danger"></span>
+                    <div class="table-meta">Si tu mets `0`, le separateur decimal de la monnaie n'est plus utilise.</div>
+                </div>
+                <div>
+                    <label asp-for="Input.QuantityDecimalSeparator" class="form-label"></label>
+                    <select asp-for="Input.QuantityDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                    <span asp-validation-for="Input.QuantityDecimalSeparator" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.QuantityGroupSeparator" class="form-label"></label>
+                    <select asp-for="Input.QuantityGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                    <span asp-validation-for="Input.QuantityGroupSeparator" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.QuantityDecimalPlaces" class="form-label"></label>
+                    <input asp-for="Input.QuantityDecimalPlaces" class="form-control" />
+                    <span asp-validation-for="Input.QuantityDecimalPlaces" class="text-danger"></span>
+                    <div class="table-meta">Si tu gardes des decimales sur les quantites, il faut un separateur de milliers different.</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
+            <button type="submit" asp-page-handler="ResynchronizeCurrencies" class="btn btn-outline-light">Resynchroniser les devises existantes</button>
+            <a class="btn btn-outline-light" asp-page="/Settings/Index">Annuler</a>
+        </div>
+        <div class="table-meta">Ce bouton force toutes les pieces, reglements, listes de prix et factures plateforme du tenant a utiliser la devise societe actuelle.</div>
+    </form>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Apercu</span>
+                <h2>Rendu actuel</h2>
+            </div>
+        </div>
+        <div class="signal-list">
+            <div class="signal-item stacked-signal-item">
+                <span class="signal-label">Gabarit actif</span>
+                <strong>@currentSettings.ThemeLabel</strong>
+            </div>
+            <div class="signal-item stacked-signal-item">
+                <span class="signal-label">Montant</span>
+                <strong>@DisplayFormatter.Money(12345.678m)</strong>
+            </div>
+            <div class="signal-item stacked-signal-item">
+                <span class="signal-label">Quantite</span>
+                <strong>@DisplayFormatter.Quantity(12345.678m, "pcs")</strong>
+            </div>
+            <div class="signal-item stacked-signal-item">
+                <span class="signal-label">Societe</span>
+                <strong>@currentSettings.CompanyName</strong>
+                <span class="table-meta">@currentSettings.CompanyLegalName</span>
+            </div>
+            <div class="signal-item stacked-signal-item">
+                <span class="signal-label">Coordonnees</span>
+                <span>@currentSettings.PrimaryContactEmail</span>
+                <span class="table-meta">@currentSettings.PhoneNumber</span>
+            </div>
+        </div>
+    </article>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const symbolMap = @Html.Raw(currencySymbolMapJson);
+            const currencySelect = document.querySelector('[data-currency-select="company"]');
+            const symbolInput = document.querySelector('[data-currency-symbol-input="true"]');
+
+            if (!currencySelect || !symbolInput) {
+                return;
+            }
+
+            const applyCurrencySymbol = () => {
+                const currencyCode = currencySelect.value;
+                const nextSymbol = symbolMap[currencyCode];
+                if (!nextSymbol) {
+                    return;
+                }
+
+                symbolInput.value = nextSymbol;
+            };
+
+            currencySelect.addEventListener("change", applyCurrencySymbol);
+        })();
+    </script>
+}

@@ -1,0 +1,37 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.Warehouses.EditModel
+@{
+    ViewData["Title"] = "Modifier un depot";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Edition</span>
+        <h1>Modifier un depot</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Retour a la liste</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <form method="post" class="stack-form compact-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-grid">
+            <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
+            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
+        </div>
+        <div class="form-check form-switch mb-4">
+            <input asp-for="Input.IsDefault" class="form-check-input" />
+            <label asp-for="Input.IsDefault" class="form-check-label"></label>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
+            <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

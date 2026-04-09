@@ -1,0 +1,48 @@
+@page
+@model GescomSaas.Web.Pages.Finance.RegisterPaymentModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Finance</span>
+        <h1>@Model.Title</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Retour aux echeances</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <form method="post" class="stack-form compact-form">
+        <input type="hidden" asp-for="Scope" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-grid">
+            <div class="full-span">
+                <label asp-for="Input.DocumentId" class="form-label"></label>
+                <select asp-for="Input.DocumentId" asp-items="Model.Documents" class="form-select">
+                    <option value="">Choisir une facture</option>
+                </select>
+                <span asp-validation-for="Input.DocumentId" class="text-danger"></span>
+            </div>
+            <div><label asp-for="Input.PaymentDate" class="form-label"></label><input asp-for="Input.PaymentDate" class="form-control" /></div>
+            <div><label asp-for="Input.Method" class="form-label"></label><select asp-for="Input.Method" asp-items="Model.Methods" class="form-select"></select></div>
+            <div>
+                <label asp-for="Input.Amount" class="form-label"></label>
+                <input asp-for="Input.Amount" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                <div class="table-meta">Exemple : @DisplayFormatter.Money(2500m)</div>
+            </div>
+            <div><label asp-for="Input.ReferenceNumber" class="form-label"></label><input asp-for="Input.ReferenceNumber" class="form-control" /></div>
+            <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Enregistrer le reglement</button>
+            <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

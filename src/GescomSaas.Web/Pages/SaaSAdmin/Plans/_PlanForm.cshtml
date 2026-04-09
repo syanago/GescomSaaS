@@ -1,0 +1,45 @@
+@model GescomSaas.Web.Pages.SaaSAdmin.Plans.PlanInputModel
+
+<div class="form-grid">
+    <div>
+        <label asp-for="Code" class="form-label"></label>
+        <input asp-for="Code" class="form-control" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <div>
+        <label asp-for="Label" class="form-label"></label>
+        <input asp-for="Label" class="form-control" />
+        <span asp-validation-for="Label" class="text-danger"></span>
+    </div>
+    <div>
+        <label asp-for="Edition" class="form-label"></label>
+        <select asp-for="Edition" asp-items="Html.GetEnumSelectList<GescomSaas.Domain.Enums.TenantEdition>()" class="form-select"></select>
+    </div>
+    <div>
+        <label asp-for="MonthlyPrice" class="form-label"></label>
+        <input asp-for="MonthlyPrice" class="form-control" />
+    </div>
+    <div><label asp-for="MaxUsers" class="form-label"></label><input asp-for="MaxUsers" class="form-control" /></div>
+    <div><label asp-for="MaxCustomers" class="form-label"></label><input asp-for="MaxCustomers" class="form-control" /></div>
+    <div><label asp-for="MaxSuppliers" class="form-label"></label><input asp-for="MaxSuppliers" class="form-control" /></div>
+    <div><label asp-for="MaxProducts" class="form-label"></label><input asp-for="MaxProducts" class="form-control" /></div>
+    <div><label asp-for="MaxWarehouses" class="form-label"></label><input asp-for="MaxWarehouses" class="form-control" /></div>
+    <div><label asp-for="MaxMonthlyDocuments" class="form-label"></label><input asp-for="MaxMonthlyDocuments" class="form-control" /></div>
+    <div><label asp-for="OverageUserPrice" class="form-label"></label><input asp-for="OverageUserPrice" class="form-control" /></div>
+    <div><label asp-for="OverageProductPrice" class="form-label"></label><input asp-for="OverageProductPrice" class="form-control" /></div>
+    <div><label asp-for="OverageDocumentPrice" class="form-label"></label><input asp-for="OverageDocumentPrice" class="form-control" /></div>
+    <div class="inline-checks full-span">
+        <div class="form-check">
+            <input asp-for="IncludesAdvancedStock" class="form-check-input" />
+            <label asp-for="IncludesAdvancedStock" class="form-check-label"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="IncludesPurchasing" class="form-check-input" />
+            <label asp-for="IncludesPurchasing" class="form-check-label"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="IncludesBusinessIntelligence" class="form-check-input" />
+            <label asp-for="IncludesBusinessIntelligence" class="form-check-label"></label>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,122 @@
+@page
+@model GescomSaas.Web.Pages.Inventory.IndexModel
+@{
+    ViewData["Title"] = "Inventaire";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>Inventaire et valorisation</h1>
+        <p class="muted-copy">Vue consolidée des quantités disponibles, de la valeur stockée et de la répartition par dépôt.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Mouvements</a>
+        <a class="btn btn-primary-soft" asp-page="/Inventory/Adjustments">Ajustement</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="section-grid finance-metrics">
+    <article class="metric-card">
+        <span>Articles stockés</span>
+        <strong>@Model.Snapshot.TrackedProductCount</strong>
+        <small>Produits avec suivi de stock</small>
+    </article>
+    <article class="metric-card">
+        <span>Quantité totale</span>
+        <strong>@DisplayFormatter.Quantity(Model.Snapshot.TotalOnHandQuantity)</strong>
+        <small>Stock disponible agrégé</small>
+    </article>
+    <article class="metric-card">
+        <span>Valeur du stock</span>
+        <strong>@DisplayFormatter.Money(Model.Snapshot.TotalStockValue)</strong>
+        <small>Valorisation simple à coût moyen</small>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Disponibilité</span>
+                <h2>Stock par article</h2>
+            </div>
+        </div>
+        <div class="table-shell">
+            <table class="table table-darkless align-middle app-table">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Libellé</th>
+                        <th class="text-end">Qté</th>
+                        <th class="text-end">Coût moyen</th>
+                        <th class="text-end">Valeur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Snapshot.ProductStocks.Count == 0)
+                {
+                    <tr><td colspan="5" class="empty-cell">Aucun article stockable.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Snapshot.ProductStocks)
+                    {
+                        <tr>
+                            <td>@item.Sku</td>
+                            <td>@item.Label</td>
+                            <td class="text-end">@DisplayFormatter.Quantity(item.OnHandQuantity, item.UnitOfMeasure)</td>
+                            <td class="text-end">@DisplayFormatter.Money(item.AverageUnitCost)</td>
+                            <td class="text-end">@DisplayFormatter.Money(item.StockValue)</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Dépôts</span>
+                <h2>Répartition par dépôt</h2>
+            </div>
+        </div>
+        <div class="table-shell">
+            <table class="table table-darkless align-middle app-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Libellé</th>
+                        <th class="text-end">Qté</th>
+                        <th class="text-end">Valeur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Snapshot.WarehouseStocks.Count == 0)
+                {
+                    <tr><td colspan="4" class="empty-cell">Aucun dépôt.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Snapshot.WarehouseStocks)
+                    {
+                        <tr>
+                            <td>@item.WarehouseCode</td>
+                            <td>@item.WarehouseLabel</td>
+                            <td class="text-end">@DisplayFormatter.Quantity(item.TotalQuantity)</td>
+                            <td class="text-end">@DisplayFormatter.Money(item.TotalValue)</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>

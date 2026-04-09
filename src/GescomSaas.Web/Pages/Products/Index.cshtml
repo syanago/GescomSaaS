@@ -1,0 +1,105 @@
+@page
+@model GescomSaas.Web.Pages.Products.IndexModel
+@{
+    ViewData["Title"] = "Articles";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Catalogue</span>
+        <h1>Articles</h1>
+        <p class="muted-copy">Administrez les references, familles, taxes et prix d'achat/vente.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/Products/Create">Nouvel article</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (Model.ProductQuota is not null)
+{
+    <section class="quota-badge-row">
+        <span class="tag-pill @(Model.ProductQuota.IsExceeded ? "tag-pill-danger" : (Model.ProductQuota.Used >= Model.ProductQuota.Limit ? "tag-pill-warning" : string.Empty))">
+            Articles : @Model.ProductQuota.Used / @Model.ProductQuota.Limit
+        </span>
+        <span class="table-meta">
+            @if (Model.ProductQuota.IsExceeded)
+            {
+                <text>Depasse de @(Model.ProductQuota.Used - Model.ProductQuota.Limit)</text>
+            }
+            else
+            {
+                <text>@(Model.ProductQuota.Limit - Model.ProductQuota.Used) restant(s)</text>
+            }
+        </span>
+    </section>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Libelle</th>
+                    <th>Type</th>
+                    <th>Famille</th>
+                    <th>TVA</th>
+                    <th class="text-end">Achat</th>
+                    <th class="text-end">Vente</th>
+                    <th>Etat</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Products.Count == 0)
+            {
+                <tr>
+                    <td colspan="9" class="empty-cell">Aucun article n'est encore defini.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var product in Model.Products)
+                {
+                    <tr>
+                        <td>@product.Sku</td>
+                        <td>
+                            <strong>@product.Label</strong>
+                            <div class="table-meta">@product.UnitOfMeasure @(product.TrackStock ? "• Stocke" : "• Service")</div>
+                        </td>
+                        <td>@GetTypeLabel(product.ProductType)</td>
+                        <td>@product.CategoryLabel</td>
+                        <td>@product.TaxCode</td>
+                        <td class="text-end">@DisplayFormatter.Money(product.PurchasePrice)</td>
+                        <td class="text-end">@DisplayFormatter.Money(product.SalesPrice)</td>
+                        <td>
+                            <span class="badge rounded-pill @(product.IsActive ? "status-pill" : "status-pill-off")">
+                                @(product.IsActive ? "Actif" : "Inactif")
+                            </span>
+                        </td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/Products/Edit" asp-route-id="@product.Id">Modifier</a>
+                            <a asp-page="/Products/Delete" asp-route-id="@product.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@functions {
+    private static string GetTypeLabel(GescomSaas.Domain.Enums.ProductType type) => type switch
+    {
+        GescomSaas.Domain.Enums.ProductType.StockItem => "Article stocke",
+        GescomSaas.Domain.Enums.ProductType.Service => "Service",
+        GescomSaas.Domain.Enums.ProductType.Bundle => "Nomenclature",
+        _ => type.ToString()
+    };
+}

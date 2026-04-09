@@ -1,0 +1,131 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.PriceLists.EditModel
+@{
+    ViewData["Title"] = "Modifier une liste de prix";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Edition</span>
+        <h1>Modifier une liste de prix</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/PriceLists/Index">Retour a la liste</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="content-grid blueprint-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Entete</span>
+                <h2>Parametres du tarif</h2>
+            </div>
+        </div>
+
+        <form method="post" class="stack-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid">
+                <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
+                <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
+                <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
+            </div>
+            <div class="form-check form-switch mb-4">
+                <input asp-for="Input.IsDefault" class="form-check-input" />
+                <label asp-for="Input.IsDefault" class="form-check-label"></label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary-soft">Mettre a jour</button>
+            </div>
+        </form>
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Nouvelle ligne</span>
+                <h2>Ajouter un prix article</h2>
+            </div>
+        </div>
+
+        <form method="post" asp-page-handler="AddLine" class="stack-form">
+            <div class="form-grid">
+                <div class="full-span">
+                    <label asp-for="NewLine.ProductId" class="form-label"></label>
+                    <select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select">
+                        <option value="">Choisir un article</option>
+                    </select>
+                    <span asp-validation-for="NewLine.ProductId" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="NewLine.UnitPrice" class="form-label"></label>
+                    <input asp-for="NewLine.UnitPrice" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                    <div class="table-meta">Exemple : @DisplayFormatter.Money(149.9m, Model.Input.CurrencyCode)</div>
+                </div>
+                <div><label asp-for="NewLine.ValidFrom" class="form-label"></label><input asp-for="NewLine.ValidFrom" class="form-control" /></div>
+                <div><label asp-for="NewLine.ValidTo" class="form-label"></label><input asp-for="NewLine.ValidTo" class="form-control" /></div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary-soft">Ajouter la ligne</button>
+            </div>
+        </form>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="panel-header">
+        <div>
+            <span class="eyebrow">Lignes tarifaires</span>
+            <h2>Prix definis</h2>
+        </div>
+    </div>
+
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Libelle</th>
+                    <th class="text-end">Prix</th>
+                    <th>Valide du</th>
+                    <th>Valide au</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Lines.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-cell">Aucune ligne tarifaire.</td></tr>
+            }
+            else
+            {
+                @foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <td>@line.ProductCode</td>
+                        <td>@line.ProductLabel</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.UnitPrice, Model.Input.CurrencyCode)</td>
+                        <td>@(line.ValidFrom?.ToString("dd/MM/yyyy") ?? "-")</td>
+                        <td>@(line.ValidTo?.ToString("dd/MM/yyyy") ?? "-")</td>
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="DeleteLine" class="inline-form">
+                                <input type="hidden" name="lineId" value="@line.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-light">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

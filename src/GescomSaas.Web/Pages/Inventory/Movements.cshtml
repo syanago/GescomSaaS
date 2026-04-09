@@ -1,0 +1,81 @@
+@page
+@model GescomSaas.Web.Pages.Inventory.MovementsModel
+@{
+    ViewData["Title"] = "Mouvements de stock";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>Mouvements de stock</h1>
+        <p class="muted-copy">Journal complet des entrées, sorties et ajustements d’inventaire.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthèse</a>
+        <a class="btn btn-primary-soft" asp-page="/Inventory/Adjustments">Ajustement</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <form method="get" class="stack-form compact-form">
+        <div class="form-grid">
+            <div>
+                <label asp-for="ProductId" class="form-label">Article</label>
+                <select asp-for="ProductId" asp-items="Model.Products" class="form-select">
+                    <option value="">Tous les articles</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="WarehouseId" class="form-label">Dépôt</label>
+                <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select">
+                    <option value="">Tous les dépôts</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Filtrer</button>
+            <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Réinitialiser</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Article</th>
+                    <th>Dépôt</th>
+                    <th>Type</th>
+                    <th class="text-end">Qté</th>
+                    <th class="text-end">Coût</th>
+                    <th class="text-end">Valeur</th>
+                    <th>Référence</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Movements.Count == 0)
+            {
+                <tr><td colspan="8" class="empty-cell">Aucun mouvement trouvé.</td></tr>
+            }
+            else
+            {
+                @foreach (var movement in Model.Movements)
+                {
+                    <tr>
+                        <td>@movement.MovementDate.ToString("dd/MM/yyyy")</td>
+                        <td>@movement.ProductCode - @movement.ProductLabel</td>
+                        <td>@movement.WarehouseCode - @movement.WarehouseLabel</td>
+                        <td>@GescomSaas.Web.Pages.Inventory.MovementLabels.Label(movement.MovementType)</td>
+                        <td class="text-end">@DisplayFormatter.Quantity(movement.Quantity)</td>
+                        <td class="text-end">@DisplayFormatter.Money(movement.UnitCost)</td>
+                        <td class="text-end">@DisplayFormatter.Money(movement.ExtendedValue)</td>
+                        <td>@(movement.ReferenceNumber ?? "-")</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

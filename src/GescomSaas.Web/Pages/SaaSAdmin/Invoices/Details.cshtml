@@ -1,0 +1,77 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.SaaSAdmin.Invoices.DetailsModel
+@{
+    ViewData["Title"] = "Facture plateforme";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>@Model.Invoice?.InvoiceNumber</h1>
+        <p class="muted-copy">@Model.Invoice?.Tenant?.CompanyName</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="./Details" asp-route-id="@Model.Id" asp-page-handler="Pdf">Telecharger PDF</a>
+        @if (Model.Invoice?.Status == GescomSaas.Domain.Enums.PlatformInvoiceStatus.Issued || Model.Invoice?.Status == GescomSaas.Domain.Enums.PlatformInvoiceStatus.Overdue)
+        {
+            <form method="post" asp-page-handler="MarkPaid" class="inline-form">
+                <button type="submit" class="btn btn-primary-soft">Marquer payee</button>
+            </form>
+            <form method="post" asp-page-handler="Cancel" class="inline-form">
+                <button type="submit" class="btn btn-outline-light">Annuler</button>
+            </form>
+        }
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Invoices/Index">Retour</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (Model.Invoice is not null)
+{
+    <section class="content-grid dashboard-grid">
+        <article class="panel-card">
+            <dl class="detail-list">
+                <div><dt>Periode</dt><dd>@Model.Invoice.PeriodStart.ToString("dd/MM/yyyy") - @Model.Invoice.PeriodEnd.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Emission</dt><dd>@Model.Invoice.IssueDate.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Echeance</dt><dd>@Model.Invoice.DueDate.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Statut</dt><dd>@Model.Invoice.Status</dd></div>
+                <div><dt>Payee le</dt><dd>@(Model.Invoice.PaidOn?.ToString("dd/MM/yyyy") ?? "-")</dd></div>
+            </dl>
+            <div class="totals-box">
+                <div><span>Total HT</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalExcludingTax, Model.Invoice.CurrencyCode)</strong></div>
+                <div><span>Total taxe</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalTax, Model.Invoice.CurrencyCode)</strong></div>
+                <div><span>Total TTC</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalIncludingTax, Model.Invoice.CurrencyCode)</strong></div>
+            </div>
+        </article>
+
+        <article class="panel-card">
+            <div class="table-shell">
+                <table class="table table-darkless align-middle app-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-end">Quantite</th>
+                            <th class="text-end">PU HT</th>
+                            <th class="text-end">Total HT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var line in Model.Invoice.Lines.OrderBy(x => x.CreatedOnUtc))
+                    {
+                        <tr>
+                            <td>@line.Description</td>
+                            <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
+                            <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Invoice.CurrencyCode)</td>
+                            <td class="text-end">@DisplayFormatter.Money(line.LineTotalExcludingTax, Model.Invoice.CurrencyCode)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+}

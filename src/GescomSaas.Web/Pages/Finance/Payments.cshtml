@@ -1,0 +1,54 @@
+@page
+@model GescomSaas.Web.Pages.Finance.PaymentsModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Finance</span>
+        <h1>@Model.Title</h1>
+        <p class="muted-copy">Historique des encaissements et decaissements affectes aux factures.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Retour aux echeances</a>
+        <a class="btn btn-primary-soft" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">Nouveau reglement</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Tiers</th>
+                    <th>Mode</th>
+                    <th class="text-end">Montant</th>
+                    <th class="text-end">Affectations</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Payments.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-cell">Aucun reglement.</td></tr>
+            }
+            else
+            {
+                @foreach (var payment in Model.Payments)
+                {
+                    <tr>
+                        <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                        <td>@payment.ReferenceNumber</td>
+                        <td>@payment.PartnerName</td>
+                        <td>@payment.Method</td>
+                        <td class="text-end">@DisplayFormatter.Money(payment.Amount, payment.CurrencyCode)</td>
+                        <td class="text-end">@DisplayFormatter.Number(payment.AllocationCount, 0)</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

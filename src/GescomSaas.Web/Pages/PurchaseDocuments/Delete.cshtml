@@ -1,0 +1,40 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.PurchaseDocuments.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer une piece d'achat";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Suppression</span>
+        <h1>Supprimer @Model.Document?.Number</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/PurchaseDocuments/Index" asp-route-type="@Model.Document?.DocumentType">Retour a la liste</a>
+    </div>
+</section>
+
+<section class="panel-card">
+    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
+    {
+        <div class="app-alert warning">@Model.BlockingReason</div>
+    }
+    else
+    {
+        <p>La piece <strong>@Model.Document?.Number</strong> sera supprimee, ainsi que ses lignes et mouvements eventuels lies a son numero.</p>
+    }
+
+    <dl class="detail-list">
+        <div><dt>Type</dt><dd>@Model.Document?.DocumentType</dd></div>
+        <div><dt>Statut</dt><dd>@Model.Document?.Status</dd></div>
+        <div><dt>Montant TTC</dt><dd>@DisplayFormatter.Money(Model.Document?.TotalIncludingTax ?? 0m, Model.Document?.CurrencyCode)</dd></div>
+    </dl>
+
+    <form method="post" class="form-actions">
+        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
+        {
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+        }
+        <a class="btn btn-outline-light" asp-page="/PurchaseDocuments/Index" asp-route-type="@Model.Document?.DocumentType">Annuler</a>
+    </form>
+</section>

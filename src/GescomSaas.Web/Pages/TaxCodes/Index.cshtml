@@ -1,0 +1,57 @@
+@page
+@model GescomSaas.Web.Pages.TaxCodes.IndexModel
+@{
+    ViewData["Title"] = "Taxes";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Referentiel</span>
+        <h1>Taxes</h1>
+        <p class="muted-copy">Definissez les codes et taux applicables aux articles et documents.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/TaxCodes/Create">Nouveau code taxe</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libelle</th>
+                    <th class="text-end">Taux</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.TaxCodes.Count == 0)
+            {
+                <tr><td colspan="4" class="empty-cell">Aucun code taxe.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in Model.TaxCodes)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Label</td>
+                        <td class="text-end">@DisplayFormatter.Number(item.Rate, 2) %</td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/TaxCodes/Edit" asp-route-id="@item.Id">Modifier</a>
+                            <a asp-page="/TaxCodes/Delete" asp-route-id="@item.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

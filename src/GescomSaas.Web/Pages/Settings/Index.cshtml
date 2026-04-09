@@ -1,0 +1,21 @@
+@page
+@model GescomSaas.Web.Pages.Settings.IndexModel
+@{
+    ViewData["Title"] = "Parametres";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Parametres</span>
+        <h1>Parametres de la societe</h1>
+        <p class="muted-copy">Configurez l'identite de l'entreprise, la devise de caisse et les formats de presentation utilises dans LigCom.</p>
+    </div>
+</section>
+
+<section class="card-grid">
+    <a class="module-card nav-card" asp-page="/Settings/Company">
+        <h3>Societe et formats</h3>
+        <p>Nom commercial, raison sociale, coordonnees, devise, symbole et precision d'affichage.</p>
+        <span>Ouvrir</span>
+    </a>
+</section>

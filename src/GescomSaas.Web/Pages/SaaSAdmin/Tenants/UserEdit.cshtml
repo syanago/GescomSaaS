@@ -1,0 +1,96 @@
+@page "{tenantId:guid}/{userId}"
+@model GescomSaas.Web.Pages.SaaSAdmin.Tenants.UserEditModel
+@{
+    ViewData["Title"] = "Edition utilisateur tenant";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>@Model.UserEmail</h1>
+        <p class="muted-copy">Edition des roles et du rattachement pour @Model.TenantName.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId">Retour utilisateurs</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (!ViewContext.ModelState.IsValid)
+{
+    <div class="app-alert warning" asp-validation-summary="All"></div>
+}
+
+<section class="content-grid dashboard-grid">
+    <form method="post" class="panel-card stack-form compact-form">
+        <div class="panel-header compact">
+            <div>
+                <span class="eyebrow">Compte rattache</span>
+                <h2>Mettre a jour l'utilisateur</h2>
+            </div>
+        </div>
+
+        <div class="detail-list">
+            <div>
+                <dt>E-mail</dt>
+                <dd>@Model.UserEmail</dd>
+            </div>
+            <div>
+                <dt>Tenant</dt>
+                <dd>@Model.TenantName</dd>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div>
+                <label asp-for="Input.FirstName" class="form-label"></label>
+                <input asp-for="Input.FirstName" class="form-control" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.LastName" class="form-label"></label>
+                <input asp-for="Input.LastName" class="form-control" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+            <div class="full-span">
+                <span class="form-label">Roles</span>
+                <div class="role-grid">
+                    @foreach (var role in Model.AssignableRoles)
+                    {
+                        <label class="role-chip">
+                            <input type="checkbox" name="Input.SelectedRoles" value="@role" checked="@Model.Input.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
+                            <span>@role</span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Input.SelectedRoles" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
+            <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId">Annuler</a>
+        </div>
+    </form>
+
+    <article class="panel-card stack-form compact-form">
+        <div class="panel-header compact">
+            <div>
+                <span class="eyebrow">Detachage</span>
+                <h2>Retirer du tenant</h2>
+            </div>
+        </div>
+        <p class="muted-copy">Le compte reste dans la plateforme, mais il ne sera plus rattache a ce tenant et perdra ses roles tenant.</p>
+        <form method="post" asp-page-handler="Detach" class="form-actions">
+            <button type="submit" class="btn btn-danger-soft">Detacher du tenant</button>
+        </form>
+    </article>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

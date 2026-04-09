@@ -1,0 +1,33 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.TaxCodes.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer un code taxe";
+}
+
+<section class="page-header-card">
+    <div><span class="eyebrow">Suppression</span><h1>Supprimer @Model.TaxCode?.Code</h1></div>
+    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/TaxCodes/Index">Retour a la liste</a></div>
+</section>
+
+<section class="panel-card">
+    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
+    {
+        <div class="app-alert warning">@Model.BlockingReason</div>
+    }
+    else
+    {
+        <p>Le code taxe <strong>@Model.TaxCode?.Label</strong> sera supprime.</p>
+    }
+    <dl class="detail-list">
+        <div><dt>Code</dt><dd>@Model.TaxCode?.Code</dd></div>
+        <div><dt>Libelle</dt><dd>@Model.TaxCode?.Label</dd></div>
+        <div><dt>Taux</dt><dd>@DisplayFormatter.Number(Model.TaxCode?.Rate ?? 0m, 2) %</dd></div>
+    </dl>
+    <form method="post" class="form-actions">
+        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
+        {
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+        }
+        <a class="btn btn-outline-light" asp-page="/TaxCodes/Index">Annuler</a>
+    </form>
+</section>

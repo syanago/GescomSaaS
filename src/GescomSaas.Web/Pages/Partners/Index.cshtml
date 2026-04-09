@@ -1,0 +1,106 @@
+@page
+@model GescomSaas.Web.Pages.Partners.IndexModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Referentiel tiers</span>
+        <h1>@Model.Title</h1>
+        <p class="muted-copy">Gerez les fiches tiers, les conditions de paiement et l'etat d'activation.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="customers">Clients</a>
+        <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="suppliers">Fournisseurs</a>
+        <a class="btn btn-primary-soft" asp-page="/Partners/Create" asp-route-scope="@Model.Scope">Nouveau</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (Model.ScopeQuota is not null)
+{
+    <section class="quota-badge-row">
+        <span class="tag-pill @(Model.ScopeQuota.IsExceeded ? "tag-pill-danger" : (Model.ScopeQuota.Used >= Model.ScopeQuota.Limit ? "tag-pill-warning" : string.Empty))">
+            @Model.QuotaLabel : @Model.ScopeQuota.Used / @Model.ScopeQuota.Limit
+        </span>
+        <span class="table-meta">
+            @if (Model.ScopeQuota.IsExceeded)
+            {
+                <text>Depasse de @(Model.ScopeQuota.Used - Model.ScopeQuota.Limit)</text>
+            }
+            else
+            {
+                <text>@(Model.ScopeQuota.Limit - Model.ScopeQuota.Used) restant(s)</text>
+            }
+        </span>
+    </section>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Raison sociale</th>
+                    <th>Type</th>
+                    <th>Contact</th>
+                    <th>Condition</th>
+                    <th class="text-end">Credit</th>
+                    <th>Etat</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Partners.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="empty-cell">Aucune fiche disponible pour cette vue.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var partner in Model.Partners)
+                {
+                    <tr>
+                        <td>@partner.Code</td>
+                        <td>
+                            <strong>@partner.Name</strong>
+                            <div class="table-meta">@partner.Email</div>
+                        </td>
+                        <td>@GetTypeLabel(partner.PartnerType)</td>
+                        <td>@(string.IsNullOrWhiteSpace(partner.PhoneNumber) ? "-" : partner.PhoneNumber)</td>
+                        <td>@partner.PaymentTermLabel</td>
+                        <td class="text-end">@DisplayFormatter.Money(partner.CreditLimit)</td>
+                        <td>
+                            <span class="badge rounded-pill @(partner.IsActive ? "status-pill" : "status-pill-off")">
+                                @(partner.IsActive ? "Actif" : "Inactif")
+                            </span>
+                        </td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/Partners/Edit" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope">Modifier</a>
+                            <a asp-page="/Partners/Delete" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@functions {
+    private static string GetTypeLabel(GescomSaas.Domain.Enums.BusinessPartnerType type) => type switch
+    {
+        GescomSaas.Domain.Enums.BusinessPartnerType.Customer => "Client",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Supplier => "Fournisseur",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Both => "Mixte",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Prospect => "Prospect",
+        _ => type.ToString()
+    };
+}

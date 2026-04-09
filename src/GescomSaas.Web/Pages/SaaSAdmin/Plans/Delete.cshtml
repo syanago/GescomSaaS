@@ -1,0 +1,27 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.SaaSAdmin.Plans.DeleteModel
+@{
+    ViewData["Title"] = "Suppression plan";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>Supprimer @Model.Plan?.Code</h1>
+        <p class="muted-copy">Action irreversible si le plan n'est rattache a aucun tenant.</p>
+    </div>
+</section>
+
+<section class="panel-card">
+    @if (Model.IsUsed)
+    {
+        <div class="app-alert warning">Ce plan est deja utilise par au moins un abonnement.</div>
+    }
+    else
+    {
+        <form method="post" class="form-actions">
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+            <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+        </form>
+    }
+</section>

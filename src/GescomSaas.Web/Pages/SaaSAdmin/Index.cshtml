@@ -1,0 +1,177 @@
+@page
+@model GescomSaas.Web.Pages.SaaSAdmin.IndexModel
+@{
+    ViewData["Title"] = "Administration SaaS";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>Administration SaaS</h1>
+        <p class="muted-copy">Pilotage global des tenants, plans, quotas et facturation plateforme.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Index">Tenants</a>
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Plans/Index">Plans</a>
+        <a class="btn btn-primary-soft" asp-page="/SaaSAdmin/Invoices/Index">Facturation</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="section-grid finance-metrics">
+    <article class="metric-card">
+        <span>Tenants</span>
+        <strong>@DisplayFormatter.Number(Model.Dashboard.TotalTenants, 0)</strong>
+        <small>@DisplayFormatter.Number(Model.Dashboard.ActiveTenants, 0) actifs</small>
+    </article>
+    <article class="metric-card">
+        <span>Essais en cours</span>
+        <strong>@DisplayFormatter.Number(Model.Dashboard.TrialTenants, 0)</strong>
+        <small>Abonnements a convertir</small>
+    </article>
+    <article class="metric-card">
+        <span>MRR</span>
+        <strong>@DisplayFormatter.Money(Model.Dashboard.MonthlyRecurringRevenue)</strong>
+        <small>Revenu mensuel recurent</small>
+    </article>
+    <article class="metric-card">
+        <span>Factures en retard</span>
+        <strong>@DisplayFormatter.Number(Model.Dashboard.OverdueInvoices, 0)</strong>
+        <small>Recouvrement plateforme</small>
+    </article>
+    <article class="metric-card">
+        <span>Alertes quota</span>
+        <strong>@DisplayFormatter.Number(Model.Dashboard.TenantsWithQuotaAlerts, 0)</strong>
+        <small>@DisplayFormatter.Number(Model.Dashboard.WarningNotifications, 0) avertissement(s), @DisplayFormatter.Number(Model.Dashboard.CriticalNotifications, 0) critique(s)</small>
+    </article>
+</section>
+
+<section class="content-grid dashboard-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Alertes</span>
+                <h2>Tenants a surveiller</h2>
+            </div>
+            <a class="nav-ghost" asp-page="/SaaSAdmin/Tenants/Index">Voir tous les tenants</a>
+        </div>
+        @if (Model.Dashboard.AlertedTenants.Count == 0)
+        {
+            <p class="muted-copy">Aucun tenant n'approche ou ne depasse ses quotas actuellement.</p>
+        }
+        else
+        {
+            <div class="signal-list">
+                @foreach (var tenant in Model.Dashboard.AlertedTenants)
+                {
+                    <div class="signal-item">
+                        <div>
+                            <strong>@tenant.CompanyName</strong>
+                            <div class="table-meta">@tenant.PlanName - @tenant.SubscriptionStatus</div>
+                        </div>
+                        <div class="signal-meta">
+                            <span>@DisplayFormatter.Number(tenant.QuotaAlertCount, 0) alerte(s)</span>
+                            <a asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@tenant.TenantId">Administrer</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Notifications</span>
+                <h2>Flux quota plateforme</h2>
+            </div>
+            <span class="muted-copy">@DisplayFormatter.Number(Model.Dashboard.WarningNotifications + Model.Dashboard.CriticalNotifications, 0) notification(s) ouverte(s)</span>
+        </div>
+        @if (Model.Dashboard.RecentQuotaNotifications.Count == 0)
+        {
+            <p class="muted-copy">Aucune notification de quota active pour le moment.</p>
+        }
+        else
+        {
+            <div class="signal-list">
+                @foreach (var notification in Model.Dashboard.RecentQuotaNotifications)
+                {
+                    <div class="signal-item quota-notification-item @(notification.Severity == GescomSaas.Domain.Enums.PlatformNotificationSeverity.Critical ? "quota-notification-critical" : "quota-notification-warning")">
+                        <div class="quota-notification-copy">
+                            <div class="tag-list">
+                                <span class="tag-pill @(notification.Severity == GescomSaas.Domain.Enums.PlatformNotificationSeverity.Critical ? "tag-pill-danger" : "tag-pill-warning")">@notification.Severity</span>
+                                <span class="tag-pill">@notification.QuotaLabel</span>
+                                <span class="tag-pill">@notification.Used / @notification.Limit</span>
+                            </div>
+                            <div>
+                                <strong>@notification.Title</strong>
+                                <div class="table-meta">@notification.TenantName - @notification.PlanName</div>
+                                <div class="table-meta">@notification.Message</div>
+                                <div class="table-meta">Detectee le @notification.LastTriggeredOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                        <div class="quota-notification-actions">
+                            <a asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@notification.TenantId">Administrer</a>
+                            <form method="post" asp-page-handler="AcknowledgeNotification" class="inline-form">
+                                <input type="hidden" name="notificationId" value="@notification.NotificationId" />
+                                <button type="submit" class="btn btn-outline-light btn-sm">Acquitter</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </article>
+</section>
+
+<section>
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Facturation</span>
+                <h2>Dernieres factures plateforme</h2>
+            </div>
+            <a class="nav-ghost" asp-page="/SaaSAdmin/Invoices/Index">Voir l'historique</a>
+        </div>
+        @if (Model.Dashboard.RecentInvoices.Count == 0)
+        {
+            <p class="muted-copy">Aucune facture plateforme n'a encore ete emise.</p>
+        }
+        else
+        {
+            <div class="table-shell">
+                <table class="table table-darkless align-middle">
+                    <thead>
+                        <tr>
+                            <th>Numero</th>
+                            <th>Tenant</th>
+                            <th>Date</th>
+                            <th>Echeance</th>
+                            <th>Statut</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var invoice in Model.Dashboard.RecentInvoices)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="/SaaSAdmin/Invoices/Details" asp-route-id="@invoice.InvoiceId">@invoice.InvoiceNumber</a>
+                            </td>
+                            <td>@invoice.TenantName</td>
+                            <td>@invoice.IssueDate.ToString("dd/MM/yyyy")</td>
+                            <td>@invoice.DueDate.ToString("dd/MM/yyyy")</td>
+                            <td><span class="badge rounded-pill status-pill">@invoice.Status</span></td>
+                            <td class="text-end">@DisplayFormatter.Money(invoice.TotalIncludingTax, invoice.CurrencyCode)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </article>
+</section>

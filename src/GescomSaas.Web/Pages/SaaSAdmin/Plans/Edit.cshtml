@@ -1,0 +1,20 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.SaaSAdmin.Plans.EditModel
+@{
+    ViewData["Title"] = "Edition plan";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Plateforme</span>
+        <h1>Editer le plan @Model.Input.Code</h1>
+    </div>
+</section>
+
+<form method="post" class="panel-card stack-form compact-form">
+    <partial name="_PlanForm" model="Model.Input" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
+        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+    </div>
+</form>

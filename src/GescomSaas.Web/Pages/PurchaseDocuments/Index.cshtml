@@ -1,0 +1,87 @@
+@page
+@model GescomSaas.Web.Pages.PurchaseDocuments.IndexModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Cycle d'achat</span>
+        <h1>@Model.Title</h1>
+        <p class="muted-copy">Pilotez les demandes, commandes, receptions, factures et avoirs fournisseurs.</p>
+    </div>
+    <div class="header-actions">
+        @foreach (var type in GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.PurchaseTypes)
+        {
+            <a class="btn btn-outline-light" asp-page="/PurchaseDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.Label(type)</a>
+        }
+        <a class="btn btn-primary-soft" asp-page="/PurchaseDocuments/Create" asp-route-type="@Model.CurrentType">Nouveau</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+@if (Model.DocumentQuota is not null)
+{
+    <section class="quota-badge-row">
+        <span class="tag-pill @(Model.DocumentQuota.IsExceeded ? "tag-pill-danger" : (Model.DocumentQuota.Used >= Model.DocumentQuota.Limit ? "tag-pill-warning" : string.Empty))">
+            Documents du mois : @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
+        </span>
+        <span class="table-meta">
+            @if (Model.DocumentQuota.IsExceeded)
+            {
+                <text>Depasse de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</text>
+            }
+            else
+            {
+                <text>@(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</text>
+            }
+        </span>
+    </section>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Date</th>
+                    <th>Fournisseur</th>
+                    <th>Source</th>
+                    <th>Statut</th>
+                    <th class="text-end">Montant TTC</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Documents.Count == 0)
+            {
+                <tr><td colspan="7" class="empty-cell">Aucune piece pour ce type.</td></tr>
+            }
+            else
+            {
+                @foreach (var document in Model.Documents)
+                {
+                    <tr>
+                        <td>@document.Number</td>
+                        <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
+                        <td>@document.PartnerName</td>
+                        <td>@(document.SourceNumber ?? "-")</td>
+                        <td><span class="badge rounded-pill status-pill">@document.Status</span></td>
+                        <td class="text-end">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/PurchaseDocuments/Details" asp-route-id="@document.Id">Voir</a>
+                            <a asp-page="/PurchaseDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
+                            <a asp-page="/PurchaseDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

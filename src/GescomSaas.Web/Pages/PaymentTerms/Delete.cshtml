@@ -1,0 +1,35 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.PaymentTerms.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer une condition de paiement";
+}
+
+<section class="page-header-card">
+    <div><span class="eyebrow">Suppression</span><h1>Supprimer @Model.PaymentTerm?.Code</h1></div>
+    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/PaymentTerms/Index">Retour a la liste</a></div>
+</section>
+
+<section class="panel-card">
+    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
+    {
+        <div class="app-alert warning">@Model.BlockingReason</div>
+    }
+    else
+    {
+        <p>La condition <strong>@Model.PaymentTerm?.Label</strong> sera supprimee.</p>
+    }
+
+    <dl class="detail-list">
+        <div><dt>Code</dt><dd>@Model.PaymentTerm?.Code</dd></div>
+        <div><dt>Libelle</dt><dd>@Model.PaymentTerm?.Label</dd></div>
+        <div><dt>Jours</dt><dd>@Model.PaymentTerm?.DueInDays</dd></div>
+    </dl>
+
+    <form method="post" class="form-actions">
+        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
+        {
+            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
+        }
+        <a class="btn btn-outline-light" asp-page="/PaymentTerms/Index">Annuler</a>
+    </form>
+</section>

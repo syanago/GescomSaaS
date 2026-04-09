@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LigCom</title>
+    <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/GescomSaas.Web.styles.css" asp-append-version="true" />
+</head>
+@{
+    var uiSettings = DisplayFormatter.GetSettings();
+}
+<body class="@uiSettings.ThemeCssClass">
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="container chrome">
+                <a class="brand-mark" asp-area="" asp-page="/Index">
+                    <span class="brand-kicker">ERP SaaS</span>
+                    <strong>LigCom</strong>
+                </a>
+
+                <nav class="main-nav">
+                    <a asp-area="" asp-page="/Index">Cockpit</a>
+                    @if (User.IsInRole("PlatformAdmin"))
+                    {
+                        <a asp-area="" asp-page="/SaaSAdmin/Index">SaaS Admin</a>
+                    }
+                    <div class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Traitements</button>
+                        <div class="nav-dropdown-menu">
+                            <a asp-area="" asp-page="/CommercialOperations/Index">Vue d'ensemble</a>
+                            <a asp-area="" asp-page="/SalesDocuments/Index">Ventes</a>
+                            <a asp-area="" asp-page="/PurchaseDocuments/Index">Achats</a>
+                            <a asp-area="" asp-page="/Finance/OpenItems">Finances</a>
+                            <a asp-area="" asp-page="/Inventory/Index">Stock</a>
+                        </div>
+                    </div>
+                    <div class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Referentiels</button>
+                        <div class="nav-dropdown-menu">
+                            <a asp-area="" asp-page="/ReferenceData/Index">Vue d'ensemble</a>
+                            <a asp-area="" asp-page="/Partners/Index" asp-route-scope="customers">Clients</a>
+                            <a asp-area="" asp-page="/Partners/Index" asp-route-scope="suppliers">Fournisseurs</a>
+                            <a asp-area="" asp-page="/Products/Index">Articles</a>
+                            <a asp-area="" asp-page="/Warehouses/Index">Depots</a>
+                        </div>
+                    </div>
+                    @if (User.IsInRole("TenantOwner") || User.IsInRole("PlatformAdmin"))
+                    {
+                        <div class="nav-dropdown">
+                            <button type="button" class="nav-dropdown-toggle">Parametres</button>
+                            <div class="nav-dropdown-menu">
+                                <a asp-area="" asp-page="/Settings/Index">Vue d'ensemble</a>
+                                <a asp-area="" asp-page="/Settings/Company">Societe et formats</a>
+                            </div>
+                        </div>
+                    }
+                    <a asp-area="" asp-page="/Blueprint">Architecture</a>
+                    <a asp-area="" asp-page="/Privacy">Confidentialite</a>
+                </nav>
+
+                <partial name="_LoginPartial" />
+            </div>
+        </header>
+
+        <main class="container page-body">
+            @RenderBody()
+        </main>
+
+        <footer class="container footer-bar">
+            <span>LigCom 2026</span>
+            <span>Base de gestion commerciale multi-tenant en ASP.NET Core et SQL Server.</span>
+        </footer>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

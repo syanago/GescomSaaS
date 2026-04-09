@@ -1,0 +1,57 @@
+@page
+@model GescomSaas.Web.Pages.PaymentTerms.IndexModel
+@{
+    ViewData["Title"] = "Conditions de paiement";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Referentiel</span>
+        <h1>Conditions de paiement</h1>
+        <p class="muted-copy">Parametrez les echeances utilisees sur les fiches clients et fournisseurs.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/PaymentTerms/Create">Nouvelle condition</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libelle</th>
+                    <th class="text-end">Jours</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.PaymentTerms.Count == 0)
+            {
+                <tr><td colspan="4" class="empty-cell">Aucune condition de paiement.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in Model.PaymentTerms)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Label</td>
+                        <td class="text-end">@item.DueInDays</td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/PaymentTerms/Edit" asp-route-id="@item.Id">Modifier</a>
+                            <a asp-page="/PaymentTerms/Delete" asp-route-id="@item.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

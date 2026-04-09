@@ -1,0 +1,24 @@
+@page
+@model GescomSaas.Web.Pages.ReferenceData.IndexModel
+@{
+    ViewData["Title"] = "Referentiels";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Parametrage</span>
+        <h1>Referentiels commerciaux</h1>
+        <p class="muted-copy">Point d'entree vers les bases de donnees metier qui structurent la gestion commerciale.</p>
+    </div>
+</section>
+
+<section class="card-grid">
+    @foreach (var card in Model.Cards)
+    {
+        <a class="module-card nav-card" href="@card.Href">
+            <h3>@card.Title</h3>
+            <p>@card.Description</p>
+            <span>Ouvrir</span>
+        </a>
+    }
+</section>

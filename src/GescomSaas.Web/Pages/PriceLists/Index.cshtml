@@ -1,0 +1,65 @@
+@page
+@model GescomSaas.Web.Pages.PriceLists.IndexModel
+@{
+    ViewData["Title"] = "Listes de prix";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Referentiel</span>
+        <h1>Listes de prix</h1>
+        <p class="muted-copy">Administrez les tarifs par devise et les prix specifiques des articles.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/PriceLists/Create">Nouvelle liste</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libelle</th>
+                    <th>Devise</th>
+                    <th class="text-end">Lignes</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.PriceLists.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-cell">Aucune liste de prix.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in Model.PriceLists)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Label</td>
+                        <td>@item.CurrencyCode</td>
+                        <td class="text-end">@item.LineCount</td>
+                        <td>
+                            <span class="badge rounded-pill @(item.IsDefault ? "status-pill" : "status-pill-off")">
+                                @(item.IsDefault ? "Par defaut" : "Secondaire")
+                            </span>
+                        </td>
+                        <td class="text-end action-cell">
+                            <a asp-page="/PriceLists/Edit" asp-route-id="@item.Id">Ouvrir</a>
+                            <a asp-page="/PriceLists/Delete" asp-route-id="@item.Id">Supprimer</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,144 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.SalesDocuments.EditModel
+@{
+    ViewData["Title"] = "Modifier une piece commerciale";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Edition</span>
+        <h1>@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(Model.Input.DocumentType) @Model.Input.Number</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Id">Voir le detail</a>
+        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Input.DocumentType">Retour a la liste</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="content-grid blueprint-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Entete</span>
+                <h2>Informations du document</h2>
+            </div>
+        </div>
+
+        <form method="post" class="stack-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid">
+                <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
+                <div><label asp-for="Input.PartnerId" class="form-label"></label><select asp-for="Input.PartnerId" asp-items="Model.Partners" class="form-select"><option value="">Choisir un client</option></select></div>
+                <div><label asp-for="Input.WarehouseId" class="form-label"></label><select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Aucun depot</option></select></div>
+                <div><label asp-for="Input.Status" class="form-label"></label><select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select></div>
+                <div><label asp-for="Input.DocumentDate" class="form-label"></label><input asp-for="Input.DocumentDate" class="form-control" /></div>
+                <div><label asp-for="Input.DueDate" class="form-label"></label><input asp-for="Input.DueDate" class="form-control" /></div>
+                <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
+                <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary-soft">Mettre a jour</button>
+            </div>
+        </form>
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Nouvelle ligne</span>
+                <h2>Ajouter un article</h2>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="AddLine" class="stack-form">
+            <div class="form-grid">
+                <div class="full-span"><label asp-for="NewLine.ProductId" class="form-label"></label><select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select"><option value="">Choisir un article</option></select><span asp-validation-for="NewLine.ProductId" class="text-danger"></span></div>
+                <div class="full-span"><label asp-for="NewLine.Description" class="form-label"></label><input asp-for="NewLine.Description" class="form-control" /><span asp-validation-for="NewLine.Description" class="text-danger"></span></div>
+                <div>
+                    <label asp-for="NewLine.Quantity" class="form-label"></label>
+                    <input asp-for="NewLine.Quantity" class="form-control" type="number" step="@DisplayFormatter.QuantityInputStep()" inputmode="decimal" />
+                    <div class="table-meta">Exemple : @DisplayFormatter.Quantity(3.5m)</div>
+                </div>
+                <div>
+                    <label asp-for="NewLine.UnitPriceExcludingTax" class="form-label"></label>
+                    <input asp-for="NewLine.UnitPriceExcludingTax" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                    <div class="table-meta">Exemple : @DisplayFormatter.Money(149.95m, Model.Input.CurrencyCode)</div>
+                </div>
+                <div>
+                    <label asp-for="NewLine.DiscountRate" class="form-label"></label>
+                    <input asp-for="NewLine.DiscountRate" class="form-control" type="number" step="@DisplayFormatter.RateInputStep()" inputmode="decimal" />
+                    <div class="table-meta">Exemple : @DisplayFormatter.Number(5m, 2) %</div>
+                </div>
+                <div>
+                    <label asp-for="NewLine.TaxRate" class="form-label"></label>
+                    <input asp-for="NewLine.TaxRate" class="form-control" type="number" step="@DisplayFormatter.RateInputStep()" inputmode="decimal" />
+                    <div class="table-meta">Exemple : @DisplayFormatter.Number(19.25m, 2) %</div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary-soft">Ajouter la ligne</button>
+            </div>
+        </form>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="panel-header">
+        <div>
+            <span class="eyebrow">Lignes</span>
+            <h2>Contenu du document</h2>
+        </div>
+    </div>
+
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Description</th>
+                    <th class="text-end">Qté</th>
+                    <th class="text-end">PU HT</th>
+                    <th class="text-end">Remise</th>
+                    <th class="text-end">Taxe</th>
+                    <th class="text-end">TTC</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Lines.Count == 0)
+            {
+                <tr><td colspan="8" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
+            }
+            else
+            {
+                @foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <td>@line.ProductCode</td>
+                        <td>@line.Description</td>
+                        <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Input.CurrencyCode)</td>
+                        <td class="text-end">@DisplayFormatter.Number(line.DiscountRate, 2) %</td>
+                        <td class="text-end">@DisplayFormatter.Number(line.TaxRate, 2) %</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.TotalIncludingTax, Model.Input.CurrencyCode)</td>
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="DeleteLine" class="inline-form">
+                                <input type="hidden" name="lineId" value="@line.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-light">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

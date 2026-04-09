@@ -1,0 +1,26 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<ul class="navbar-nav align-items-center gap-2">
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item">
+        <a class="nav-link nav-ghost" asp-area="Identity" asp-page="/Account/Manage/Index" title="Gerer le compte">@(User.FindFirst("first_name")?.Value ?? User.Identity?.Name)</a>
+    </li>
+    <li class="nav-item">
+        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+            <button type="submit" class="btn btn-primary-soft">Se deconnecter</button>
+        </form>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link nav-ghost" asp-area="Identity" asp-page="/Account/Register">Creer un compte</a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-primary-soft" asp-area="Identity" asp-page="/Account/Login">Connexion</a>
+    </li>
+}
+</ul>

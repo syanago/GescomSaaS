@@ -1,0 +1,65 @@
+@page
+@model GescomSaas.Web.Pages.Inventory.AdjustmentsModel
+@{
+    ViewData["Title"] = "Ajustement d'inventaire";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Stock</span>
+        <h1>Ajustement d'inventaire</h1>
+        <p class="muted-copy">Saisissez un mouvement manuel pour corriger un écart de stock ou enregistrer un comptage.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthèse</a>
+        <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Mouvements</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="panel-card">
+    <form method="post" class="stack-form compact-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-grid">
+            <div>
+                <label asp-for="Input.ProductId" class="form-label"></label>
+                <select asp-for="Input.ProductId" asp-items="Model.Products" class="form-select">
+                    <option value="">Choisir un article</option>
+                </select>
+                <span asp-validation-for="Input.ProductId" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.WarehouseId" class="form-label"></label>
+                <select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select">
+                    <option value="">Choisir un dépôt</option>
+                </select>
+                <span asp-validation-for="Input.WarehouseId" class="text-danger"></span>
+            </div>
+            <div><label asp-for="Input.MovementDate" class="form-label"></label><input asp-for="Input.MovementDate" class="form-control" /></div>
+            <div><label asp-for="Input.MovementType" class="form-label"></label><select asp-for="Input.MovementType" asp-items="Model.AdjustmentTypes" class="form-select"></select></div>
+            <div>
+                <label asp-for="Input.Quantity" class="form-label"></label>
+                <input asp-for="Input.Quantity" class="form-control" type="number" step="@DisplayFormatter.QuantityInputStep()" inputmode="decimal" />
+                <div class="table-meta">Exemple : @DisplayFormatter.Quantity(12.345m)</div>
+            </div>
+            <div>
+                <label asp-for="Input.UnitCost" class="form-label"></label>
+                <input asp-for="Input.UnitCost" class="form-control" type="number" step="@DisplayFormatter.MoneyInputStep()" inputmode="decimal" />
+                <div class="table-meta">Exemple : @DisplayFormatter.Money(48.75m)</div>
+            </div>
+            <div class="full-span"><label asp-for="Input.ReferenceNumber" class="form-label"></label><input asp-for="Input.ReferenceNumber" class="form-control" /></div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary-soft">Enregistrer l'ajustement</button>
+            <a class="btn btn-outline-light" asp-page="/Inventory/Index">Annuler</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

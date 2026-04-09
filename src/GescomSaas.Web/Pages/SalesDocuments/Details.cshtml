@@ -1,0 +1,122 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.SalesDocuments.DetailsModel
+@{
+    ViewData["Title"] = "Detail de la piece";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Detail</span>
+        <h1>@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(Model.Document!.DocumentType) @Model.Document.Number</h1>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary-soft" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Document.Id" asp-page-handler="Pdf">Telecharger PDF</a>
+        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Edit" asp-route-id="@Model.Document.Id">Modifier</a>
+        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Document.DocumentType">Retour a la liste</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<section class="content-grid blueprint-grid">
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Synthese</span>
+                <h2>Informations generales</h2>
+            </div>
+        </div>
+        <dl class="detail-list">
+            <div><dt>Numero</dt><dd>@Model.Document.Number</dd></div>
+            <div><dt>Type</dt><dd>@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(Model.Document.DocumentType)</dd></div>
+            <div><dt>Statut</dt><dd>@Model.Document.Status</dd></div>
+            <div><dt>Date</dt><dd>@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</dd></div>
+            <div><dt>Echeance</dt><dd>@(Model.Document.DueDate?.ToString("dd/MM/yyyy") ?? "-")</dd></div>
+            <div><dt>Client</dt><dd>@Model.Document.PartnerName</dd></div>
+            <div><dt>Depot</dt><dd>@Model.Document.WarehouseLabel</dd></div>
+            <div><dt>Source</dt><dd>@(Model.Document.SourceNumber ?? "-")</dd></div>
+            <div><dt>Notes</dt><dd>@(string.IsNullOrWhiteSpace(Model.Document.Notes) ? "-" : Model.Document.Notes)</dd></div>
+        </dl>
+    </article>
+
+    <article class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Transformations</span>
+                <h2>Actions disponibles</h2>
+            </div>
+        </div>
+
+        @if (GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.GetTargets(Model.Document.DocumentType).Count == 0)
+        {
+            <p class="muted-copy">Aucune transformation disponible pour cette piece.</p>
+        }
+        else
+        {
+            <div class="form-actions">
+                @foreach (var target in GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.GetTargets(Model.Document.DocumentType))
+                {
+                    <form method="post" asp-page-handler="Transform" class="inline-form">
+                        <input type="hidden" name="targetType" value="@target" />
+                        <button type="submit" class="btn btn-primary-soft">Creer @GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(target)</button>
+                    </form>
+                }
+            </div>
+        }
+
+        <div class="totals-box">
+            <div><span>Total HT</span><strong>@DisplayFormatter.Money(Model.Document.TotalExcludingTax, Model.Document.CurrencyCode)</strong></div>
+            <div><span>Total taxe</span><strong>@DisplayFormatter.Money(Model.Document.TotalTax, Model.Document.CurrencyCode)</strong></div>
+            <div><span>Total TTC</span><strong>@DisplayFormatter.Money(Model.Document.TotalIncludingTax, Model.Document.CurrencyCode)</strong></div>
+        </div>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="panel-header">
+        <div>
+            <span class="eyebrow">Lignes</span>
+            <h2>Contenu de la piece</h2>
+        </div>
+    </div>
+
+    <div class="table-shell">
+        <table class="table table-darkless align-middle app-table">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Description</th>
+                    <th class="text-end">Qté</th>
+                    <th class="text-end">PU HT</th>
+                    <th class="text-end">Remise</th>
+                    <th class="text-end">Taxe</th>
+                    <th class="text-end">TTC</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Document.Lines.Count == 0)
+            {
+                <tr><td colspan="7" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
+            }
+            else
+            {
+                @foreach (var line in Model.Document.Lines)
+                {
+                    <tr>
+                        <td>@line.ProductCode</td>
+                        <td>@line.Description</td>
+                        <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Document.CurrencyCode)</td>
+                        <td class="text-end">@DisplayFormatter.Number(line.DiscountRate, 2) %</td>
+                        <td class="text-end">@DisplayFormatter.Number(line.TaxRate, 2) %</td>
+                        <td class="text-end">@DisplayFormatter.Money(line.TotalIncludingTax, Model.Document.CurrencyCode)</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
