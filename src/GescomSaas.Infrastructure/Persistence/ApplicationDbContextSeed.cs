@@ -253,7 +253,7 @@ public static class ApplicationDbContextSeed
             tenant.QuantityDecimalSeparator = string.IsNullOrEmpty(tenant.QuantityDecimalSeparator) ? "," : tenant.QuantityDecimalSeparator;
             tenant.QuantityGroupSeparator ??= " ";
             tenant.QuantityDecimalPlaces = tenant.QuantityDecimalPlaces < 0 ? 3 : tenant.QuantityDecimalPlaces;
-            tenant.DefaultStockValuationMethod = tenant.DefaultStockValuationMethod;
+            tenant.VisualTheme = Enum.IsDefined(tenant.VisualTheme) ? tenant.VisualTheme : ApplicationTheme.LigComMidnight;
             tenant.IsActive = true;
         }
 

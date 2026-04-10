@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IPlatformInvoicePdfService, PlatformInvoicePdfService>();
         services.AddScoped<PlatformNotificationEmailService>();
         services.AddScoped<IPlatformUserAdministrationService, PlatformUserAdministrationService>();
+        services.AddScoped<ISageImportService, SageImportService>();
         services.AddScoped<ISettlementService, SettlementService>();
         services.AddScoped<ITenantDisplayFormatter, TenantDisplayFormatter>();
         services.AddScoped<ITenantQuotaEnforcementService, TenantQuotaEnforcementService>();

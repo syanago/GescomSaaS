@@ -29,6 +29,17 @@ public class Tenant : AuditableEntity
     public bool AllowNegativeStock { get; set; }
     public StockValuationMethod DefaultStockValuationMethod { get; set; } = StockValuationMethod.Cmup;
     public ApplicationTheme VisualTheme { get; set; } = ApplicationTheme.LigComMidnight;
+    public bool SageImportEnabled { get; set; }
+    public string SageSqlServerName { get; set; } = string.Empty;
+    public string SageSqlDatabaseName { get; set; } = string.Empty;
+    public ExternalSqlAuthenticationMode SageSqlAuthenticationMode { get; set; } = ExternalSqlAuthenticationMode.Windows;
+    public string SageSqlUserName { get; set; } = string.Empty;
+    public string SageSqlPassword { get; set; } = string.Empty;
+    public string SageCompanyCode { get; set; } = string.Empty;
+    public SageImportMode SageImportMode { get; set; } = SageImportMode.Partial;
+    public string SageImportScopeJson { get; set; } = "{}";
+    public string SageImportFilterJson { get; set; } = "{}";
+    public string SageImportMappingJson { get; set; } = "{}";
     public bool IsActive { get; set; } = true;
 
     public ICollection<TenantSubscription> Subscriptions { get; set; } = new List<TenantSubscription>();

@@ -92,15 +92,7 @@ public class CompanyModel(
     {
         var tenant = await LoadTenantAsync();
         var previousCurrencyCode = tenant.CurrencyCode;
-        var normalizedMoney = NormalizeSeparators(Input.MoneyDecimalSeparator, Input.MoneyGroupSeparator, Input.MoneyDecimalPlaces);
-        var normalizedQuantity = NormalizeSeparators(Input.QuantityDecimalSeparator, Input.QuantityGroupSeparator, Input.QuantityDecimalPlaces);
-        var autoAdjustedMoneyGroup = !string.Equals(Input.MoneyGroupSeparator, normalizedMoney.GroupSeparator, StringComparison.Ordinal);
-        var autoAdjustedQuantityGroup = !string.Equals(Input.QuantityGroupSeparator, normalizedQuantity.GroupSeparator, StringComparison.Ordinal);
-
-        Input.MoneyDecimalSeparator = normalizedMoney.DecimalSeparator;
-        Input.MoneyGroupSeparator = normalizedMoney.GroupSeparator;
-        Input.QuantityDecimalSeparator = normalizedQuantity.DecimalSeparator;
-        Input.QuantityGroupSeparator = normalizedQuantity.GroupSeparator;
+        var adjustments = NormalizeFormatSelections();
 
         if (!ModelState.IsValid)
         {
@@ -117,7 +109,12 @@ public class CompanyModel(
 
         await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
 
-        StatusMessage = BuildStatusMessage(currencyWasChanged, autoAdjustedMoneyGroup, autoAdjustedQuantityGroup);
+        var baseMessage = currencyWasChanged
+            ? "Parametres de societe mis a jour et devise synchronisee sur les donnees existantes du tenant."
+            : "Parametres de societe mis a jour.";
+        StatusMessage = adjustments.Count == 0
+            ? baseMessage
+            : $"{baseMessage} Ajustements automatiques : {string.Join(" ", adjustments)}";
         return RedirectToPage();
     }
 
@@ -239,36 +236,22 @@ public class CompanyModel(
         _ => value
     };
 
-    private static (string DecimalSeparator, string GroupSeparator) NormalizeSeparators(string decimalSeparator, string groupSeparator, int decimalPlaces)
+    private List<string> NormalizeFormatSelections()
     {
-        if (decimalPlaces <= 0)
+        var adjustments = new List<string>();
+
+        if (Input.MoneyDecimalPlaces > 0 && NormalizeSeparator(Input.MoneyDecimalSeparator) == NormalizeSeparator(Input.MoneyGroupSeparator))
         {
-            return (decimalSeparator, groupSeparator);
+            Input.MoneyGroupSeparator = "none";
+            adjustments.Add("Le separateur de milliers monnaie a ete passe sur Aucun pour eviter un conflit.");
         }
 
-        return NormalizeSeparator(decimalSeparator) == NormalizeSeparator(groupSeparator)
-            ? (decimalSeparator, "none")
-            : (decimalSeparator, groupSeparator);
-    }
-
-    private static string BuildStatusMessage(bool currencyWasChanged, bool autoAdjustedMoneyGroup, bool autoAdjustedQuantityGroup)
-    {
-        var messages = new List<string>();
-
-        messages.Add(currencyWasChanged
-            ? "Parametres de societe mis a jour et devise synchronisee sur les donnees existantes du tenant."
-            : "Parametres de societe mis a jour.");
-
-        if (autoAdjustedMoneyGroup)
+        if (Input.QuantityDecimalPlaces > 0 && NormalizeSeparator(Input.QuantityDecimalSeparator) == NormalizeSeparator(Input.QuantityGroupSeparator))
         {
-            messages.Add("Le separateur de milliers de la monnaie a ete bascule sur 'Aucun' pour eviter un conflit avec le separateur decimal.");
+            Input.QuantityGroupSeparator = "none";
+            adjustments.Add("Le separateur de milliers quantites a ete passe sur Aucun pour eviter un conflit.");
         }
 
-        if (autoAdjustedQuantityGroup)
-        {
-            messages.Add("Le separateur de milliers des quantites a ete bascule sur 'Aucun' pour eviter un conflit avec le separateur decimal.");
-        }
-
-        return string.Join(" ", messages);
+        return adjustments;
     }
 }

@@ -368,3 +368,111 @@
         }
     }
 })();
+
+(() => {
+    const schemaScript = document.getElementById("sage-schema-json");
+    if (!schemaScript) {
+        return;
+    }
+
+    let schemaTables = [];
+
+    try {
+        schemaTables = JSON.parse(schemaScript.textContent || "[]");
+    } catch {
+        schemaTables = [];
+    }
+
+    const normalize = (value) => (value || "").trim().toLowerCase();
+
+    const getColumnsForTable = (tableName) => {
+        const match = schemaTables.find((item) => normalize(item.tableName || item.TableName) === normalize(tableName));
+        return match?.columns || match?.Columns || [];
+    };
+
+    const parseRawMap = (value) => {
+        const lines = (value || "")
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+        const mapping = new Map();
+
+        for (const line of lines) {
+            const parts = line.split("=");
+            if (parts.length < 2) {
+                continue;
+            }
+
+            const target = (parts.shift() || "").trim();
+            const source = parts.join("=").trim();
+            if (target) {
+                mapping.set(target, source);
+            }
+        }
+
+        return mapping;
+    };
+
+    document.querySelectorAll("[data-sage-table-input]").forEach((tableInput) => {
+        const moduleKey = tableInput.getAttribute("data-sage-table-input");
+        if (!moduleKey) {
+            return;
+        }
+
+        const rawMap = document.querySelector(`[data-sage-raw-map="${moduleKey}"]`);
+        const fieldInputs = Array.from(document.querySelectorAll(`[data-sage-field-input="${moduleKey}"]`));
+        const datalist = document.getElementById(`sage-columns-${moduleKey}`);
+
+        if (!rawMap || fieldInputs.length === 0 || !datalist) {
+            return;
+        }
+
+        const refreshColumnSuggestions = () => {
+            const columns = getColumnsForTable(tableInput.value);
+            datalist.innerHTML = columns
+                .map((column) => `<option value="${column}"></option>`)
+                .join("");
+        };
+
+        const syncFieldInputsFromRaw = () => {
+            const mapping = parseRawMap(rawMap.value);
+            fieldInputs.forEach((input) => {
+                const targetField = input.getAttribute("data-target-field") || "";
+                input.value = mapping.get(targetField) || "";
+            });
+        };
+
+        const syncRawFromFieldInputs = () => {
+            const knownTargets = new Set(fieldInputs.map((input) => input.getAttribute("data-target-field") || "").filter(Boolean));
+            const existing = parseRawMap(rawMap.value);
+            const lines = [];
+
+            fieldInputs.forEach((input) => {
+                const targetField = input.getAttribute("data-target-field") || "";
+                const sourceField = input.value.trim();
+                if (targetField && sourceField) {
+                    lines.push(`${targetField}=${sourceField}`);
+                }
+            });
+
+            existing.forEach((value, key) => {
+                if (!knownTargets.has(key) && value) {
+                    lines.push(`${key}=${value}`);
+                }
+            });
+
+            rawMap.value = lines.join("\n");
+        };
+
+        tableInput.addEventListener("input", refreshColumnSuggestions);
+        fieldInputs.forEach((input) => {
+            input.addEventListener("input", syncRawFromFieldInputs);
+            input.addEventListener("change", syncRawFromFieldInputs);
+        });
+        rawMap.addEventListener("input", syncFieldInputsFromRaw);
+
+        refreshColumnSuggestions();
+        syncFieldInputsFromRaw();
+    });
+})();

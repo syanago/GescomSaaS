@@ -29,7 +29,7 @@ public class SalesDocumentInputModel
 
     [StringLength(3)]
     [Display(Name = "Devise")]
-    public string CurrencyCode { get; set; } = "CAD";
+    public string CurrencyCode { get; set; } = string.Empty;
 
     [Display(Name = "Statut")]
     public CommercialDocumentStatus Status { get; set; } = CommercialDocumentStatus.Draft;
@@ -58,7 +58,9 @@ public class SalesDocumentInputModel
         entity.WarehouseId = WarehouseId;
         entity.DocumentDate = DocumentDate;
         entity.DueDate = DueDate;
-        entity.CurrencyCode = CurrencyCode.Trim().ToUpperInvariant();
+        entity.CurrencyCode = string.IsNullOrWhiteSpace(CurrencyCode)
+            ? entity.CurrencyCode
+            : CurrencyCode.Trim().ToUpperInvariant();
         entity.Status = Status;
         entity.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim();
     }

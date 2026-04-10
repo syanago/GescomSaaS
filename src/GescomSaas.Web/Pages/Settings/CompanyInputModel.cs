@@ -110,11 +110,11 @@ public class CompanyInputModel
             CashCurrencyCode = tenant.CashCurrencyCode,
             CurrencySymbol = tenant.CurrencySymbol,
             CurrencySymbolPosition = tenant.CurrencySymbolPosition,
-            MoneyDecimalSeparator = ToInputSeparator(tenant.MoneyDecimalSeparator),
-            MoneyGroupSeparator = ToInputSeparator(tenant.MoneyGroupSeparator),
+            MoneyDecimalSeparator = ToSelectorValue(tenant.MoneyDecimalSeparator),
+            MoneyGroupSeparator = ToSelectorValue(tenant.MoneyGroupSeparator),
             MoneyDecimalPlaces = tenant.MoneyDecimalPlaces,
-            QuantityDecimalSeparator = ToInputSeparator(tenant.QuantityDecimalSeparator),
-            QuantityGroupSeparator = ToInputSeparator(tenant.QuantityGroupSeparator),
+            QuantityDecimalSeparator = ToSelectorValue(tenant.QuantityDecimalSeparator),
+            QuantityGroupSeparator = ToSelectorValue(tenant.QuantityGroupSeparator),
             QuantityDecimalPlaces = tenant.QuantityDecimalPlaces,
             AllowNegativeStock = tenant.AllowNegativeStock,
             DefaultStockValuationMethod = tenant.DefaultStockValuationMethod,
@@ -155,7 +155,7 @@ public class CompanyInputModel
         _ => value.Trim()
     };
 
-    private static string ToInputSeparator(string value) => value switch
+    private static string ToSelectorValue(string value) => value switch
     {
         " " => "space",
         "" => "none",

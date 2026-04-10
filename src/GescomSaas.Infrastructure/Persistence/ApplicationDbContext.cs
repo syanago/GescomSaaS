@@ -27,6 +27,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<PlatformInvoice> PlatformInvoices => Set<PlatformInvoice>();
     public DbSet<PlatformInvoiceLine> PlatformInvoiceLines => Set<PlatformInvoiceLine>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<SageImportRun> SageImportRuns => Set<SageImportRun>();
+    public DbSet<SageImportRunModule> SageImportRunModules => Set<SageImportRunModule>();
+    public DbSet<SageImportProfile> SageImportProfiles => Set<SageImportProfile>();
+    public DbSet<SageImportProfileVersion> SageImportProfileVersions => Set<SageImportProfileVersion>();
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantQuotaNotification> TenantQuotaNotifications => Set<TenantQuotaNotification>();
@@ -60,6 +64,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.QuantityDecimalSeparator).HasMaxLength(4);
             entity.Property(x => x.QuantityGroupSeparator).HasMaxLength(4);
             entity.Property(x => x.CountryCode).HasMaxLength(2);
+            entity.Property(x => x.SageSqlServerName).HasMaxLength(120);
+            entity.Property(x => x.SageSqlDatabaseName).HasMaxLength(120);
+            entity.Property(x => x.SageSqlUserName).HasMaxLength(120);
+            entity.Property(x => x.SageSqlPassword).HasMaxLength(200);
+            entity.Property(x => x.SageCompanyCode).HasMaxLength(80);
         });
 
         builder.Entity<SubscriptionPlan>(entity =>
@@ -71,6 +80,55 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.OverageUserPrice).HasPrecision(18, 2);
             entity.Property(x => x.OverageProductPrice).HasPrecision(18, 2);
             entity.Property(x => x.OverageDocumentPrice).HasPrecision(18, 2);
+        });
+
+        builder.Entity<SageImportRun>(entity =>
+        {
+            entity.Property(x => x.SourceServer).HasMaxLength(120);
+            entity.Property(x => x.SourceDatabase).HasMaxLength(120);
+            entity.Property(x => x.WarningSummary).HasMaxLength(2000);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SageImportProfile>(entity =>
+        {
+            entity.Property(x => x.Name).HasMaxLength(120);
+            entity.Property(x => x.Description).HasMaxLength(600);
+            entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SageImportProfileVersion>(entity =>
+        {
+            entity.Property(x => x.Notes).HasMaxLength(600);
+            entity.HasIndex(x => new { x.SageImportProfileId, x.VersionNumber }).IsUnique();
+            entity.HasOne(x => x.SageImportProfile)
+                .WithMany(x => x.Versions)
+                .HasForeignKey(x => x.SageImportProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SageImportRunModule>(entity =>
+        {
+            entity.Property(x => x.ModuleName).HasMaxLength(120);
+            entity.Property(x => x.Status).HasMaxLength(40);
+            entity.Property(x => x.SourceTable).HasMaxLength(240);
+            entity.Property(x => x.Summary).HasMaxLength(600);
+            entity.Property(x => x.NoteSummary).HasMaxLength(2000);
+            entity.HasOne(x => x.SageImportRun)
+                .WithMany(x => x.Modules)
+                .HasForeignKey(x => x.SageImportRunId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<TenantSubscription>(entity =>
