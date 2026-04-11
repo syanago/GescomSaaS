@@ -12,7 +12,8 @@ namespace GescomSaas.Web.Pages.ProductCategories;
 [Authorize]
 public class CreateModel(
     ApplicationDbContext dbContext,
-    ICurrentTenantAccessor currentTenantAccessor) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ICurrentTenantAccessor currentTenantAccessor,
+    INumberingService numberingService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty]
     public ProductCategoryInputModel Input { get; set; } = new();
@@ -34,6 +35,8 @@ public class CreateModel(
     public async Task OnGetAsync()
     {
         var tenantId = await GetTenantIdAsync();
+        var rule = await numberingService.GetReferenceRuleAsync(tenantId, ReferenceNumberingScope.ProductCategory, HttpContext.RequestAborted);
+        Input.Code = rule.Preview;
         var tenant = await DbContext.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == tenantId, HttpContext.RequestAborted);
@@ -49,6 +52,16 @@ public class CreateModel(
         if (!ModelState.IsValid) return Page();
 
         var tenantId = await GetTenantIdAsync();
+        try
+        {
+            Input.Code = await numberingService.ResolveReferenceCodeAsync(tenantId, ReferenceNumberingScope.ProductCategory, Input.Code, HttpContext.RequestAborted);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError("Input.Code", exception.Message);
+            return Page();
+        }
+
         if (await DbContext.ProductCategories.AnyAsync(x => x.TenantId == tenantId && x.Code == Input.Code.Trim().ToUpperInvariant(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Input.Code", "Ce code existe deja.");

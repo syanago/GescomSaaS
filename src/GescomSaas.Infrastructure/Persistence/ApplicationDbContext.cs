@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CommercialDocument> CommercialDocuments => Set<CommercialDocument>();
     public DbSet<CommercialDocumentLine> CommercialDocumentLines => Set<CommercialDocumentLine>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
+    public DbSet<ReferenceNumberingSetting> ReferenceNumberingSettings => Set<ReferenceNumberingSetting>();
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
@@ -293,6 +294,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<DocumentSequence>(entity =>
         {
             entity.HasIndex(x => new { x.TenantId, x.DocumentType }).IsUnique();
+            entity.Property(x => x.Prefix).HasMaxLength(20);
+        });
+
+        builder.Entity<ReferenceNumberingSetting>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantId, x.Scope }).IsUnique();
             entity.Property(x => x.Prefix).HasMaxLength(20);
         });
 

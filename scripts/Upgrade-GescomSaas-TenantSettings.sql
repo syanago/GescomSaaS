@@ -385,18 +385,321 @@ BEGIN
 END
 GO
 
-UPDATE dbo.Tenants
-SET
-    CompanyLegalName = CASE WHEN LTRIM(RTRIM(ISNULL(CompanyLegalName, N''))) = N'' THEN CompanyName ELSE CompanyLegalName END,
-    CashCurrencyCode = CASE WHEN LTRIM(RTRIM(ISNULL(CashCurrencyCode, N''))) = N'' THEN CurrencyCode ELSE CashCurrencyCode END,
-    CurrencySymbol = CASE WHEN LTRIM(RTRIM(ISNULL(CurrencySymbol, N''))) = N'' THEN N'$' ELSE CurrencySymbol END,
-    MoneyDecimalSeparator = CASE WHEN LTRIM(RTRIM(ISNULL(MoneyDecimalSeparator, N''))) = N'' THEN N',' ELSE MoneyDecimalSeparator END,
-    MoneyGroupSeparator = CASE WHEN MoneyGroupSeparator IS NULL THEN N' ' ELSE MoneyGroupSeparator END,
-    QuantityDecimalSeparator = CASE WHEN LTRIM(RTRIM(ISNULL(QuantityDecimalSeparator, N''))) = N'' THEN N',' ELSE QuantityDecimalSeparator END,
-    QuantityGroupSeparator = CASE WHEN QuantityGroupSeparator IS NULL THEN N' ' ELSE QuantityGroupSeparator END,
-    DefaultStockValuationMethod = ISNULL(DefaultStockValuationMethod, 0),
-    AllowNegativeStock = ISNULL(AllowNegativeStock, 0),
-    SageImportScopeJson = CASE WHEN LTRIM(RTRIM(ISNULL(SageImportScopeJson, N''))) = N'' THEN N'{}' ELSE SageImportScopeJson END,
-    SageImportFilterJson = CASE WHEN LTRIM(RTRIM(ISNULL(SageImportFilterJson, N''))) = N'' THEN N'{}' ELSE SageImportFilterJson END,
-    SageImportMappingJson = CASE WHEN LTRIM(RTRIM(ISNULL(SageImportMappingJson, N''))) = N'' THEN N'{}' ELSE SageImportMappingJson END;
+-- Le script d'upgrade ne doit plus modifier les formats deja definis sur les tenants.
+-- Il ajoute uniquement les colonnes manquantes avec leurs valeurs par defaut SQL.
+GO
+
+IF COL_LENGTH('dbo.DocumentSequences', 'Mode') IS NULL
+BEGIN
+    ALTER TABLE dbo.DocumentSequences ADD Mode int NOT NULL CONSTRAINT DF_DocumentSequences_Mode DEFAULT 1;
+END
+GO
+
+IF COL_LENGTH('dbo.DocumentSequences', 'NumberLength') IS NULL
+BEGIN
+    ALTER TABLE dbo.DocumentSequences ADD NumberLength int NOT NULL CONSTRAINT DF_DocumentSequences_NumberLength DEFAULT 4;
+END
+GO
+
+IF COL_LENGTH('dbo.DocumentSequences', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.DocumentSequences ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_DocumentSequences_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.DocumentSequences', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.DocumentSequences ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF OBJECT_ID('dbo.ReferenceNumberingSettings', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ReferenceNumberingSettings
+    (
+        Id uniqueidentifier NOT NULL CONSTRAINT PK_ReferenceNumberingSettings PRIMARY KEY,
+        CreatedOnUtc datetime2 NOT NULL,
+        UpdatedOnUtc datetime2 NULL,
+        TenantId uniqueidentifier NOT NULL,
+        Scope int NOT NULL,
+        Mode int NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_Mode DEFAULT 1,
+        Prefix nvarchar(20) NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_Prefix DEFAULT N'',
+        NumberLength int NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_NumberLength DEFAULT 4,
+        NextValue int NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_NextValue DEFAULT 1,
+        CONSTRAINT FK_ReferenceNumberingSettings_Tenants_TenantId FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE
+    );
+
+    CREATE UNIQUE INDEX IX_ReferenceNumberingSettings_TenantId_Scope
+        ON dbo.ReferenceNumberingSettings(TenantId, Scope);
+END
+GO
+
+IF COL_LENGTH('dbo.ReferenceNumberingSettings', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ReferenceNumberingSettings ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.ReferenceNumberingSettings', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ReferenceNumberingSettings ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.ReferenceNumberingSettings', 'NumberLength') IS NULL
+BEGIN
+    ALTER TABLE dbo.ReferenceNumberingSettings ADD NumberLength int NOT NULL CONSTRAINT DF_ReferenceNumberingSettings_NumberLength DEFAULT 4;
+END
+GO
+
+IF COL_LENGTH('dbo.SubscriptionPlans', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.SubscriptionPlans ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_SubscriptionPlans_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.SubscriptionPlans', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.SubscriptionPlans ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.Tenants', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Tenants ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_Tenants_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.Tenants', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Tenants ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.TenantSubscriptions', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TenantSubscriptions ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_TenantSubscriptions_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.TenantSubscriptions', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TenantSubscriptions ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.TenantQuotaNotifications', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TenantQuotaNotifications ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_TenantQuotaNotifications_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.TenantQuotaNotifications', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TenantQuotaNotifications ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.UserInvitations', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.UserInvitations ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_UserInvitations_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.UserInvitations', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.UserInvitations ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PaymentTerms', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PaymentTerms ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PaymentTerms_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PaymentTerms', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PaymentTerms ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.TaxCodes', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TaxCodes ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_TaxCodes_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.TaxCodes', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.TaxCodes ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.ProductCategories', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ProductCategories ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_ProductCategories_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.ProductCategories', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ProductCategories ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.Products', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Products ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_Products_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.Products', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Products ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PriceLists', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PriceLists ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PriceLists_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PriceLists', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PriceLists ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PriceListLines', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PriceListLines ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PriceListLines_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PriceListLines', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PriceListLines ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.Warehouses', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Warehouses ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_Warehouses_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.Warehouses', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Warehouses ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.BusinessPartners', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.BusinessPartners ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_BusinessPartners_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.BusinessPartners', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.BusinessPartners ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.CommercialDocuments', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.CommercialDocuments ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_CommercialDocuments_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.CommercialDocuments', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.CommercialDocuments ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.CommercialDocumentLines', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.CommercialDocumentLines ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_CommercialDocumentLines_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.CommercialDocumentLines', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.CommercialDocumentLines ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.Payments', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Payments ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_Payments_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.Payments', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.Payments ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PaymentAllocations', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PaymentAllocations ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PaymentAllocations_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PaymentAllocations', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PaymentAllocations ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.ReminderLogs', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ReminderLogs ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_ReminderLogs_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.ReminderLogs', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.ReminderLogs ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.StockMovements', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.StockMovements ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_StockMovements_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.StockMovements', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.StockMovements ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PlatformInvoices', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PlatformInvoices ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PlatformInvoices_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PlatformInvoices', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PlatformInvoices ADD UpdatedOnUtc datetime2 NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.PlatformInvoiceLines', 'CreatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PlatformInvoiceLines ADD CreatedOnUtc datetime2 NOT NULL CONSTRAINT DF_PlatformInvoiceLines_CreatedOnUtc DEFAULT SYSUTCDATETIME();
+END
+GO
+
+IF COL_LENGTH('dbo.PlatformInvoiceLines', 'UpdatedOnUtc') IS NULL
+BEGIN
+    ALTER TABLE dbo.PlatformInvoiceLines ADD UpdatedOnUtc datetime2 NULL;
+END
 GO

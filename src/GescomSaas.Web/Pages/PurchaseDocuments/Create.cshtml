@@ -20,7 +20,7 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div id="purchase-document-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
         <div class="form-grid">
-            <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
+            <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" /></div>
             <div><label asp-for="Input.PartnerId" class="form-label"></label><select asp-for="Input.PartnerId" asp-items="Model.Partners" class="form-select"><option value="">Choisir un fournisseur</option></select><span asp-validation-for="Input.PartnerId" class="text-danger"></span></div>
             <div><label asp-for="Input.WarehouseId" class="form-label"></label><select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Aucun depot</option></select></div>
             <div><label asp-for="Input.Status" class="form-label"></label><select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select></div>

@@ -8,20 +8,22 @@ namespace GescomSaas.Infrastructure.Services;
 
 public class CommercialDocumentWorkflowService(
     ApplicationDbContext dbContext,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : ICommercialDocumentWorkflowService
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService,
+    INumberingService numberingService) : ICommercialDocumentWorkflowService
 {
     public async Task<CommercialDocument> InitializeDraftAsync(Guid tenantId, CommercialDocumentType documentType, CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants
             .AsNoTracking()
             .FirstAsync(x => x.Id == tenantId, cancellationToken);
+        var rule = await numberingService.GetDocumentRuleAsync(tenantId, documentType, cancellationToken);
 
         return new CommercialDocument
         {
             TenantId = tenantId,
             DocumentType = documentType,
             Status = CommercialDocumentStatus.Draft,
-            Number = await GetNextNumberAsync(tenantId, documentType, cancellationToken),
+            Number = rule.Preview,
             DocumentDate = DateOnly.FromDateTime(DateTime.UtcNow),
             CurrencyCode = tenant.CurrencyCode
         };
@@ -40,6 +42,12 @@ public class CommercialDocumentWorkflowService(
 
         ValidateTransition(source.DocumentType, targetDocumentType);
         await tenantQuotaEnforcementService.EnsureCanCreateDocumentAsync(tenantId, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken);
+        var numberingRule = await numberingService.GetDocumentRuleAsync(tenantId, targetDocumentType, cancellationToken);
+
+        if (numberingRule.Mode == NumberingMode.Manual)
+        {
+            throw new InvalidOperationException("La numerotation de cette piece est en mode manuel. Cree d'abord le document depuis l'ecran Nouveau pour saisir son numero.");
+        }
 
         var target = await InitializeDraftAsync(tenantId, targetDocumentType, cancellationToken);
         target.SourceDocumentId = source.Id;
@@ -72,6 +80,7 @@ public class CommercialDocumentWorkflowService(
             ? CommercialDocumentStatus.Open
             : CommercialDocumentStatus.Draft;
 
+        target.Number = await numberingService.ResolveDocumentNumberAsync(tenantId, targetDocumentType, target.Number, cancellationToken);
         RecalculateTotals(target);
 
         dbContext.CommercialDocuments.Add(target);
@@ -142,46 +151,6 @@ public class CommercialDocumentWorkflowService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
-
-    private async Task<string> GetNextNumberAsync(Guid tenantId, CommercialDocumentType documentType, CancellationToken cancellationToken)
-    {
-        var sequence = await dbContext.DocumentSequences
-            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.DocumentType == documentType, cancellationToken);
-
-        if (sequence is null)
-        {
-            sequence = new DocumentSequence
-            {
-                TenantId = tenantId,
-                DocumentType = documentType,
-                Prefix = GetDefaultPrefix(documentType),
-                NextValue = 1
-            };
-
-            dbContext.DocumentSequences.Add(sequence);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        var number = $"{sequence.Prefix}{sequence.NextValue:0000}";
-        sequence.NextValue += 1;
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return number;
-    }
-
-    private static string GetDefaultPrefix(CommercialDocumentType documentType) => documentType switch
-    {
-        CommercialDocumentType.SalesQuote => $"DEV-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.SalesOrder => $"CMD-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.DeliveryNote => $"BL-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.SalesInvoice => $"FAC-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.SalesCreditNote => $"AVO-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.PurchaseRequest => $"DA-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.PurchaseOrder => $"ACH-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.GoodsReceipt => $"REC-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.PurchaseInvoice => $"FAF-{DateTime.UtcNow:yyyy}-",
-        CommercialDocumentType.SupplierCreditNote => $"AVF-{DateTime.UtcNow:yyyy}-",
-        _ => $"DOC-{DateTime.UtcNow:yyyy}-"
-    };
 
     private static void ValidateTransition(CommercialDocumentType sourceType, CommercialDocumentType targetType)
     {

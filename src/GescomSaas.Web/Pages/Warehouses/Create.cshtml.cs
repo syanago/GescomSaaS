@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
+using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace GescomSaas.Web.Pages.Warehouses;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    INumberingService numberingService,
     ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty]
@@ -21,6 +23,9 @@ public class CreateModel(
 
     public async Task OnGetAsync()
     {
+        var tenantId = await GetTenantIdAsync();
+        var rule = await numberingService.GetReferenceRuleAsync(tenantId, ReferenceNumberingScope.Warehouse, HttpContext.RequestAborted);
+        Input.Code = rule.Preview;
         await LoadQuotasAsync();
     }
 
@@ -34,6 +39,16 @@ public class CreateModel(
         }
 
         var tenantId = await GetTenantIdAsync();
+        try
+        {
+            Input.Code = await numberingService.ResolveReferenceCodeAsync(tenantId, ReferenceNumberingScope.Warehouse, Input.Code, HttpContext.RequestAborted);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError("Input.Code", exception.Message);
+            return Page();
+        }
+
         if (await DbContext.Warehouses.AnyAsync(x => x.TenantId == tenantId && x.Code == Input.Code.Trim().ToUpperInvariant(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Input.Code", "Ce code depot existe deja.");

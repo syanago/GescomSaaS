@@ -14,6 +14,7 @@ namespace GescomSaas.Web.Pages.Partners;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    INumberingService numberingService,
     ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty]
@@ -38,6 +39,9 @@ public class CreateModel(
     {
         Scope = PartnerScope.Normalize(Scope);
         Input.PartnerType = Scope == PartnerScope.Suppliers ? BusinessPartnerType.Supplier : BusinessPartnerType.Customer;
+        var tenantId = await GetTenantIdAsync();
+        var rule = await numberingService.GetReferenceRuleAsync(tenantId, GetNumberingScope(), HttpContext.RequestAborted);
+        Input.Code = rule.Preview;
         await LoadLookupsAsync();
         await LoadQuotasAsync();
     }
@@ -54,6 +58,16 @@ public class CreateModel(
         }
 
         var tenantId = await GetTenantIdAsync();
+        try
+        {
+            Input.Code = await numberingService.ResolveReferenceCodeAsync(tenantId, GetNumberingScope(), Input.Code, HttpContext.RequestAborted);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError("Input.Code", exception.Message);
+            return Page();
+        }
+
         if (await DbContext.BusinessPartners.AnyAsync(x => x.TenantId == tenantId && x.Code == Input.Code.Trim(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Input.Code", "Ce code existe deja.");
@@ -85,6 +99,9 @@ public class CreateModel(
     }
 
     public string Title => PartnerScope.CreateTitle(Scope);
+
+    private ReferenceNumberingScope GetNumberingScope() =>
+        Scope == PartnerScope.Suppliers ? ReferenceNumberingScope.Supplier : ReferenceNumberingScope.Customer;
 
     private async Task LoadLookupsAsync()
     {

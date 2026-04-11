@@ -14,6 +14,7 @@ namespace GescomSaas.Web.Pages.Products;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    INumberingService numberingService,
     ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty]
@@ -46,6 +47,9 @@ public class CreateModel(
 
     public async Task OnGetAsync()
     {
+        var tenantId = await GetTenantIdAsync();
+        var rule = await numberingService.GetReferenceRuleAsync(tenantId, ReferenceNumberingScope.Product, HttpContext.RequestAborted);
+        Input.Sku = rule.Preview;
         await LoadDefaultsAsync();
         await LoadLookupsAsync();
         await LoadQuotasAsync();
@@ -62,6 +66,16 @@ public class CreateModel(
         }
 
         var tenantId = await GetTenantIdAsync();
+        try
+        {
+            Input.Sku = await numberingService.ResolveReferenceCodeAsync(tenantId, ReferenceNumberingScope.Product, Input.Sku, HttpContext.RequestAborted);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError("Input.Sku", exception.Message);
+            return Page();
+        }
+
         if (await DbContext.Products.AnyAsync(x => x.TenantId == tenantId && x.Sku == Input.Sku.Trim(), HttpContext.RequestAborted))
         {
             ModelState.AddModelError("Input.Sku", "Cette reference existe deja.");

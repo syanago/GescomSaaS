@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<ICommercialDocumentPdfService, CommercialDocumentPdfService>();
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IStockDocumentService, StockDocumentService>();
+        services.AddScoped<INumberingService, NumberingService>();
         services.AddScoped<IPlatformAdministrationService, PlatformAdministrationService>();
         services.AddScoped<IPlatformInvoicePdfService, PlatformInvoicePdfService>();
         services.AddScoped<PlatformNotificationEmailService>();

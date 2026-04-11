@@ -14,6 +14,7 @@ public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
     ICommercialDocumentWorkflowService workflowService,
+    INumberingService numberingService,
     ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
 {
     [BindProperty(SupportsGet = true)]
@@ -72,6 +73,15 @@ public class CreateModel(
 
         var entity = await workflowService.InitializeDraftAsync(tenantId, documentType, HttpContext.RequestAborted);
         Input.ApplyTo(entity);
+        try
+        {
+            entity.Number = await numberingService.ResolveDocumentNumberAsync(tenantId, documentType, Input.Number, HttpContext.RequestAborted);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError("Input.Number", exception.Message);
+            return Page();
+        }
 
         DbContext.CommercialDocuments.Add(entity);
         await DbContext.SaveChangesAsync(HttpContext.RequestAborted);

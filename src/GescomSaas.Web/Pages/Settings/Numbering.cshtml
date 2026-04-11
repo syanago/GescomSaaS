@@ -1,0 +1,146 @@
+@page
+@model GescomSaas.Web.Pages.Settings.NumberingModel
+@{
+    ViewData["Title"] = "Numerotation";
+}
+
+<section class="page-header-card">
+    <div>
+        <span class="eyebrow">Parametres</span>
+        <h1>Numerotation</h1>
+        <p class="muted-copy">Choisissez, pour chaque referentiel et pour chaque type de piece, si LigCom doit generer la valeur automatiquement ou laisser une saisie manuelle.</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-outline-light" asp-page="/Settings/Index">Retour</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="app-alert">@Model.StatusMessage</div>
+}
+
+<form method="post" class="stack-form">
+    <section class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Referentiels</span>
+                <h2>Regles de base</h2>
+            </div>
+        </div>
+        <div class="table-shell">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Mode</th>
+                        <th>Racine</th>
+                        <th>Taille</th>
+                        <th>Apercu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.Input.References.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model.Input.References[i].Label
+                            <input type="hidden" asp-for="Input.References[i].Key" />
+                            <input type="hidden" asp-for="Input.References[i].Label" />
+                        </td>
+                        <td><select asp-for="Input.References[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
+                        <td><input asp-for="Input.References[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
+                        <td><input asp-for="Input.References[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
+                        <td class="table-meta" data-numbering-preview="true">@Model.Input.References[i].Preview</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="eyebrow">Documents</span>
+                <h2>Numerotation des pieces</h2>
+            </div>
+        </div>
+        <div class="table-shell">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Piece</th>
+                        <th>Mode</th>
+                        <th>Racine</th>
+                        <th>Taille</th>
+                        <th>Apercu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.Input.Documents.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model.Input.Documents[i].Label
+                            <input type="hidden" asp-for="Input.Documents[i].Key" />
+                            <input type="hidden" asp-for="Input.Documents[i].Label" />
+                        </td>
+                        <td><select asp-for="Input.Documents[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
+                        <td><input asp-for="Input.Documents[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
+                        <td><input asp-for="Input.Documents[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
+                        <td class="table-meta" data-numbering-preview="true">@Model.Input.Documents[i].Preview</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
+        <a class="btn btn-outline-light" asp-page="/Settings/Index">Annuler</a>
+    </div>
+    <div class="table-meta">La taille par defaut est de 4 caracteres numeriques, par exemple `CLI-0001` ou `FAC-2026-0001`.</div>
+</form>
+
+@section Scripts {
+    <script>
+        (() => {
+            const rows = document.querySelectorAll('tr');
+            rows.forEach(row => {
+                const modeSelect = row.querySelector('[data-numbering-mode="true"]');
+                const prefixInput = row.querySelector('[data-numbering-prefix="true"]');
+                const lengthInput = row.querySelector('[data-numbering-length="true"]');
+                const previewNode = row.querySelector('[data-numbering-preview="true"]');
+                if (!modeSelect || !prefixInput || !lengthInput || !previewNode) {
+                    return;
+                }
+
+                const buildPreview = () => {
+                    const mode = modeSelect.value;
+                    const length = Math.max(1, Math.min(12, parseInt(lengthInput.value || '4', 10) || 4));
+                    const prefix = prefixInput.value ?? '';
+                    previewNode.textContent = mode === 'Manual'
+                        ? 'Saisie libre'
+                        : `${prefix}${String(1).padStart(length, '0')}`;
+                };
+
+                const refresh = () => {
+                    const disabled = modeSelect.value === 'Manual';
+                    prefixInput.disabled = disabled;
+                    if (disabled) {
+                        prefixInput.value = '';
+                    }
+
+                    buildPreview();
+                };
+
+                modeSelect.addEventListener('change', refresh);
+                prefixInput.addEventListener('input', buildPreview);
+                lengthInput.addEventListener('input', buildPreview);
+                refresh();
+            });
+        })();
+    </script>
+}

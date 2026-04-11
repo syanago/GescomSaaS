@@ -55,6 +55,10 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
+var shouldSeed = args.Any(x =>
+    string.Equals(x, "--seed", StringComparison.OrdinalIgnoreCase) ||
+    string.Equals(x, "--seed-only", StringComparison.OrdinalIgnoreCase));
+var seedOnly = args.Any(x => string.Equals(x, "--seed-only", StringComparison.OrdinalIgnoreCase));
 
 if (args.Any(x => string.Equals(x, "--drop-database", StringComparison.OrdinalIgnoreCase)))
 {
@@ -63,8 +67,12 @@ if (args.Any(x => string.Equals(x, "--drop-database", StringComparison.OrdinalIg
     await dbContext.Database.EnsureDeletedAsync();
 }
 
-await app.Services.SeedApplicationAsync();
-if (args.Any(x => string.Equals(x, "--seed-only", StringComparison.OrdinalIgnoreCase)))
+if (shouldSeed)
+{
+    await app.Services.SeedApplicationAsync();
+}
+
+if (seedOnly)
 {
     return;
 }

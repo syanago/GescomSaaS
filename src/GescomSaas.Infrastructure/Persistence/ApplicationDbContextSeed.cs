@@ -198,64 +198,49 @@ public static class ApplicationDbContextSeed
         string currencyCode)
     {
         var tenant = await context.Tenants.FirstOrDefaultAsync(x => x.Slug == slug);
-        var isNewTenant = tenant is null;
+        var isNew = tenant is null;
         if (tenant is null)
         {
             tenant = new Tenant { Slug = slug };
             context.Tenants.Add(tenant);
         }
 
-        if (isNewTenant)
+        tenant.CompanyName = companyName;
+        tenant.CompanyLegalName = isNew || string.IsNullOrWhiteSpace(tenant.CompanyLegalName) ? companyLegalName : tenant.CompanyLegalName;
+        tenant.PrimaryContactEmail = primaryContactEmail;
+        tenant.PhoneNumber = isNew || string.IsNullOrWhiteSpace(tenant.PhoneNumber) ? phoneNumber : tenant.PhoneNumber;
+        tenant.AddressLine1 = isNew || string.IsNullOrWhiteSpace(tenant.AddressLine1) ? addressLine1 : tenant.AddressLine1;
+        tenant.AddressLine2 = isNew || string.IsNullOrWhiteSpace(tenant.AddressLine2) ? addressLine2 : tenant.AddressLine2;
+        tenant.PostalCode = isNew || string.IsNullOrWhiteSpace(tenant.PostalCode) ? postalCode : tenant.PostalCode;
+        tenant.City = isNew || string.IsNullOrWhiteSpace(tenant.City) ? city : tenant.City;
+        tenant.State = isNew || string.IsNullOrWhiteSpace(tenant.State) ? state : tenant.State;
+        tenant.CountryCode = countryCode;
+        tenant.CurrencyCode = isNew || string.IsNullOrWhiteSpace(tenant.CurrencyCode) ? currencyCode : tenant.CurrencyCode;
+        tenant.CashCurrencyCode = isNew || string.IsNullOrWhiteSpace(tenant.CashCurrencyCode) ? tenant.CurrencyCode : tenant.CashCurrencyCode;
+        tenant.CurrencySymbol = isNew || string.IsNullOrWhiteSpace(tenant.CurrencySymbol) ? "$" : tenant.CurrencySymbol;
+        if (isNew)
         {
-            tenant.CompanyName = companyName;
-            tenant.CompanyLegalName = companyLegalName;
-            tenant.PrimaryContactEmail = primaryContactEmail;
-            tenant.PhoneNumber = phoneNumber;
-            tenant.AddressLine1 = addressLine1;
-            tenant.AddressLine2 = addressLine2;
-            tenant.PostalCode = postalCode;
-            tenant.City = city;
-            tenant.State = state;
-            tenant.CountryCode = countryCode;
-            tenant.CurrencyCode = currencyCode;
-            tenant.CashCurrencyCode = currencyCode;
-            tenant.CurrencySymbol = "$";
             tenant.CurrencySymbolPosition = CurrencySymbolPosition.BeforeAmount;
-            tenant.MoneyDecimalSeparator = ",";
-            tenant.MoneyGroupSeparator = " ";
+        }
+
+        tenant.MoneyDecimalSeparator = isNew || tenant.MoneyDecimalSeparator is null ? "," : tenant.MoneyDecimalSeparator;
+        tenant.MoneyGroupSeparator = isNew || tenant.MoneyGroupSeparator is null ? " " : tenant.MoneyGroupSeparator;
+        if (isNew)
+        {
             tenant.MoneyDecimalPlaces = 2;
-            tenant.QuantityDecimalSeparator = ",";
-            tenant.QuantityGroupSeparator = " ";
+        }
+
+        tenant.QuantityDecimalSeparator = isNew || tenant.QuantityDecimalSeparator is null ? "," : tenant.QuantityDecimalSeparator;
+        tenant.QuantityGroupSeparator = isNew || tenant.QuantityGroupSeparator is null ? " " : tenant.QuantityGroupSeparator;
+        if (isNew)
+        {
             tenant.QuantityDecimalPlaces = 3;
+            tenant.VisualTheme = ApplicationTheme.LigComMidnight;
             tenant.AllowNegativeStock = false;
             tenant.DefaultStockValuationMethod = StockValuationMethod.Cmup;
-            tenant.VisualTheme = ApplicationTheme.LigComMidnight;
-            tenant.IsActive = true;
         }
-        else
-        {
-            tenant.CompanyName = string.IsNullOrWhiteSpace(tenant.CompanyName) ? companyName : tenant.CompanyName;
-            tenant.CompanyLegalName = string.IsNullOrWhiteSpace(tenant.CompanyLegalName) ? companyLegalName : tenant.CompanyLegalName;
-            tenant.PrimaryContactEmail = string.IsNullOrWhiteSpace(tenant.PrimaryContactEmail) ? primaryContactEmail : tenant.PrimaryContactEmail;
-            tenant.PhoneNumber = string.IsNullOrWhiteSpace(tenant.PhoneNumber) ? phoneNumber : tenant.PhoneNumber;
-            tenant.AddressLine1 = string.IsNullOrWhiteSpace(tenant.AddressLine1) ? addressLine1 : tenant.AddressLine1;
-            tenant.AddressLine2 = string.IsNullOrWhiteSpace(tenant.AddressLine2) ? addressLine2 : tenant.AddressLine2;
-            tenant.PostalCode = string.IsNullOrWhiteSpace(tenant.PostalCode) ? postalCode : tenant.PostalCode;
-            tenant.City = string.IsNullOrWhiteSpace(tenant.City) ? city : tenant.City;
-            tenant.State = string.IsNullOrWhiteSpace(tenant.State) ? state : tenant.State;
-            tenant.CountryCode = string.IsNullOrWhiteSpace(tenant.CountryCode) ? countryCode : tenant.CountryCode;
-            tenant.CurrencyCode = string.IsNullOrWhiteSpace(tenant.CurrencyCode) ? currencyCode : tenant.CurrencyCode;
-            tenant.CashCurrencyCode = string.IsNullOrWhiteSpace(tenant.CashCurrencyCode) ? tenant.CurrencyCode : tenant.CashCurrencyCode;
-            tenant.CurrencySymbol = string.IsNullOrWhiteSpace(tenant.CurrencySymbol) ? "$" : tenant.CurrencySymbol;
-            tenant.MoneyDecimalSeparator = string.IsNullOrEmpty(tenant.MoneyDecimalSeparator) ? "," : tenant.MoneyDecimalSeparator;
-            tenant.MoneyGroupSeparator ??= " ";
-            tenant.MoneyDecimalPlaces = tenant.MoneyDecimalPlaces < 0 ? 2 : tenant.MoneyDecimalPlaces;
-            tenant.QuantityDecimalSeparator = string.IsNullOrEmpty(tenant.QuantityDecimalSeparator) ? "," : tenant.QuantityDecimalSeparator;
-            tenant.QuantityGroupSeparator ??= " ";
-            tenant.QuantityDecimalPlaces = tenant.QuantityDecimalPlaces < 0 ? 3 : tenant.QuantityDecimalPlaces;
-            tenant.VisualTheme = Enum.IsDefined(tenant.VisualTheme) ? tenant.VisualTheme : ApplicationTheme.LigComMidnight;
-            tenant.IsActive = true;
-        }
+
+        tenant.IsActive = true;
 
         if (context.ChangeTracker.HasChanges())
         {
@@ -851,6 +836,8 @@ public static class ApplicationDbContextSeed
                 items[seed.DocumentType] = item;
             }
 
+            item.Mode = NumberingMode.AutomaticWithPrefix;
+            item.NumberLength = 4;
             item.Prefix = seed.Prefix;
             item.NextValue = Math.Max(item.NextValue, seed.NextValue);
         }
