@@ -4,6 +4,8 @@ namespace GescomSaas.Application.Models;
 
 public sealed record OpenItemSummary(
     Guid DocumentId,
+    Guid? PartnerId,
+    string? PartnerCode,
     string Number,
     string PartnerName,
     DateOnly DocumentDate,
@@ -14,5 +16,8 @@ public sealed record OpenItemSummary(
     decimal BalanceAmount,
     int OverdueDays,
     CommercialDocumentStatus Status,
+    CommercialPaymentStatus PaymentStatus,
+    bool InDispute,
+    DateOnly? PromiseToPayDate,
     ReminderLevel? LastReminderLevel,
     DateTime? LastReminderOnUtc);

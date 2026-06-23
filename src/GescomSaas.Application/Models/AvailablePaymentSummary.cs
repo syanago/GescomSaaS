@@ -2,19 +2,13 @@ using GescomSaas.Domain.Enums;
 
 namespace GescomSaas.Application.Models;
 
-public sealed record PaymentHistoryItem(
+public sealed record AvailablePaymentSummary(
     Guid PaymentId,
     DateOnly PaymentDate,
     string ReferenceNumber,
-    Guid PartnerId,
-    string? PartnerCode,
-    string PartnerName,
-    PaymentDirection Direction,
     PaymentType Type,
     PaymentMethod Method,
-    PaymentAllocationStatus AllocationStatus,
     string CurrencyCode,
     decimal Amount,
     decimal AllocatedAmount,
-    decimal AvailableAmount,
-    int AllocationCount);
+    decimal AvailableAmount);

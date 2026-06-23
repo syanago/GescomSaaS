@@ -28,12 +28,14 @@ public sealed record TenantDisplaySettings(
     public string ThemeCssClass => VisualTheme switch
     {
         ApplicationTheme.LigComEmeraldLight => "theme-emerald-light",
+        ApplicationTheme.LigComIvoryLight => "theme-ivory-light",
         _ => "theme-midnight"
     };
 
     public string ThemeLabel => VisualTheme switch
     {
         ApplicationTheme.LigComEmeraldLight => "LigCom Vert Clair",
+        ApplicationTheme.LigComIvoryLight => "LigCom Ivoire",
         _ => "LigCom Nuit"
     };
 
