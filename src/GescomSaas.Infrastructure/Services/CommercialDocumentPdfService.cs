@@ -1,6 +1,9 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
+using GescomSaas.Domain.Entities.Commercial;
+using GescomSaas.Domain.Entities.SaaS;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
@@ -28,9 +31,14 @@ public class CommercialDocumentPdfService(ApplicationDbContext dbContext) : ICom
                 .ThenInclude(x => x.Product)
             .FirstOrDefaultAsync(x => x.Id == documentId && x.TenantId == tenantId, cancellationToken);
 
-        if (tenant is null || document is null)
+        if (tenant is null)
         {
-            throw new InvalidOperationException("Document introuvable pour l'export PDF.");
+            throw new NotFoundException(nameof(Tenant), tenantId);
+        }
+
+        if (document is null)
+        {
+            throw new NotFoundException(nameof(CommercialDocument), documentId);
         }
 
         var pdfBytes = Document.Create(container =>

@@ -3,6 +3,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.SaaS;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Identity;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
@@ -37,7 +38,7 @@ public class PlatformUserAdministrationService(
 
         if (tenant is null)
         {
-            throw new InvalidOperationException("Tenant introuvable.");
+            throw new NotFoundException(nameof(Tenant), tenantId);
         }
 
         await EnsureTenantRolesExistAsync();
@@ -136,7 +137,7 @@ public class PlatformUserAdministrationService(
 
         if (tenant is null)
         {
-            throw new InvalidOperationException("Tenant introuvable.");
+            throw new NotFoundException(nameof(Tenant), tenantId);
         }
 
         await EnsureTenantRolesExistAsync();
@@ -147,12 +148,16 @@ public class PlatformUserAdministrationService(
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser?.TenantId.HasValue == true && existingUser.TenantId != tenantId)
         {
-            throw new InvalidOperationException("Cet utilisateur est deja rattache a un autre tenant.");
+            throw new BusinessRuleException(
+                "Cet utilisateur est deja rattache a un autre tenant.",
+                errorCode: "USER_ALREADY_LINKED_TO_OTHER_TENANT");
         }
 
         if (existingUser?.TenantId == tenantId)
         {
-            throw new InvalidOperationException("Cet utilisateur est deja rattache a ce tenant.");
+            throw new BusinessRuleException(
+                "Cet utilisateur est deja rattache a ce tenant.",
+                errorCode: "USER_ALREADY_LINKED_TO_THIS_TENANT");
         }
 
         var hasPendingInvitation = await dbContext.UserInvitations
@@ -165,7 +170,9 @@ public class PlatformUserAdministrationService(
 
         if (hasPendingInvitation)
         {
-            throw new InvalidOperationException("Une invitation en cours existe deja pour cette adresse e-mail.");
+            throw new BusinessRuleException(
+                "Une invitation en cours existe deja pour cette adresse e-mail.",
+                errorCode: "INVITATION_PENDING_DUPLICATE");
         }
 
         var invitation = new UserInvitation
@@ -193,17 +200,19 @@ public class PlatformUserAdministrationService(
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            throw new InvalidOperationException("Utilisateur introuvable.");
+            throw new NotFoundException(nameof(ApplicationUser), userId);
         }
 
         if (user.TenantId.HasValue && user.TenantId != tenantId)
         {
-            throw new InvalidOperationException("Cet utilisateur est deja rattache a un autre tenant.");
+            throw new BusinessRuleException(
+                "Cet utilisateur est deja rattache a un autre tenant.",
+                errorCode: "USER_ALREADY_LINKED_TO_OTHER_TENANT");
         }
 
         if (!await dbContext.Tenants.AsNoTracking().AnyAsync(x => x.Id == tenantId, cancellationToken))
         {
-            throw new InvalidOperationException("Tenant introuvable.");
+            throw new NotFoundException(nameof(Tenant), tenantId);
         }
 
         var normalizedRoles = await NormalizeRequestedRolesAsync(roles);
@@ -238,7 +247,7 @@ public class PlatformUserAdministrationService(
         var user = await userManager.FindByIdAsync(userId);
         if (user is null || user.TenantId != tenantId)
         {
-            throw new InvalidOperationException("Utilisateur de tenant introuvable.");
+            throw new NotFoundException("TenantUser", userId);
         }
 
         var normalizedRoles = await NormalizeRequestedRolesAsync(request.Roles);
@@ -257,7 +266,7 @@ public class PlatformUserAdministrationService(
         var user = await userManager.FindByIdAsync(userId);
         if (user is null || user.TenantId != tenantId)
         {
-            throw new InvalidOperationException("Utilisateur de tenant introuvable.");
+            throw new NotFoundException("TenantUser", userId);
         }
 
         await EnsureTenantOwnerWillRemainAsync(tenantId, user, [], cancellationToken);
@@ -283,12 +292,14 @@ public class PlatformUserAdministrationService(
 
         if (invitation is null)
         {
-            throw new InvalidOperationException("Invitation introuvable.");
+            throw new NotFoundException("UserInvitation", invitationId);
         }
 
         if (invitation.Status == UserInvitationStatus.Accepted)
         {
-            throw new InvalidOperationException("Cette invitation a deja ete acceptee.");
+            throw new BusinessRuleException(
+                "Cette invitation a deja ete acceptee.",
+                errorCode: "INVITATION_ALREADY_ACCEPTED");
         }
 
         invitation.Status = UserInvitationStatus.Cancelled;
@@ -333,24 +344,30 @@ public class PlatformUserAdministrationService(
 
         if (invitation is null || invitation.Tenant is null)
         {
-            throw new InvalidOperationException("Invitation introuvable.");
+            throw new NotFoundException("UserInvitation", token);
         }
 
         if (invitation.Status == UserInvitationStatus.Accepted)
         {
-            throw new InvalidOperationException("Cette invitation a deja ete acceptee.");
+            throw new BusinessRuleException(
+                "Cette invitation a deja ete acceptee.",
+                errorCode: "INVITATION_ALREADY_ACCEPTED");
         }
 
         if (invitation.Status == UserInvitationStatus.Cancelled)
         {
-            throw new InvalidOperationException("Cette invitation a ete annulee.");
+            throw new BusinessRuleException(
+                "Cette invitation a ete annulee.",
+                errorCode: "INVITATION_CANCELLED");
         }
 
         if (invitation.ExpiresOnUtc <= DateTime.UtcNow)
         {
             invitation.Status = UserInvitationStatus.Expired;
             await dbContext.SaveChangesAsync(cancellationToken);
-            throw new InvalidOperationException("Cette invitation a expire.");
+            throw new BusinessRuleException(
+                "Cette invitation a expire.",
+                errorCode: "INVITATION_EXPIRED");
         }
 
         var roles = await NormalizeRequestedRolesAsync(ParseRoles(invitation.RequestedRoles));
@@ -359,7 +376,9 @@ public class PlatformUserAdministrationService(
         var user = await userManager.FindByEmailAsync(email);
         if (user is not null && user.TenantId.HasValue && user.TenantId != invitation.TenantId)
         {
-            throw new InvalidOperationException("Ce compte utilisateur est deja rattache a un autre tenant.");
+            throw new BusinessRuleException(
+                "Ce compte utilisateur est deja rattache a un autre tenant.",
+                errorCode: "USER_ALREADY_LINKED_TO_OTHER_TENANT");
         }
 
         if (user is null)
@@ -368,7 +387,10 @@ public class PlatformUserAdministrationService(
 
             if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new InvalidOperationException("Un mot de passe est requis pour creer le compte.");
+                throw new ValidationException(new Dictionary<string, string[]>
+                {
+                    ["Password"] = new[] { "Un mot de passe est requis pour creer le compte." },
+                });
             }
 
             user = new ApplicationUser
@@ -402,7 +424,10 @@ public class PlatformUserAdministrationService(
             {
                 if (string.IsNullOrWhiteSpace(request.Password))
                 {
-                    throw new InvalidOperationException("Un mot de passe est requis pour finaliser l'invitation.");
+                    throw new ValidationException(new Dictionary<string, string[]>
+                    {
+                        ["Password"] = new[] { "Un mot de passe est requis pour finaliser l'invitation." },
+                    });
                 }
 
                 var addPasswordResult = await userManager.AddPasswordAsync(user, request.Password);
@@ -456,13 +481,20 @@ public class PlatformUserAdministrationService(
 
         if (normalizedRoles.Count == 0)
         {
-            throw new InvalidOperationException("Selectionnez au moins un role.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["Roles"] = new[] { "Selectionnez au moins un role." },
+            });
         }
 
         var invalidRoles = normalizedRoles.Where(role => !IsTenantRole(role)).ToList();
         if (invalidRoles.Count > 0)
         {
-            throw new InvalidOperationException($"Roles invalides: {string.Join(", ", invalidRoles)}.");
+            var ex = new BusinessRuleException(
+                $"Roles invalides: {string.Join(", ", invalidRoles)}.",
+                errorCode: "USER_INVALID_ROLES");
+            ex.Data["invalidRoles"] = invalidRoles;
+            throw ex;
         }
 
         await EnsureTenantRolesExistAsync();
@@ -517,7 +549,9 @@ public class PlatformUserAdministrationService(
 
         if (ownerCount <= 1)
         {
-            throw new InvalidOperationException("Le tenant doit conserver au moins un TenantOwner.");
+            throw new BusinessRuleException(
+                "Le tenant doit conserver au moins un TenantOwner.",
+                errorCode: "TENANT_MUST_KEEP_OWNER");
         }
     }
 
@@ -541,7 +575,10 @@ public class PlatformUserAdministrationService(
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            throw new InvalidOperationException("L'adresse e-mail est obligatoire.");
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["Email"] = new[] { "L'adresse e-mail est obligatoire." },
+            });
         }
 
         return email.Trim().ToLowerInvariant();
@@ -614,7 +651,11 @@ public class PlatformUserAdministrationService(
         }
 
         var details = string.Join(", ", result.Errors.Select(x => x.Description));
-        throw new InvalidOperationException($"{message} {details}".Trim());
+        var ex = new BusinessRuleException(
+            $"{message} {details}".Trim(),
+            errorCode: "IDENTITY_OPERATION_FAILED");
+        ex.Data["identityErrors"] = result.Errors.Select(x => x.Description).ToArray();
+        throw ex;
     }
 
     private sealed record TenantScopedUserProjection(

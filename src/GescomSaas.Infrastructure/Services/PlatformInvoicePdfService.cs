@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.SaaS;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
@@ -23,7 +24,7 @@ public class PlatformInvoicePdfService(ApplicationDbContext dbContext) : IPlatfo
 
         if (invoice is null || invoice.Tenant is null)
         {
-            throw new InvalidOperationException("Facture plateforme introuvable pour l'export PDF.");
+            throw new NotFoundException(nameof(PlatformInvoice), invoiceId);
         }
 
         var pdfBytes = Document.Create(container =>

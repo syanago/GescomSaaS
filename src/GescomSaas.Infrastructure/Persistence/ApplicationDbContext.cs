@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CommercialDocument> CommercialDocuments => Set<CommercialDocument>();
     public DbSet<CommercialDocumentLine> CommercialDocumentLines => Set<CommercialDocumentLine>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
+    public DbSet<JournalAccount> JournalAccounts => Set<JournalAccount>();
     public DbSet<ReferenceNumberingSetting> ReferenceNumberingSettings => Set<ReferenceNumberingSetting>();
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -33,6 +34,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SageImportProfile> SageImportProfiles => Set<SageImportProfile>();
     public DbSet<SageImportProfileVersion> SageImportProfileVersions => Set<SageImportProfileVersion>();
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+    public DbSet<TenantAccessProfile> TenantAccessProfiles => Set<TenantAccessProfile>();
+    public DbSet<TenantAccessProfilePermission> TenantAccessProfilePermissions => Set<TenantAccessProfilePermission>();
+    public DbSet<TenantUserAccessProfile> TenantUserAccessProfiles => Set<TenantUserAccessProfile>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantQuotaNotification> TenantQuotaNotifications => Set<TenantQuotaNotification>();
     public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
@@ -64,12 +68,49 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.MoneyGroupSeparator).HasMaxLength(4);
             entity.Property(x => x.QuantityDecimalSeparator).HasMaxLength(4);
             entity.Property(x => x.QuantityGroupSeparator).HasMaxLength(4);
+            entity.Property(x => x.PaymentMethodsJson).HasMaxLength(400);
             entity.Property(x => x.CountryCode).HasMaxLength(2);
             entity.Property(x => x.SageSqlServerName).HasMaxLength(120);
             entity.Property(x => x.SageSqlDatabaseName).HasMaxLength(120);
             entity.Property(x => x.SageSqlUserName).HasMaxLength(120);
             entity.Property(x => x.SageSqlPassword).HasMaxLength(200);
             entity.Property(x => x.SageCompanyCode).HasMaxLength(80);
+        });
+
+        builder.Entity<TenantAccessProfile>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(120);
+            entity.Property(x => x.Description).HasMaxLength(600);
+            entity.HasOne(x => x.Tenant)
+                .WithMany(x => x.AccessProfiles)
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<TenantAccessProfilePermission>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantAccessProfileId, x.PermissionKey }).IsUnique();
+            entity.Property(x => x.PermissionKey).HasMaxLength(120);
+            entity.HasOne(x => x.TenantAccessProfile)
+                .WithMany(x => x.Permissions)
+                .HasForeignKey(x => x.TenantAccessProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<TenantUserAccessProfile>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantId, x.UserId, x.TenantAccessProfileId }).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.UserId });
+            entity.Property(x => x.UserId).HasMaxLength(450);
+            entity.HasOne(x => x.Tenant)
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.TenantAccessProfile)
+                .WithMany(x => x.UserAssignments)
+                .HasForeignKey(x => x.TenantAccessProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<SubscriptionPlan>(entity =>
@@ -116,7 +157,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(x => x.TenantId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<SageImportRunModule>(entity =>
@@ -297,6 +338,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.Prefix).HasMaxLength(20);
         });
 
+        builder.Entity<JournalAccount>(entity =>
+        {
+            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+            entity.Property(x => x.Code).HasMaxLength(20);
+            entity.Property(x => x.Label).HasMaxLength(120);
+            entity.Property(x => x.CounterpartAccountCode).HasMaxLength(30);
+        });
+
         builder.Entity<ReferenceNumberingSetting>(entity =>
         {
             entity.HasIndex(x => new { x.TenantId, x.Scope }).IsUnique();
@@ -311,6 +360,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.TotalExcludingTax).HasPrecision(18, 2);
             entity.Property(x => x.TotalTax).HasPrecision(18, 2);
             entity.Property(x => x.TotalIncludingTax).HasPrecision(18, 2);
+            entity.Property(x => x.PaidAmount).HasPrecision(18, 2);
+            entity.Property(x => x.BalanceAmount).HasPrecision(18, 2);
 
             entity.HasOne(x => x.SourceDocument)
                 .WithMany(x => x.DerivedDocuments)
@@ -324,15 +375,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.ReferenceNumber).HasMaxLength(50);
             entity.Property(x => x.CurrencyCode).HasMaxLength(3);
             entity.Property(x => x.Amount).HasPrecision(18, 2);
+            entity.Property(x => x.AllocatedAmount).HasPrecision(18, 2);
+            entity.Property(x => x.AvailableAmount).HasPrecision(18, 2);
             entity.HasOne(x => x.Partner)
                 .WithMany(x => x.Payments)
                 .HasForeignKey(x => x.PartnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.SourceCommercialDocument)
+                .WithMany()
+                .HasForeignKey(x => x.SourceCommercialDocumentId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<PaymentAllocation>(entity =>
         {
             entity.Property(x => x.AllocatedAmount).HasPrecision(18, 2);
+            entity.Property(x => x.Notes).HasMaxLength(400);
             entity.HasOne(x => x.Payment)
                 .WithMany(x => x.Allocations)
                 .HasForeignKey(x => x.PaymentId);
@@ -345,6 +403,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ReminderLog>(entity =>
         {
             entity.Property(x => x.Channel).HasMaxLength(30);
+            entity.Property(x => x.Notes).HasMaxLength(400);
             entity.HasOne(x => x.CommercialDocument)
                 .WithMany(x => x.ReminderLogs)
                 .HasForeignKey(x => x.CommercialDocumentId)

@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace GescomSaas.Infrastructure.Services;
 public class CommercialDocumentWorkflowService(
     ApplicationDbContext dbContext,
     ITenantQuotaEnforcementService tenantQuotaEnforcementService,
+    ISettlementService settlementService,
     INumberingService numberingService) : ICommercialDocumentWorkflowService
 {
     public async Task<CommercialDocument> InitializeDraftAsync(Guid tenantId, CommercialDocumentType documentType, CancellationToken cancellationToken = default)
@@ -37,16 +39,23 @@ public class CommercialDocumentWorkflowService(
 
         if (source is null)
         {
-            throw new InvalidOperationException("Document source introuvable.");
+            throw new NotFoundException(nameof(CommercialDocument), sourceDocumentId);
         }
 
         ValidateTransition(source.DocumentType, targetDocumentType);
         await tenantQuotaEnforcementService.EnsureCanCreateDocumentAsync(tenantId, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken);
+        if (source.PartnerId != Guid.Empty)
+        {
+            await settlementService.EnsureSalesDocumentAllowedAsync(tenantId, source.PartnerId, targetDocumentType, cancellationToken);
+        }
+
         var numberingRule = await numberingService.GetDocumentRuleAsync(tenantId, targetDocumentType, cancellationToken);
 
         if (numberingRule.Mode == NumberingMode.Manual)
         {
-            throw new InvalidOperationException("La numerotation de cette piece est en mode manuel. Cree d'abord le document depuis l'ecran Nouveau pour saisir son numero.");
+            throw new BusinessRuleException(
+                "La numerotation de cette piece est en mode manuel. Cree d'abord le document depuis l'ecran Nouveau pour saisir son numero.",
+                errorCode: "DOC_MANUAL_NUMBERING_REQUIRED");
         }
 
         var target = await InitializeDraftAsync(tenantId, targetDocumentType, cancellationToken);
@@ -169,7 +178,9 @@ public class CommercialDocumentWorkflowService(
 
         if (!valid)
         {
-            throw new InvalidOperationException("Transformation de document non autorisee.");
+            throw new BusinessRuleException(
+                $"Transformation non autorisee : {sourceType} -> {targetType}.",
+                errorCode: "DOC_INVALID_TRANSITION");
         }
     }
 

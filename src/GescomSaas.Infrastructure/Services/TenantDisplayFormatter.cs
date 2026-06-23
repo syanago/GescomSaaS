@@ -3,6 +3,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace GescomSaas.Infrastructure.Services;
@@ -20,35 +21,42 @@ public class TenantDisplayFormatter(
             return settings;
         }
 
-        var tenantId = currentTenantAccessor.GetTenantId();
-        var query = dbContext.Tenants.AsNoTracking();
-        settings = (tenantId.HasValue
-                ? query.Where(x => x.Id == tenantId.Value)
-                : query.OrderBy(x => x.CompanyName))
-            .Select(x => new TenantDisplaySettings(
-                x.CompanyName,
-                x.CompanyLegalName,
-                x.PrimaryContactEmail,
-                x.PhoneNumber,
-                x.AddressLine1,
-                x.AddressLine2,
-                x.PostalCode,
-                x.City,
-                x.State,
-                x.CountryCode,
-                x.CurrencyCode,
-                x.CashCurrencyCode,
-                x.CurrencySymbol,
-                x.CurrencySymbolPosition,
-                x.MoneyDecimalSeparator,
-                x.MoneyGroupSeparator,
-                x.MoneyDecimalPlaces,
-                x.QuantityDecimalSeparator,
-                x.QuantityGroupSeparator,
-                x.QuantityDecimalPlaces,
-                x.VisualTheme))
-            .FirstOrDefault()
-            ?? TenantDisplaySettings.Default;
+        try
+        {
+            var tenantId = currentTenantAccessor.GetTenantId();
+            var query = dbContext.Tenants.AsNoTracking();
+            settings = (tenantId.HasValue
+                    ? query.Where(x => x.Id == tenantId.Value)
+                    : query.OrderBy(x => x.CompanyName))
+                .Select(x => new TenantDisplaySettings(
+                    x.CompanyName,
+                    x.CompanyLegalName,
+                    x.PrimaryContactEmail,
+                    x.PhoneNumber,
+                    x.AddressLine1,
+                    x.AddressLine2,
+                    x.PostalCode,
+                    x.City,
+                    x.State,
+                    x.CountryCode,
+                    x.CurrencyCode,
+                    x.CashCurrencyCode,
+                    x.CurrencySymbol,
+                    x.CurrencySymbolPosition,
+                    x.MoneyDecimalSeparator,
+                    x.MoneyGroupSeparator,
+                    x.MoneyDecimalPlaces,
+                    x.QuantityDecimalSeparator,
+                    x.QuantityGroupSeparator,
+                    x.QuantityDecimalPlaces,
+                    x.VisualTheme))
+                .FirstOrDefault()
+                ?? TenantDisplaySettings.Default;
+        }
+        catch (SqlException)
+        {
+            settings = TenantDisplaySettings.Default;
+        }
 
         return settings;
     }

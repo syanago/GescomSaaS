@@ -2,6 +2,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,6 +58,9 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
                 TotalQuantity = dbContext.StockMovements.Where(m => m.TenantId == tenantId && m.WarehouseId == x.Id).Sum(m => (decimal?)m.Quantity) ?? 0m,
                 TotalValue = dbContext.StockMovements.Where(m => m.TenantId == tenantId && m.WarehouseId == x.Id).Sum(m => (decimal?)(m.Quantity * m.UnitCost)) ?? 0m
             })
+            .ToListAsync(cancellationToken);
+
+        var mappedWarehouses = warehouseStocks
             .OrderByDescending(x => x.TotalValue)
             .ThenBy(x => x.Code)
             .Select(x => new WarehouseInventoryItem(
@@ -65,14 +69,14 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
                 x.Label,
                 x.TotalQuantity,
                 x.TotalValue))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return new InventoryDashboardSnapshot(
             mappedProducts.Count,
             mappedProducts.Sum(x => x.OnHandQuantity),
             mappedProducts.Sum(x => x.StockValue),
             mappedProducts,
-            warehouseStocks);
+            mappedWarehouses);
     }
 
     public async Task<IReadOnlyList<InventoryMovementItem>> GetMovementsAsync(Guid tenantId, Guid? productId = null, Guid? warehouseId = null, CancellationToken cancellationToken = default)
@@ -245,12 +249,16 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
     {
         if (document.Status == StockDocumentStatus.Posted)
         {
-            throw new InvalidOperationException("Ce document de stock est deja valide.");
+            throw new BusinessRuleException(
+                "Ce document de stock est deja valide.",
+                errorCode: "STOCK_DOC_ALREADY_POSTED");
         }
 
         if (document.Lines.Count == 0)
         {
-            throw new InvalidOperationException("Ajoute au moins une ligne avant de valider ce document.");
+            throw new BusinessRuleException(
+                "Ajoute au moins une ligne avant de valider ce document.",
+                errorCode: "STOCK_DOC_NO_LINES");
         }
 
         await ValidateStockDocumentWarehousesAsync(tenantId, document, cancellationToken);
@@ -259,7 +267,9 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
         {
             if (line.Quantity <= 0m)
             {
-                throw new InvalidOperationException("Chaque ligne de document de stock doit avoir une quantite strictement positive.");
+                throw new BusinessRuleException(
+                    "Chaque ligne de document de stock doit avoir une quantite strictement positive.",
+                    errorCode: "STOCK_LINE_QUANTITY_INVALID");
             }
 
             var productContext = await GetTrackedProductContextAsync(tenantId, line.ProductId!.Value, cancellationToken);
@@ -366,18 +376,22 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
     {
         if (request.Quantity <= 0m)
         {
-            throw new InvalidOperationException("La quantite doit etre strictement positive.");
+            throw new BusinessRuleException(
+                "La quantite doit etre strictement positive.",
+                errorCode: "STOCK_ADJUSTMENT_QUANTITY_INVALID");
         }
 
         if (request.MovementType is not StockMovementType.AdjustmentIn and not StockMovementType.AdjustmentOut)
         {
-            throw new InvalidOperationException("Le type de mouvement doit etre un ajustement d'inventaire.");
+            throw new BusinessRuleException(
+                "Le type de mouvement doit etre un ajustement d'inventaire.",
+                errorCode: "STOCK_ADJUSTMENT_TYPE_INVALID");
         }
 
         var productContext = await GetTrackedProductContextAsync(tenantId, request.ProductId, cancellationToken);
         if (productContext is null)
         {
-            throw new InvalidOperationException("Article stockable introuvable.");
+            throw new NotFoundException(nameof(Product), request.ProductId);
         }
         await EnsureWarehouseExistsAsync(tenantId, request.WarehouseId, cancellationToken);
 
@@ -422,7 +436,7 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
 
         foreach (var line in deliveryNote.Lines.Where(x => x.ProductId.HasValue))
         {
-            var productContext = await GetTrackedProductContextAsync(tenantId, line.ProductId!.Value, cancellationToken, allowNull: true);
+            var productContext = await TryGetTrackedProductContextAsync(tenantId, line.ProductId!.Value, cancellationToken);
             if (productContext is null)
             {
                 continue;
@@ -466,7 +480,7 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
 
         foreach (var line in goodsReceipt.Lines.Where(x => x.ProductId.HasValue))
         {
-            var productContext = await GetTrackedProductContextAsync(tenantId, line.ProductId!.Value, cancellationToken, allowNull: true);
+            var productContext = await TryGetTrackedProductContextAsync(tenantId, line.ProductId!.Value, cancellationToken);
             if (productContext is null)
             {
                 continue;
@@ -491,7 +505,7 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<ProductStockContext?> GetTrackedProductContextAsync(Guid tenantId, Guid productId, CancellationToken cancellationToken, bool allowNull = false)
+    private async Task<ProductStockContext> GetTrackedProductContextAsync(Guid tenantId, Guid productId, CancellationToken cancellationToken)
     {
         var product = await dbContext.Products
             .AsNoTracking()
@@ -500,12 +514,26 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
 
         if (product is null || !product.TrackStock)
         {
-            if (allowNull)
-            {
-                return null;
-            }
+            throw new NotFoundException("StockableProduct", productId);
+        }
 
-            throw new InvalidOperationException("Article stockable introuvable.");
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstAsync(x => x.Id == tenantId, cancellationToken);
+
+        return new ProductStockContext(product, tenant);
+    }
+
+    private async Task<ProductStockContext?> TryGetTrackedProductContextAsync(Guid tenantId, Guid productId, CancellationToken cancellationToken)
+    {
+        var product = await dbContext.Products
+            .AsNoTracking()
+            .Include(x => x.ProductCategory)
+            .FirstOrDefaultAsync(x => x.Id == productId && x.TenantId == tenantId, cancellationToken);
+
+        if (product is null || !product.TrackStock)
+        {
+            return null;
         }
 
         var tenant = await dbContext.Tenants
@@ -523,7 +551,7 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
 
         if (!warehouseExists)
         {
-            throw new InvalidOperationException("Depot introuvable.");
+            throw new NotFoundException("Warehouse", warehouseId);
         }
     }
 
@@ -534,7 +562,9 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
             case StockDocumentType.Entry:
                 if (!document.DestinationWarehouseId.HasValue)
                 {
-                    throw new InvalidOperationException("Selectionne le depot de destination pour une entree de stock.");
+                    throw new BusinessRuleException(
+                        "Selectionne le depot de destination pour une entree de stock.",
+                        errorCode: "STOCK_ENTRY_DESTINATION_REQUIRED");
                 }
 
                 await EnsureWarehouseExistsAsync(tenantId, document.DestinationWarehouseId.Value, cancellationToken);
@@ -543,7 +573,9 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
             case StockDocumentType.Exit:
                 if (!document.SourceWarehouseId.HasValue)
                 {
-                    throw new InvalidOperationException("Selectionne le depot source pour une sortie de stock.");
+                    throw new BusinessRuleException(
+                        "Selectionne le depot source pour une sortie de stock.",
+                        errorCode: "STOCK_EXIT_SOURCE_REQUIRED");
                 }
 
                 await EnsureWarehouseExistsAsync(tenantId, document.SourceWarehouseId.Value, cancellationToken);
@@ -552,12 +584,16 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
             case StockDocumentType.Transfer:
                 if (!document.SourceWarehouseId.HasValue || !document.DestinationWarehouseId.HasValue)
                 {
-                    throw new InvalidOperationException("Selectionne les depots source et destination pour un transfert.");
+                    throw new BusinessRuleException(
+                        "Selectionne les depots source et destination pour un transfert.",
+                        errorCode: "STOCK_TRANSFER_BOTH_WAREHOUSES_REQUIRED");
                 }
 
                 if (document.SourceWarehouseId == document.DestinationWarehouseId)
                 {
-                    throw new InvalidOperationException("Le depot source et le depot destination doivent etre differents pour un transfert.");
+                    throw new BusinessRuleException(
+                        "Le depot source et le depot destination doivent etre differents pour un transfert.",
+                        errorCode: "STOCK_TRANSFER_SAME_WAREHOUSE");
                 }
 
                 await EnsureWarehouseExistsAsync(tenantId, document.SourceWarehouseId.Value, cancellationToken);
@@ -570,19 +606,31 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
     {
         if (product.StockIdentityTrackingMode == StockIdentityTrackingMode.Lot && string.IsNullOrWhiteSpace(lotNumber))
         {
-            throw new InvalidOperationException($"L'article {product.Sku} est gere par lot. Renseigne un numero de lot.");
+            var ex = new BusinessRuleException(
+                $"L'article {product.Sku} est gere par lot. Renseigne un numero de lot.",
+                errorCode: "STOCK_LOT_NUMBER_REQUIRED");
+            ex.Data["sku"] = product.Sku;
+            throw ex;
         }
 
         if (product.StockIdentityTrackingMode == StockIdentityTrackingMode.SerialNumber)
         {
             if (string.IsNullOrWhiteSpace(serialNumber))
             {
-                throw new InvalidOperationException($"L'article {product.Sku} est gere par numero de serie. Renseigne les numeros de serie pendant la saisie du document, soit un par un, soit par enumeration, soit par plage.");
+                var ex = new BusinessRuleException(
+                    $"L'article {product.Sku} est gere par numero de serie. Renseigne les numeros de serie pendant la saisie du document, soit un par un, soit par enumeration, soit par plage.",
+                    errorCode: "STOCK_SERIAL_NUMBER_REQUIRED");
+                ex.Data["sku"] = product.Sku;
+                throw ex;
             }
 
             if (quantity != 1m)
             {
-                throw new InvalidOperationException($"L'article {product.Sku} gere par numero de serie doit etre ventile avec une quantite de 1 par numero. Utilise l'enumeration ou la plage pour generer une ligne par serie.");
+                var ex = new BusinessRuleException(
+                    $"L'article {product.Sku} gere par numero de serie doit etre ventile avec une quantite de 1 par numero. Utilise l'enumeration ou la plage pour generer une ligne par serie.",
+                    errorCode: "STOCK_SERIAL_QUANTITY_MUST_BE_ONE");
+                ex.Data["sku"] = product.Sku;
+                throw ex;
             }
         }
 
@@ -605,7 +653,13 @@ public class InventoryService(ApplicationDbContext dbContext) : IInventoryServic
         var available = await GetOnHandQuantityAsync(productContext.Product.Id, warehouseId, lotNumber, serialNumber, cancellationToken);
         if (available + signedQuantity < 0m)
         {
-            throw new InvalidOperationException($"Stock insuffisant pour {productContext.Product.Sku}. Disponible : {available}.");
+            var ex = new BusinessRuleException(
+                $"Stock insuffisant pour {productContext.Product.Sku}. Disponible : {available}.",
+                errorCode: "STOCK_INSUFFICIENT");
+            ex.Data["sku"] = productContext.Product.Sku;
+            ex.Data["available"] = available;
+            ex.Data["requested"] = -signedQuantity;
+            throw ex;
         }
     }
 

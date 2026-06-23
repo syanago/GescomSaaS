@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,12 +30,14 @@ public class StockDocumentService(ApplicationDbContext dbContext, IInventoryServ
 
         if (document is null)
         {
-            throw new InvalidOperationException("Document de stock introuvable.");
+            throw new NotFoundException(nameof(StockDocument), stockDocumentId);
         }
 
         if (document.Status != StockDocumentStatus.Draft)
         {
-            throw new InvalidOperationException("Seuls les documents de stock en brouillon peuvent etre valides.");
+            throw new BusinessRuleException(
+                "Seuls les documents de stock en brouillon peuvent etre valides.",
+                errorCode: "STOCK_DOC_NOT_DRAFT");
         }
 
         await inventoryService.PostStockDocumentAsync(tenantId, document, cancellationToken);

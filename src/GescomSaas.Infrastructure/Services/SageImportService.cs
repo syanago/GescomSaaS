@@ -33,6 +33,7 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
         success &= await RunModuleAsync(() => ImportCategoriesAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportProductCategories);
         success &= await RunModuleAsync(() => ImportTaxCodesAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportTaxCodes);
         success &= await RunModuleAsync(() => ImportPaymentTermsAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportPaymentTerms);
+        success &= await RunModuleAsync(() => ImportJournalAccountsAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => true);
         success &= await RunModuleAsync(() => ImportWarehousesAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportWarehouses);
         success &= await RunModuleAsync(() => ImportProductsAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportProducts);
         success &= await RunModuleAsync(() => ImportPriceListsAsync(sourceConnection, schema, request, state, cancellationToken), moduleReports, warnings, request.Execution.StopOnFirstError, () => request.Scope.ImportPriceLists);
@@ -388,6 +389,143 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
         }
 
         return new SageImportModuleReport("Conditions de paiement", "Traite", candidate.TableName, imported, updated, skipped, "Conditions de paiement preparees pour LigCom.", []);
+    }
+
+    private async Task<SageImportModuleReport> ImportJournalAccountsAsync(
+        SqlConnection sourceConnection,
+        IReadOnlyList<SourceTableInfo> schema,
+        SageImportExecutionRequest request,
+        ImportState state,
+        CancellationToken cancellationToken)
+    {
+        var candidate = FindBestTable(
+            schema,
+            ["F_JOURNAUX", "JOURNAUX", "JOURNAL", "F_JOURNAL"],
+            ["JO_NUM", "JO_INTITULE", "CG_NUM", "JO_TYPE", "JO_Contrepartie"]);
+
+        if (candidate is null)
+        {
+            return MissingModule("Comptes journaux", "Aucune table journaux evidente n'a ete detectee.");
+        }
+
+        var rows = await ReadRowsAsync(sourceConnection, candidate.TableName, cancellationToken);
+        var imported = 0;
+        var updated = 0;
+        var skipped = 0;
+        List<string> notes = [];
+
+        foreach (var row in rows)
+        {
+            var code = GetString(row, "JO_NUM", "CODE", "JOURNAL", "CODEJOURNAL");
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                skipped++;
+                notes.Add("Journal ignore : code journal absent dans la source Sage.");
+                continue;
+            }
+
+            var label = GetFirstNonEmpty(
+                GetString(row, "JO_INTITULE", "INTITULE", "LIBELLE", "LABEL"),
+                code) ?? code;
+
+            var journalType = GetInt(row, "JO_TYPE", "TYPEJOURNAL", "TYPE", "NATURE");
+            var journalKind = GetFirstNonEmpty(
+                GetString(row, "JO_TYPE", "JO_NATURE", "TYPE", "NATURE", "JOURNALTYPE", "TYPEJOURNAL"),
+                label,
+                code);
+
+            if (!IsTreasuryJournal(journalType, code, label, journalKind))
+            {
+                skipped++;
+                notes.Add($"Journal `{code}` ignore : type Sage `{journalType}` hors tresorerie.");
+                continue;
+            }
+
+            var counterpartAccountCode = GetFirstNonEmpty(
+                GetString(row, "CG_NUM", "CG_NUMCONTREPARTIE", "CG_NUMCP", "COMPTECONTREPARTIE", "JO_COMPTE", "JO_COMPTECP", "COMPTE", "COMPTEGENERAL", "COMPTECONTREPARTIECAISSE", "COMPTECONTREPARTIEBANQUE"));
+
+            if (state.JournalAccounts.TryGetValue(code, out var existing))
+            {
+                var labelChanged = !string.Equals(existing.Label, label, StringComparison.Ordinal);
+                var counterpartChanged = false;
+                if (!string.IsNullOrWhiteSpace(counterpartAccountCode)
+                    && !string.Equals(existing.CounterpartAccountCode, counterpartAccountCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    counterpartChanged = true;
+                }
+
+                if (request.Mapping.ExistingRecordPolicy == SageExistingRecordPolicy.SkipExisting)
+                {
+                    if (counterpartChanged)
+                    {
+                        existing.CounterpartAccountCode = counterpartAccountCode;
+                        updated++;
+                        notes.Add($"Journal `{code}` existant : contrepartie synchronisee vers `{counterpartAccountCode}`.");
+                    }
+                    else
+                    {
+                        skipped++;
+                        notes.Add(string.IsNullOrWhiteSpace(counterpartAccountCode)
+                            ? $"Journal `{code}` ignore : aucune contrepartie exploitable n'a ete trouvee cote Sage."
+                            : $"Journal `{code}` ignore : contrepartie deja a jour (`{existing.CounterpartAccountCode ?? "-"}`).");
+                    }
+
+                    continue;
+                }
+
+                if (!labelChanged && !counterpartChanged)
+                {
+                    skipped++;
+                    notes.Add(string.IsNullOrWhiteSpace(counterpartAccountCode)
+                        ? $"Journal `{code}` inchange : aucune contrepartie exploitable n'a ete trouvee cote Sage."
+                        : $"Journal `{code}` inchange : contrepartie deja a jour (`{existing.CounterpartAccountCode ?? counterpartAccountCode}`).");
+                    continue;
+                }
+
+                existing.Label = label;
+                if (!string.IsNullOrWhiteSpace(counterpartAccountCode))
+                {
+                    existing.CounterpartAccountCode = counterpartAccountCode;
+                }
+
+                updated++;
+                notes.Add(counterpartChanged
+                    ? $"Journal `{code}` mis a jour : contrepartie `{counterpartAccountCode}`."
+                    : $"Journal `{code}` mis a jour : libelle synchronise.");
+                continue;
+            }
+
+            if (request.Mapping.ExistingRecordPolicy == SageExistingRecordPolicy.PrefixAndCreate)
+            {
+                code = EnsureUniqueCode(state.JournalAccountCodes, BuildPrefixedCode(code, request.Mapping.ProductPrefix));
+            }
+
+            var journalAccount = new JournalAccount
+            {
+                TenantId = request.TenantId,
+                Code = code,
+                Label = label,
+                CounterpartAccountCode = counterpartAccountCode
+            };
+
+            dbContext.JournalAccounts.Add(journalAccount);
+            state.JournalAccounts[code] = journalAccount;
+            state.JournalAccountCodes.Add(code);
+            imported++;
+            notes.Add(string.IsNullOrWhiteSpace(counterpartAccountCode)
+                ? $"Journal `{code}` importe sans contrepartie source exploitable."
+                : $"Journal `{code}` importe avec contrepartie `{counterpartAccountCode}`.");
+        }
+
+        return new SageImportModuleReport(
+            "Journaux de tresorerie",
+            "Traite",
+            candidate.TableName,
+            imported,
+            updated,
+            skipped,
+            "Les journaux de tresorerie Sage (`JO_Type = 2`) sont repris avec synchronisation des comptes de contrepartie lus dans `CG_Num` quand un code existe deja dans LigCom.",
+            notes.Distinct().Take(20).ToArray());
     }
 
     private async Task<SageImportModuleReport> ImportWarehousesAsync(SqlConnection sourceConnection, IReadOnlyList<SourceTableInfo> schema, SageImportExecutionRequest request, ImportState state, CancellationToken cancellationToken)
@@ -1792,7 +1930,7 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
     {
         foreach (var hint in hints)
         {
-            var key = row.Keys.FirstOrDefault(x => Normalize(x).Contains(Normalize(hint), StringComparison.OrdinalIgnoreCase));
+            var key = FindRowKey(row, hint);
             if (key is null)
             {
                 continue;
@@ -1822,7 +1960,7 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
 
         foreach (var hint in hints)
         {
-            var key = row.Keys.FirstOrDefault(x => Normalize(x).Contains(Normalize(hint), StringComparison.OrdinalIgnoreCase));
+            var key = FindRowKey(row, hint);
             if (key is not null && row[key] is not null)
             {
                 try
@@ -1848,7 +1986,7 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
 
         foreach (var hint in hints)
         {
-            var key = row.Keys.FirstOrDefault(x => Normalize(x).Contains(Normalize(hint), StringComparison.OrdinalIgnoreCase));
+            var key = FindRowKey(row, hint);
             if (key is not null && row[key] is not null)
             {
                 try
@@ -1862,6 +2000,47 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
         }
 
         return 0;
+    }
+
+    private static string? FindRowKey(Dictionary<string, object?> row, string hint)
+    {
+        var normalizedHint = Normalize(hint);
+
+        var exactKey = row.Keys.FirstOrDefault(x => string.Equals(Normalize(x), normalizedHint, StringComparison.OrdinalIgnoreCase));
+        if (exactKey is not null)
+        {
+            return exactKey;
+        }
+
+        return row.Keys.FirstOrDefault(x => Normalize(x).Contains(normalizedHint, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsTreasuryJournal(int journalType, string code, string label, string? journalKind)
+    {
+        if (journalType == 2)
+        {
+            return true;
+        }
+
+        var tokens = new[] { code, label, journalKind ?? string.Empty };
+        return tokens.Any(value =>
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var normalized = value.Trim().ToUpperInvariant();
+            return normalized.Contains("TRESOR")
+                || normalized.Contains("TRESO")
+                || normalized.Contains("CAISSE")
+                || normalized.Contains("BANQUE")
+                || normalized.Contains("BANK")
+                || normalized == "CAI"
+                || normalized.StartsWith("CAI")
+                || normalized.StartsWith("BQ")
+                || normalized.StartsWith("BAN");
+        });
     }
 
     private static string? GetFirstNonEmpty(params string[] values)
@@ -1888,6 +2067,8 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
         public HashSet<string> CategoryCodes { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, TaxCode> TaxCodes { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, PaymentTerm> PaymentTerms { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, JournalAccount> JournalAccounts { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> JournalAccountCodes { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, Warehouse> Warehouses { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, Product> Products { get; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> ProductCodes { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -1922,6 +2103,12 @@ public class SageImportService(ApplicationDbContext dbContext) : ISageImportServ
             foreach (var paymentTerm in await dbContext.PaymentTerms.Where(x => x.TenantId == tenantId).ToListAsync(cancellationToken))
             {
                 state.PaymentTerms[paymentTerm.Code] = paymentTerm;
+            }
+
+            foreach (var journalAccount in await dbContext.JournalAccounts.Where(x => x.TenantId == tenantId).ToListAsync(cancellationToken))
+            {
+                state.JournalAccounts[journalAccount.Code] = journalAccount;
+                state.JournalAccountCodes.Add(journalAccount.Code);
             }
 
             foreach (var warehouse in await dbContext.Warehouses.Where(x => x.TenantId == tenantId).ToListAsync(cancellationToken))

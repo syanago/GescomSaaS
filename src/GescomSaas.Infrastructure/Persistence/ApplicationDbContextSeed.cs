@@ -1,6 +1,7 @@
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Entities.SaaS;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Application.Models;
 using GescomSaas.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,9 @@ public static class ApplicationDbContextSeed
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        await context.Database.EnsureCreatedAsync();
+        // Le seed est appele apres InitializeRuntimeAsync qui a deja cree/migre la base.
+        // On verifie juste que la connexion est ouverte.
+        await context.Database.CanConnectAsync();
 
         await EnsureRolesAsync(roleManager);
         var plans = await EnsureSubscriptionPlansAsync(context);
@@ -232,6 +235,9 @@ public static class ApplicationDbContextSeed
 
         tenant.QuantityDecimalSeparator = isNew || tenant.QuantityDecimalSeparator is null ? "," : tenant.QuantityDecimalSeparator;
         tenant.QuantityGroupSeparator = isNew || tenant.QuantityGroupSeparator is null ? " " : tenant.QuantityGroupSeparator;
+        tenant.PaymentMethodsJson = isNew || string.IsNullOrWhiteSpace(tenant.PaymentMethodsJson)
+            ? PaymentMethodCatalog.SerializeSelection(PaymentMethodCatalog.DefaultSelection)
+            : tenant.PaymentMethodsJson;
         if (isNew)
         {
             tenant.QuantityDecimalPlaces = 3;

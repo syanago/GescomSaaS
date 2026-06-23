@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -108,7 +109,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
 
         if (existingPartner is null)
         {
-            throw new InvalidOperationException("Tiers introuvable.");
+            throw new NotFoundException("BusinessPartner", partnerId);
         }
 
         var quota = await GetQuotaContextAsync(tenantId, cancellationToken);
@@ -169,7 +170,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
 
         if (existingProduct is null)
         {
-            throw new InvalidOperationException("Article introuvable.");
+            throw new NotFoundException("Product", productId);
         }
 
         var quota = await GetQuotaContextAsync(tenantId, cancellationToken);
@@ -287,7 +288,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
 
         if (tenant is null)
         {
-            throw new InvalidOperationException("Tenant introuvable.");
+            throw new NotFoundException("Tenant", tenantId);
         }
 
         var subscription = await dbContext.TenantSubscriptions
@@ -325,9 +326,7 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
             return;
         }
 
-        throw new InvalidOperationException(
-            $"Quota {quotaLabel.ToLowerInvariant()} atteint pour le plan {planLabel} ({currentUsage}/{limit}). " +
-            $"{BuildUpgradeGuidance()}");
+        throw BuildQuotaException(quotaLabel, planLabel, currentUsage, limit);
     }
 
     private static void EnsureQuotaChange(string quotaLabel, string planLabel, int currentUsage, int limit, int projectedUsage)
@@ -337,9 +336,18 @@ public class TenantQuotaEnforcementService(ApplicationDbContext dbContext) : ITe
             return;
         }
 
-        throw new InvalidOperationException(
-            $"Quota {quotaLabel.ToLowerInvariant()} atteint pour le plan {planLabel} ({currentUsage}/{limit}). " +
-            $"{BuildUpgradeGuidance()}");
+        throw BuildQuotaException(quotaLabel, planLabel, currentUsage, limit);
+    }
+
+    private static QuotaExceededException BuildQuotaException(string quotaLabel, string planLabel, int currentUsage, int limit)
+    {
+        // L'exception expose les metadonnees structurees (QuotaName, Limit, Current).
+        // Le middleware ProblemDetails les ajoute dans la reponse JSON pour les clients API.
+        // Le message utilisateur garde le contexte plan + guidance pour l'affichage Razor.
+        var ex = new QuotaExceededException(quotaLabel.ToLowerInvariant(), limit, currentUsage);
+        ex.Data["planLabel"] = planLabel;
+        ex.Data["upgradeGuidance"] = BuildUpgradeGuidance();
+        return ex;
     }
 
     private static string BuildUpgradeGuidance() =>

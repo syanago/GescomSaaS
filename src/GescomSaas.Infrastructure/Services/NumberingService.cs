@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,13 +83,18 @@ public class NumberingService(ApplicationDbContext dbContext) : INumberingServic
             case NumberingMode.Manual:
                 if (string.IsNullOrWhiteSpace(sanitized))
                 {
-                    throw new InvalidOperationException("Saisis une valeur manuelle pour cette numerotation.");
+                    throw new ValidationException(new Dictionary<string, string[]>
+                    {
+                        ["Number"] = new[] { "Saisis une valeur manuelle pour cette numerotation." },
+                    });
                 }
 
                 return sanitized;
 
             default:
-                throw new InvalidOperationException("Mode de numerotation inconnu.");
+                throw new BusinessRuleException(
+                    "Mode de numerotation inconnu.",
+                    errorCode: "NUMBERING_MODE_UNKNOWN");
         }
     }
 

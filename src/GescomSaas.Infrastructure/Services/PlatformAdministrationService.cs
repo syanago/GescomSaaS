@@ -2,6 +2,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.SaaS;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Domain.Exceptions;
 using GescomSaas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -200,7 +201,7 @@ public class PlatformAdministrationService(
 
         if (tenant is null)
         {
-            throw new InvalidOperationException("Tenant introuvable.");
+            throw new NotFoundException(nameof(Tenant), tenantId);
         }
 
         var subscription = await dbContext.TenantSubscriptions
@@ -212,7 +213,9 @@ public class PlatformAdministrationService(
 
         if (subscription is null || subscription.SubscriptionPlan is null)
         {
-            throw new InvalidOperationException("Aucun abonnement exploitable n'est defini pour ce tenant.");
+            throw new BusinessRuleException(
+                "Aucun abonnement exploitable n'est defini pour ce tenant.",
+                errorCode: "TENANT_NO_ACTIVE_SUBSCRIPTION");
         }
 
         var periodStart = new DateOnly(issueDate.Year, issueDate.Month, 1);
@@ -229,14 +232,18 @@ public class PlatformAdministrationService(
 
         if (existingForPeriod)
         {
-            throw new InvalidOperationException("Une facture plateforme existe deja pour cette periode.");
+            throw new BusinessRuleException(
+                "Une facture plateforme existe deja pour cette periode.",
+                errorCode: "PLATFORM_INVOICE_PERIOD_DUPLICATE");
         }
 
         var summaries = await GetTenantSummariesAsync(cancellationToken);
         var summary = summaries.FirstOrDefault(x => x.TenantId == tenantId);
         if (summary is null)
         {
-            throw new InvalidOperationException("Impossible de calculer les usages du tenant.");
+            throw new BusinessRuleException(
+                "Impossible de calculer les usages du tenant.",
+                errorCode: "TENANT_USAGE_COMPUTATION_FAILED");
         }
 
         var invoice = new PlatformInvoice
@@ -291,7 +298,7 @@ public class PlatformAdministrationService(
 
         if (notification is null)
         {
-            throw new InvalidOperationException("Notification introuvable.");
+            throw new NotFoundException("TenantQuotaNotification", notificationId);
         }
 
         notification.IsAcknowledged = true;

@@ -261,6 +261,9 @@ public class CommercialDashboardService(
                 TotalQuantity = dbContext.StockMovements.Where(m => m.TenantId == tenantId && m.WarehouseId == x.Id).Sum(m => (decimal?)m.Quantity) ?? 0m,
                 TotalValue = dbContext.StockMovements.Where(m => m.TenantId == tenantId && m.WarehouseId == x.Id).Sum(m => (decimal?)(m.Quantity * m.UnitCost)) ?? 0m
             })
+            .ToListAsync(cancellationToken);
+
+        var topWarehouseItems = topWarehouses
             .OrderByDescending(x => x.TotalValue)
             .ThenBy(x => x.Code)
             .Take(4)
@@ -269,7 +272,7 @@ public class CommercialDashboardService(
                 x.Label,
                 x.TotalQuantity,
                 x.TotalValue))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return new StockDashboardSnapshot(
             trackedProducts.Count,
@@ -277,7 +280,7 @@ public class CommercialDashboardService(
             trackedProducts.Sum(x => x.StockValue),
             trackedProducts.Count(x => x.OnHandQuantity <= 5m),
             watchItems,
-            topWarehouses);
+            topWarehouseItems);
     }
 
     private async Task<IReadOnlyList<OpenBalanceItem>> GetOpenBalancesAsync(
