@@ -2,89 +2,125 @@
 @model GescomSaas.Web.Pages.StockDocuments.DetailsModel
 @{
     ViewData["Title"] = "Detail document de stock";
+    var docLabel = GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.Document!.DocumentType);
+    var isDraft = Model.Document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stock</span>
-        <h1>@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.Document!.DocumentType) @Model.Document.Number</h1>
+        <h1 class="page-header-title">@docLabel @Model.Document.Number</h1>
+        <div class="page-header-sub">
+            <span class="badge doc-status-@Model.Document.Status.ToString().ToLowerInvariant()">@Model.Document.Status</span>
+            <span class="ms-2">· @Model.Document.DocumentDate.ToString("dd/MM/yyyy")</span>
+            <span class="ms-2">· @Model.Document.Lines.Count ligne(s)</span>
+        </div>
     </div>
-    <div class="header-actions">
-        @if (Model.Document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft)
+    <div class="d-flex gap-2">
+        @if (isDraft)
         {
-            <a class="btn btn-outline-light" asp-page="/StockDocuments/Edit" asp-route-id="@Model.Document.Id">Modifier</a>
-            <form method="post" asp-page-handler="Post" class="inline-form">
-                <button type="submit" class="btn btn-primary-soft">Valider</button>
+            <a class="btn btn-secondary" asp-page="/StockDocuments/Edit" asp-route-id="@Model.Document.Id">
+                <i class="bi bi-pencil me-1"></i>Modifier
+            </a>
+            <form method="post" asp-page-handler="Post" class="d-inline">
+                <button type="submit" class="btn btn-primary"
+                        onclick="return confirm('Valider definitivement ce document ?')">
+                    <i class="bi bi-check-lg me-1"></i>Valider
+                </button>
             </form>
         }
-        <a class="btn btn-outline-light" asp-page="/StockDocuments/Index" asp-route-type="@Model.Document.DocumentType">Retour a la liste</a>
+        <a class="btn btn-secondary" asp-page="/StockDocuments/Index" asp-route-type="@Model.Document.DocumentType">
+            <i class="bi bi-arrow-left me-1"></i>Retour a la liste
+        </a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
-<section class="content-grid">
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Resume</span>
-                <h2>Informations generales</h2>
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-info-circle"></i>
+        <span>Informations generales</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="small text-muted">Numero</div>
+                <div class="fw-semibold">@Model.Document.Number</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted">Statut</div>
+                <div><span class="badge doc-status-@Model.Document.Status.ToString().ToLowerInvariant()">@Model.Document.Status</span></div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted">Date</div>
+                <div class="fw-semibold">@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted">Depot source</div>
+                <div class="fw-semibold">@(Model.Document.SourceWarehouseLabel ?? "—")</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted">Depot destination</div>
+                <div class="fw-semibold">@(Model.Document.DestinationWarehouseLabel ?? "—")</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted">Date validation</div>
+                <div class="fw-semibold">@(Model.Document.PostedOnUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</div>
+            </div>
+            <div class="col-12">
+                <div class="small text-muted">Notes</div>
+                <div>@(string.IsNullOrWhiteSpace(Model.Document.Notes) ? "—" : Model.Document.Notes)</div>
             </div>
         </div>
-        <dl class="details-grid">
-            <div><dt>Numero</dt><dd>@Model.Document.Number</dd></div>
-            <div><dt>Statut</dt><dd>@Model.Document.Status</dd></div>
-            <div><dt>Date</dt><dd>@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</dd></div>
-            <div><dt>Depot source</dt><dd>@(Model.Document.SourceWarehouseLabel ?? "-")</dd></div>
-            <div><dt>Depot destination</dt><dd>@(Model.Document.DestinationWarehouseLabel ?? "-")</dd></div>
-            <div><dt>Date validation</dt><dd>@(Model.Document.PostedOnUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</dd></div>
-            <div class="full-span"><dt>Notes</dt><dd>@(string.IsNullOrWhiteSpace(Model.Document.Notes) ? "-" : Model.Document.Notes)</dd></div>
-        </dl>
-    </article>
-</section>
+    </div>
+</div>
 
-<section class="panel-card">
-    <div class="panel-header">
-        <div>
-            <span class="eyebrow">Lignes</span>
-            <h2>Articles du document</h2>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Articles du document</span>
+        <span class="ms-auto small text-muted">@Model.Document.Lines.Count ligne(s)</span>
+    </div>
+    @if (Model.Document.Lines.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <p class="mb-0">Aucune ligne dans ce document.</p>
         </div>
-    </div>
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Article</th>
-                    <th>Description</th>
-                    <th class="text-end">Qte</th>
-                    <th class="text-end">Cout</th>
-                    <th>Lot / Serie</th>
-                    <th>Peremption</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Document.Lines.Count == 0)
-            {
-                <tr><td colspan="6" class="empty-cell">Aucune ligne.</td></tr>
-            }
-            else
-            {
-                @foreach (var line in Model.Document.Lines)
-                {
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <td>@line.ProductCode</td>
-                        <td>@line.Description</td>
-                        <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
-                        <td class="text-end">@DisplayFormatter.Money(line.UnitCost)</td>
-                        <td>@(line.LotNumber ?? line.SerialNumber ?? "-")</td>
-                        <td>@(line.ExpirationDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                        <th>Article</th>
+                        <th>Description</th>
+                        <th class="text-end">Qte</th>
+                        <th class="text-end">Cout</th>
+                        <th>Lot / Serie</th>
+                        <th>Peremption</th>
                     </tr>
-                }
-            }
-            </tbody>
-        </table>
-    </div>
-</section>
+                </thead>
+                <tbody>
+                    @foreach (var line in Model.Document.Lines)
+                    {
+                        <tr>
+                            <td><strong>@line.ProductCode</strong></td>
+                            <td>@line.Description</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Quantity(line.Quantity)</td>
+                            <td class="text-end money">@DisplayFormatter.Money(line.UnitCost)</td>
+                            <td>@(line.LotNumber ?? line.SerialNumber ?? "—")</td>
+                            <td class="small">@(line.ExpirationDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

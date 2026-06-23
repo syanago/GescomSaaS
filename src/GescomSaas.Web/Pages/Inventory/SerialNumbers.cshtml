@@ -4,78 +4,108 @@
     ViewData["Title"] = "Stock par numero de serie";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stock</span>
-        <h1>Consultation par numero de serie</h1>
-        <p class="muted-copy">Suivez les articles traces a l'unite et localisez les numeros de serie encore en stock.</p>
+        <h1 class="page-header-title">Consultation par numero de serie</h1>
+        <div class="page-header-sub">Articles traces a l'unite et localisation des series en stock</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthese</a>
-        <a class="btn btn-outline-light" asp-page="/StockDocuments/Index">Documents</a>
-        <a class="btn btn-outline-light" asp-page="/Inventory/Lots">Lots</a>
-        <a class="btn btn-primary-soft" asp-page="/Inventory/Adjustments">Ajustement</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Inventory/Index">
+            <i class="bi bi-clipboard-data me-1"></i>Synthese
+        </a>
+        <a class="btn btn-secondary" asp-page="/StockDocuments/Index">
+            <i class="bi bi-file-earmark-text me-1"></i>Documents
+        </a>
+        <a class="btn btn-secondary" asp-page="/Inventory/Lots">
+            <i class="bi bi-box me-1"></i>Lots
+        </a>
+        <a class="btn btn-primary" asp-page="/Inventory/Adjustments">
+            <i class="bi bi-pencil-square me-1"></i>Ajustement
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="get" class="stack-form compact-form">
-        <div class="form-grid">
-            <div>
-                <label asp-for="ProductId" class="form-label">Article</label>
-                <select asp-for="ProductId" asp-items="Model.Products" class="form-select">
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-funnel"></i>
+        <span>Filtres</span>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-6">
+                <label asp-for="ProductId" class="form-label small">Article</label>
+                <select asp-for="ProductId" asp-items="Model.Products" class="form-select form-select-sm">
                     <option value="">Tous les articles</option>
                 </select>
             </div>
-            <div>
-                <label asp-for="WarehouseId" class="form-label">Depot</label>
-                <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select">
+            <div class="col-md-6">
+                <label asp-for="WarehouseId" class="form-label small">Depot</label>
+                <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select form-select-sm">
                     <option value="">Tous les depots</option>
                 </select>
             </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Filtrer</button>
-            <a class="btn btn-outline-light" asp-page="/Inventory/SerialNumbers">Reinitialiser</a>
-        </div>
-    </form>
-</section>
-
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Article</th>
-                    <th>Depot</th>
-                    <th>Numero de serie</th>
-                    <th class="text-end">Qte</th>
-                    <th class="text-end">Cout</th>
-                    <th class="text-end">Valeur</th>
-                    <th>Dernier mouvement</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.SerialNumbers.Count == 0)
-            {
-                <tr><td colspan="7" class="empty-cell">Aucun numero de serie actif pour les filtres selectionnes.</td></tr>
-            }
-            else
-            {
-                @foreach (var item in Model.SerialNumbers)
-                {
-                    <tr>
-                        <td>@item.ProductCode - @item.ProductLabel</td>
-                        <td>@item.WarehouseCode - @item.WarehouseLabel</td>
-                        <td>@item.SerialNumber</td>
-                        <td class="text-end">@DisplayFormatter.Quantity(item.OnHandQuantity)</td>
-                        <td class="text-end">@DisplayFormatter.Money(item.UnitCost)</td>
-                        <td class="text-end">@DisplayFormatter.Money(item.StockValue)</td>
-                        <td>@item.LastMovementDate.ToString("dd/MM/yyyy")</td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-page="/Inventory/SerialNumbers">
+                    <i class="bi bi-x-circle me-1"></i>Reinitialiser
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
     </div>
-</section>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-upc"></i>
+        <span>Numeros de serie en stock</span>
+        <span class="ms-auto small text-muted">@Model.SerialNumbers.Count serie(s)</span>
+    </div>
+    @if (Model.SerialNumbers.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun numero de serie actif</h6>
+            <p>Aucun numero de serie ne correspond aux filtres selectionnes.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Depot</th>
+                        <th>Numero de serie</th>
+                        <th class="text-end">Qte</th>
+                        <th class="text-end">Cout</th>
+                        <th class="text-end">Valeur</th>
+                        <th>Dernier mouvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.SerialNumbers)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@item.ProductCode</strong>
+                                <div class="small text-muted">@item.ProductLabel</div>
+                            </td>
+                            <td>
+                                <strong>@item.WarehouseCode</strong>
+                                <div class="small text-muted">@item.WarehouseLabel</div>
+                            </td>
+                            <td><strong>@item.SerialNumber</strong></td>
+                            <td class="text-end money">@DisplayFormatter.Quantity(item.OnHandQuantity)</td>
+                            <td class="text-end money">@DisplayFormatter.Money(item.UnitCost)</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(item.StockValue)</td>
+                            <td class="small">@item.LastMovementDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

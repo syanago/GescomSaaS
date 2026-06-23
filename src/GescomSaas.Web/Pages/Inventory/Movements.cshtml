@@ -4,96 +4,128 @@
     ViewData["Title"] = "Mouvements de stock";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stock</span>
-        <h1>Mouvements de stock</h1>
-        <p class="muted-copy">Journal complet des entrees, sorties, ajustements et traces lot / serie.</p>
+        <h1 class="page-header-title">Mouvements de stock</h1>
+        <div class="page-header-sub">Journal complet des entrees, sorties, ajustements et traces lot/serie</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Inventory/Index">Synthese</a>
-        <a class="btn btn-outline-light" asp-page="/StockDocuments/Index">Documents</a>
-        <a class="btn btn-outline-light" asp-page="/Inventory/Lots">Lots</a>
-        <a class="btn btn-outline-light" asp-page="/Inventory/SerialNumbers">Series</a>
-        <a class="btn btn-primary-soft" asp-page="/Inventory/Adjustments">Ajustement</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Inventory/Index">
+            <i class="bi bi-clipboard-data me-1"></i>Synthese
+        </a>
+        <a class="btn btn-secondary" asp-page="/StockDocuments/Index">
+            <i class="bi bi-file-earmark-text me-1"></i>Documents
+        </a>
+        <a class="btn btn-secondary" asp-page="/Inventory/Lots">
+            <i class="bi bi-box me-1"></i>Lots
+        </a>
+        <a class="btn btn-secondary" asp-page="/Inventory/SerialNumbers">
+            <i class="bi bi-upc me-1"></i>Series
+        </a>
+        <a class="btn btn-primary" asp-page="/Inventory/Adjustments">
+            <i class="bi bi-pencil-square me-1"></i>Ajustement
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="get" class="stack-form compact-form">
-        <div class="form-grid">
-            <div>
-                <label asp-for="ProductId" class="form-label">Article</label>
-                <select asp-for="ProductId" asp-items="Model.Products" class="form-select">
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-funnel"></i>
+        <span>Filtres</span>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-6">
+                <label asp-for="ProductId" class="form-label small">Article</label>
+                <select asp-for="ProductId" asp-items="Model.Products" class="form-select form-select-sm">
                     <option value="">Tous les articles</option>
                 </select>
             </div>
-            <div>
-                <label asp-for="WarehouseId" class="form-label">Depot</label>
-                <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select">
+            <div class="col-md-6">
+                <label asp-for="WarehouseId" class="form-label small">Depot</label>
+                <select asp-for="WarehouseId" asp-items="Model.Warehouses" class="form-select form-select-sm">
                     <option value="">Tous les depots</option>
                 </select>
             </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Filtrer</button>
-            <a class="btn btn-outline-light" asp-page="/Inventory/Movements">Reinitialiser</a>
-        </div>
-    </form>
-</section>
-
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Article</th>
-                    <th>Depot</th>
-                    <th>Type</th>
-                    <th class="text-end">Qte</th>
-                    <th class="text-end">Cout</th>
-                    <th class="text-end">Valeur</th>
-                    <th>Lot / Serie</th>
-                    <th>Reference</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Movements.Count == 0)
-            {
-                <tr><td colspan="9" class="empty-cell">Aucun mouvement trouve.</td></tr>
-            }
-            else
-            {
-                @foreach (var movement in Model.Movements)
-                {
-                    <tr>
-                        <td>@movement.MovementDate.ToString("dd/MM/yyyy")</td>
-                        <td>@movement.ProductCode - @movement.ProductLabel</td>
-                        <td>@movement.WarehouseCode - @movement.WarehouseLabel</td>
-                        <td>@GescomSaas.Web.Pages.Inventory.MovementLabels.Label(movement.MovementType)</td>
-                        <td class="text-end">@DisplayFormatter.Quantity(movement.Quantity)</td>
-                        <td class="text-end">@DisplayFormatter.Money(movement.UnitCost)</td>
-                        <td class="text-end">@DisplayFormatter.Money(movement.ExtendedValue)</td>
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(movement.LotNumber) || !string.IsNullOrWhiteSpace(movement.SerialNumber))
-                            {
-                                <span>@(movement.LotNumber ?? movement.SerialNumber)</span>
-                                @if (movement.ExpirationDate.HasValue)
-                                {
-                                    <div class="table-meta">Peremption @movement.ExpirationDate.Value.ToString("dd/MM/yyyy")</div>
-                                }
-                            }
-                            else
-                            {
-                                <span>-</span>
-                            }
-                        </td>
-                        <td>@(movement.ReferenceNumber ?? "-")</td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-page="/Inventory/Movements">
+                    <i class="bi bi-x-circle me-1"></i>Reinitialiser
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
     </div>
-</section>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-arrow-down-up"></i>
+        <span>Mouvements</span>
+        <span class="ms-auto small text-muted">@Model.Movements.Count resultat(s)</span>
+    </div>
+    @if (Model.Movements.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun mouvement trouve</h6>
+            <p>Modifie tes filtres ou enregistre un nouvel ajustement de stock.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Article</th>
+                        <th>Depot</th>
+                        <th>Type</th>
+                        <th class="text-end">Qte</th>
+                        <th class="text-end">Cout</th>
+                        <th class="text-end">Valeur</th>
+                        <th>Lot / Serie</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var movement in Model.Movements)
+                    {
+                        <tr>
+                            <td>@movement.MovementDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <strong>@movement.ProductCode</strong>
+                                <div class="small text-muted">@movement.ProductLabel</div>
+                            </td>
+                            <td>
+                                <strong>@movement.WarehouseCode</strong>
+                                <div class="small text-muted">@movement.WarehouseLabel</div>
+                            </td>
+                            <td>@GescomSaas.Web.Pages.Inventory.MovementLabels.Label(movement.MovementType)</td>
+                            <td class="text-end money @(movement.Quantity < 0 ? "stat-value-neg" : (movement.Quantity > 0 ? "stat-value-pos" : ""))">@DisplayFormatter.Quantity(movement.Quantity)</td>
+                            <td class="text-end money">@DisplayFormatter.Money(movement.UnitCost)</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(movement.ExtendedValue)</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(movement.LotNumber) || !string.IsNullOrWhiteSpace(movement.SerialNumber))
+                                {
+                                    <strong>@(movement.LotNumber ?? movement.SerialNumber)</strong>
+                                    @if (movement.ExpirationDate.HasValue)
+                                    {
+                                        <div class="small text-muted">Peremption @movement.ExpirationDate.Value.ToString("dd/MM/yyyy")</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="small">@(movement.ReferenceNumber ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

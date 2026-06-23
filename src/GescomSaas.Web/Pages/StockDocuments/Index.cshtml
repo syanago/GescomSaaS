@@ -4,75 +4,114 @@
     ViewData["Title"] = Model.Title;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stock</span>
-        <h1>@Model.Title</h1>
-        <p class="muted-copy">Pilote les entrees, sorties et transferts de stock avec une vraie piece de mouvement.</p>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Entrees, sorties et transferts de stock avec piece de mouvement</div>
     </div>
-    <div class="header-actions">
-        <div class="segmented-control">
-            @foreach (var type in Enum.GetValues<GescomSaas.Domain.Enums.StockDocumentType>())
-            {
-                <a class="chip @(type == Model.CurrentType ? "chip-active" : "")" asp-page="/StockDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.ShortLabel(type)</a>
-            }
-        </div>
-        <a class="btn btn-primary-soft" asp-page="/StockDocuments/Create" asp-route-type="@Model.CurrentType">Nouveau</a>
+    <div>
+        <a class="btn btn-primary" asp-page="/StockDocuments/Create" asp-route-type="@Model.CurrentType">
+            <i class="bi bi-plus-lg me-1"></i>Nouveau
+        </a>
     </div>
-</section>
+</div>
+
+@* Onglets de types de documents *@
+<ul class="nav nav-pills mb-3 flex-wrap">
+    @foreach (var type in Enum.GetValues<GescomSaas.Domain.Enums.StockDocumentType>())
+    {
+        var isActive = type == Model.CurrentType;
+        <li class="nav-item">
+            <a class="nav-link @(isActive ? "active" : "")" asp-page="/StockDocuments/Index" asp-route-type="@type">
+                @GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.ShortLabel(type)
+            </a>
+        </li>
+    }
+</ul>
 
 @if (Model.DocumentQuota is not null)
 {
-    <div class="quota-inline-card @(Model.DocumentQuota.IsExceeded ? "quota-danger" : "")">
-        <strong>Documents du mois :</strong> @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
-        <span>@Math.Max(Model.DocumentQuota.Limit - Model.DocumentQuota.Used, 0) restant(s)</span>
+    var quotaExceeded = Model.DocumentQuota.IsExceeded;
+    <div class="alert @(quotaExceeded ? "alert-danger" : "alert-info") mb-3">
+        <i class="bi bi-speedometer2 me-2"></i>
+        <strong>Documents du mois</strong> : @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
+        @if (quotaExceeded)
+        {
+            <span>· depassement de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</span>
+        }
+        else
+        {
+            <span>· @(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</span>
+        }
     </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Numero</th>
-                    <th>Date</th>
-                    <th>Depot source</th>
-                    <th>Depot destination</th>
-                    <th class="text-end">Quantite</th>
-                    <th class="text-end">Lignes</th>
-                    <th>Statut</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Documents.Count == 0)
-            {
-                <tr><td colspan="8" class="empty-cell">Aucun document de stock pour ce type.</td></tr>
-            }
-            else
-            {
-                @foreach (var document in Model.Documents)
-                {
-                    <tr>
-                        <td>@document.Number</td>
-                        <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
-                        <td>@(document.SourceWarehouseLabel ?? "-")</td>
-                        <td>@(document.DestinationWarehouseLabel ?? "-")</td>
-                        <td class="text-end">@DisplayFormatter.Quantity(document.TotalQuantity)</td>
-                        <td class="text-end">@document.LineCount</td>
-                        <td>@document.Status</td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-link" asp-page="/StockDocuments/Details" asp-route-id="@document.Id">Voir</a>
-                            @if (document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft)
-                            {
-                                <a class="btn btn-sm btn-link" asp-page="/StockDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
-                                <a class="btn btn-sm btn-link text-danger" asp-page="/StockDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Documents de stock</span>
+        <span class="ms-auto small text-muted">@Model.Documents.Count resultat(s)</span>
     </div>
-</section>
+    @if (Model.Documents.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun document de stock</h6>
+            <p>Cree ton premier document pour ce type de mouvement.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/StockDocuments/Create" asp-route-type="@Model.CurrentType">
+                <i class="bi bi-plus-lg me-1"></i>Nouveau document
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Date</th>
+                        <th>Depot source</th>
+                        <th>Depot destination</th>
+                        <th class="text-end">Quantite</th>
+                        <th class="text-end">Lignes</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var document in Model.Documents)
+                    {
+                        <tr>
+                            <td><strong>@document.Number</strong></td>
+                            <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
+                            <td>@(document.SourceWarehouseLabel ?? "—")</td>
+                            <td>@(document.DestinationWarehouseLabel ?? "—")</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Quantity(document.TotalQuantity)</td>
+                            <td class="text-end money">@document.LineCount</td>
+                            <td>
+                                <span class="badge doc-status-@document.Status.ToString().ToLowerInvariant()">@document.Status</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/StockDocuments/Details" asp-route-id="@document.Id" title="Voir">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (document.Status == GescomSaas.Domain.Enums.StockDocumentStatus.Draft)
+                                    {
+                                        <a class="btn btn-sm btn-secondary" asp-page="/StockDocuments/Edit" asp-route-id="@document.Id" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a class="btn btn-sm btn-secondary text-danger" asp-page="/StockDocuments/Delete" asp-route-id="@document.Id" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

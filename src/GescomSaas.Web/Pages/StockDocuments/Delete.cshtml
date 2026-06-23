@@ -4,24 +4,53 @@
     ViewData["Title"] = "Supprimer un document de stock";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stock</span>
-        <h1>Supprimer @Model.Document!.Number</h1>
-        <p class="muted-copy">Cette action est reservee aux documents de stock en brouillon.</p>
+        <h1 class="page-header-title">Supprimer @Model.Document!.Number</h1>
+        <div class="page-header-sub">Action reservee aux documents en brouillon</div>
     </div>
-</section>
+    <div>
+        <a class="btn btn-secondary" asp-page="/StockDocuments/Details" asp-route-id="@Model.Document.Id">
+            <i class="bi bi-arrow-left me-1"></i>Annuler
+        </a>
+    </div>
+</div>
 
-<section class="panel-card">
-    <dl class="details-grid">
-        <div><dt>Numero</dt><dd>@Model.Document.Number</dd></div>
-        <div><dt>Type</dt><dd>@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.Document.DocumentType)</dd></div>
-        <div><dt>Statut</dt><dd>@Model.Document.Status</dd></div>
-        <div><dt>Date</dt><dd>@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</dd></div>
-    </dl>
+<div class="alert alert-danger mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Attention</strong> — cette action est definitive. Le document sera supprime de la base de donnees.
+</div>
 
-    <form method="post" class="form-actions">
-        <button type="submit" class="btn btn-danger">Supprimer</button>
-        <a class="btn btn-outline-light" asp-page="/StockDocuments/Details" asp-route-id="@Model.Document.Id">Annuler</a>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-trash"></i>
+        <span>Confirmer la suppression</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="small text-muted">Numero</div>
+                <div class="fw-semibold">@Model.Document.Number</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Type</div>
+                <div class="fw-semibold">@GescomSaas.Web.Pages.StockDocuments.StockDocumentCatalog.Label(Model.Document.DocumentType)</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Statut</div>
+                <div><span class="badge doc-status-@Model.Document.Status.ToString().ToLowerInvariant()">@Model.Document.Status</span></div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Date</div>
+                <div class="fw-semibold">@Model.Document.DocumentDate.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <a class="btn btn-secondary" asp-page="/StockDocuments/Details" asp-route-id="@Model.Document.Id">Annuler</a>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash me-1"></i>Supprimer definitivement
+            </button>
+        </form>
+    </div>
+</div>
