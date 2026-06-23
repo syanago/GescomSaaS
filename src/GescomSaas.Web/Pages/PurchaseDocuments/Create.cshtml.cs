@@ -2,6 +2,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,20 +14,33 @@ namespace GescomSaas.Web.Pages.PurchaseDocuments;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    IUserPermissionService userPermissionService,
     ICommercialDocumentWorkflowService workflowService,
     INumberingService numberingService,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.PurchasesDocumentsManage];
+
+    private static readonly BusinessPartnerType[] AllowedPartnerTypes =
+    [
+        BusinessPartnerType.Supplier,
+        BusinessPartnerType.Both
+    ];
+
     [BindProperty(SupportsGet = true)]
     public string Type { get; set; } = CommercialDocumentType.PurchaseRequest.ToString();
 
     [BindProperty]
     public PurchaseDocumentInputModel Input { get; set; } = new();
 
-    public IReadOnlyList<SelectListItem> Partners { get; private set; } = [];
+    [BindProperty]
+    public AssistedPartnerEntryInputModel PartnerEntry { get; set; } = new();
+
+    public IReadOnlyList<PartnerLookupOption> PartnerOptions { get; private set; } = [];
     public IReadOnlyList<SelectListItem> Warehouses { get; private set; } = [];
     public QuotaUsageItem? DocumentQuota { get; private set; }
     public DateOnly QuotaReferenceDate { get; private set; }
+    public PartnerLookupMode PartnerLookupMode { get; private set; } = GescomSaas.Domain.Enums.PartnerLookupMode.Code;
     public IReadOnlyList<SelectListItem> Statuses { get; } =
     [
         new("Brouillon", CommercialDocumentStatus.Draft.ToString()),
@@ -53,9 +67,14 @@ public class CreateModel(
         Type = documentType.ToString();
         Input.DocumentType = documentType;
         await LoadLookupsAsync();
+        await ResolvePartnerAsync();
         await LoadQuotasAsync(Input.DocumentDate);
 
-        if (!ModelState.IsValid)
+        ModelState.Remove("Input.PartnerId");
+        ModelState.ClearValidationState(nameof(Input));
+        var inputIsValid = TryValidateModel(Input, nameof(Input));
+
+        if (!inputIsValid)
         {
             return Page();
         }
@@ -91,16 +110,24 @@ public class CreateModel(
     }
 
     public string Title => $"Nouveau {PurchaseDocumentCatalog.Label(PurchaseDocumentCatalog.Normalize(Type)).ToLowerInvariant()}";
+    public string PartnerLookupLabel => PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "Code du fournisseur" : "Nom du fournisseur";
+    public string PartnerLookupPlaceholder => PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "Exemple : FOU-0001" : "Exemple : Atelier Nova";
 
     private async Task LoadLookupsAsync()
     {
         var tenantId = await GetTenantIdAsync();
-        Partners = await DbContext.BusinessPartners
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.IsActive && (x.PartnerType == BusinessPartnerType.Supplier || x.PartnerType == BusinessPartnerType.Both))
-            .OrderBy(x => x.Code)
-            .Select(x => new SelectListItem($"{x.Code} - {x.Name}", x.Id.ToString()))
-            .ToListAsync(HttpContext.RequestAborted);
+        var partnerContext = await PartnerAssistService.LoadOptionsAsync(DbContext, tenantId, AllowedPartnerTypes, HttpContext.RequestAborted);
+        PartnerLookupMode = partnerContext.Tenant.PartnerLookupMode;
+        PartnerOptions = partnerContext.Options;
+
+        if (Input.PartnerId.HasValue && string.IsNullOrWhiteSpace(PartnerEntry.Lookup))
+        {
+            var selectedPartner = PartnerOptions.FirstOrDefault(x => x.Id == Input.PartnerId.Value);
+            if (selectedPartner is not null)
+            {
+                PartnerEntry.Lookup = selectedPartner.DisplayValue;
+            }
+        }
 
         Warehouses = await DbContext.Warehouses
             .AsNoTracking()
@@ -117,5 +144,36 @@ public class CreateModel(
         QuotaReferenceDate = documentDate;
         var quotas = await tenantQuotaEnforcementService.GetQuotaUsageAsync(tenantId, documentDate, HttpContext.RequestAborted);
         DocumentQuota = quotas.FirstOrDefault(x => x.Label == "Documents du mois");
+    }
+
+    private async Task ResolvePartnerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PartnerEntry.Lookup))
+        {
+            Input.PartnerId = null;
+            return;
+        }
+
+        var tenantId = await GetTenantIdAsync();
+        var result = await PartnerAssistService.ResolveOrCreateAsync(
+            DbContext,
+            numberingService,
+            tenantId,
+            AllowedPartnerTypes,
+            BusinessPartnerType.Supplier,
+            ReferenceNumberingScope.Supplier,
+            PartnerLookupMode,
+            PartnerEntry,
+            HttpContext.RequestAborted);
+
+        if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+        {
+            ModelState.AddModelError("Input.PartnerId", result.ErrorMessage);
+            Input.PartnerId = null;
+            return;
+        }
+
+        Input.PartnerId = result.PartnerId;
+        PartnerEntry.Lookup = result.LookupValue ?? PartnerEntry.Lookup;
     }
 }

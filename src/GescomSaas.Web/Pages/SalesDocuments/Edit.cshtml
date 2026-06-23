@@ -2,184 +2,561 @@
 @model GescomSaas.Web.Pages.SalesDocuments.EditModel
 @{
     ViewData["Title"] = "Modifier une piece commerciale";
+    var docLabel = GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(Model.Input.DocumentType);
 }
 
-<section class="page-header-card">
+@* ── Wrapper Phase 2 : data-attributes consommés par doc-edit-enhancements.js ── *@
+<div data-doc-edit-root
+     data-document-id="@Model.Id"
+     data-currency="@Model.Input.CurrencyCode"
+     data-partner-scope="customers"
+     data-partner-entity="client">
+
+@* ── En-tete de page (= page-header LigFin, remplace l'ancien workspace-hero) ── *@
+<div class="page-header">
     <div>
-        <span class="eyebrow">Edition</span>
-        <h1>@GescomSaas.Web.Pages.SalesDocuments.SalesDocumentCatalog.Label(Model.Input.DocumentType) @Model.Input.Number</h1>
+        <h1 class="page-header-title">@docLabel @Model.Input.Number</h1>
+        <div class="page-header-sub">
+            <span class="badge doc-status-@Model.Input.Status.ToString().ToLowerInvariant()">@Model.Input.Status</span>
+            <span class="ms-2">Devise <strong>@Model.Input.CurrencyCode</strong></span>
+            <span class="ms-2">· @Model.Lines.Count ligne(s)</span>
+            <span data-autosave-status class="ms-3" data-kind="idle">Pret</span>
+        </div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Id">Voir le detail</a>
-        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Input.DocumentType">Retour a la liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Id">
+            <i class="bi bi-eye me-1"></i>Voir le detail
+        </a>
+        <a class="btn btn-secondary" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Input.DocumentType">
+            <i class="bi bi-arrow-left me-1"></i>Retour a la liste
+        </a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>Mise a jour</strong> @Model.StatusMessage
+    </div>
 }
 
-<section class="content-grid blueprint-grid">
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Entete</span>
-                <h2>Informations du document</h2>
-            </div>
-        </div>
+@* ── Zone d'edition : 3 colonnes (entete | saisie ligne | recap sticky) ── *@
+<div class="row g-3">
 
-        <form method="post" asp-route-id="@Model.Id" class="stack-form">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-grid">
-                <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" readonly /></div>
-                <div><label asp-for="Input.PartnerId" class="form-label"></label><select asp-for="Input.PartnerId" asp-items="Model.Partners" class="form-select"><option value="">Choisir un client</option></select></div>
-                <div><label asp-for="Input.WarehouseId" class="form-label"></label><select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Aucun depot</option></select></div>
-                <div><label asp-for="Input.Status" class="form-label"></label><select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select></div>
-                <div><label asp-for="Input.DocumentDate" class="form-label"></label><input asp-for="Input.DocumentDate" class="form-control" /></div>
-                <div><label asp-for="Input.DueDate" class="form-label"></label><input asp-for="Input.DueDate" class="form-control" /></div>
-                <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-                <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
+    @* En-tete du document *@
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Informations du document</span>
             </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary-soft">Mettre a jour</button>
-            </div>
-        </form>
-    </article>
+            <div class="card-body">
+                <form method="post" asp-route-id="@Model.Id" data-autosave-form>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Nouvelle ligne</span>
-                <h2>Ajouter un article</h2>
-            </div>
-        </div>
-        <form method="post" asp-page-handler="AddLine" asp-route-id="@Model.Id" class="stack-form" data-stock-tracking-form data-stock-tracking-source-id="sales-line-tracking-data" data-require-serialized-batch="@(Model.RequiresSerializedOutputs ? "true" : "false")">
-            <div asp-validation-summary="All" class="text-danger"></div>
-            <div class="form-grid">
-                <div class="full-span"><label asp-for="NewLine.ProductId" class="form-label"></label><select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select" data-stock-tracking-select><option value="">Choisir un article</option></select><span asp-validation-for="NewLine.ProductId" class="text-danger"></span></div>
-                <div class="full-span"><label asp-for="NewLine.Description" class="form-label"></label><input asp-for="NewLine.Description" class="form-control" data-stock-product-description /><span asp-validation-for="NewLine.Description" class="text-danger"></span></div>
-                <div>
-                    <label asp-for="NewLine.Quantity" class="form-label"></label>
-                    <input asp-for="NewLine.Quantity" type="hidden" />
-                    <input type="text" id="NewLine_Quantity_display" value="@DisplayFormatter.QuantityEditor(Model.NewLine.Quantity)" class="form-control" inputmode="decimal" data-format-kind="quantity" data-format-target="NewLine_Quantity" data-stock-tracking-quantity />
-                    <div class="table-meta" data-format-preview-for="NewLine_Quantity_display">Rendu : @DisplayFormatter.Quantity(Model.NewLine.Quantity)</div>
-                    <div class="table-meta" data-stock-tracking-quantity-hint></div>
-                    <span asp-validation-for="NewLine.Quantity" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="NewLine.UnitPriceExcludingTax" class="form-label"></label>
-                    <input asp-for="NewLine.UnitPriceExcludingTax" type="hidden" />
-                    <input type="text" id="NewLine_UnitPriceExcludingTax_display" value="@DisplayFormatter.MoneyEditor(Model.NewLine.UnitPriceExcludingTax)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="NewLine_UnitPriceExcludingTax" data-format-currency-code="@Model.Input.CurrencyCode" data-stock-product-cost />
-                    <div class="table-meta" data-format-preview-for="NewLine_UnitPriceExcludingTax_display">Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPriceExcludingTax, Model.Input.CurrencyCode)</div>
-                    <span asp-validation-for="NewLine.UnitPriceExcludingTax" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="NewLine.DiscountRate" class="form-label"></label>
-                    <input asp-for="NewLine.DiscountRate" type="hidden" />
-                    <input type="text" id="NewLine_DiscountRate_display" value="@DisplayFormatter.RateEditor(Model.NewLine.DiscountRate)" class="form-control" inputmode="decimal" data-format-kind="rate" data-format-target="NewLine_DiscountRate" data-format-decimals="2" />
-                    <div class="table-meta" data-format-preview-for="NewLine_DiscountRate_display">Rendu : @DisplayFormatter.Number(Model.NewLine.DiscountRate, 2) %</div>
-                    <span asp-validation-for="NewLine.DiscountRate" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="NewLine.TaxRate" class="form-label"></label>
-                    <input asp-for="NewLine.TaxRate" type="hidden" />
-                    <input type="text" id="NewLine_TaxRate_display" value="@DisplayFormatter.RateEditor(Model.NewLine.TaxRate)" class="form-control" inputmode="decimal" data-format-kind="rate" data-format-target="NewLine_TaxRate" data-format-decimals="2" />
-                    <div class="table-meta" data-format-preview-for="NewLine_TaxRate_display">Rendu : @DisplayFormatter.Number(Model.NewLine.TaxRate, 2) %</div>
-                    <span asp-validation-for="NewLine.TaxRate" class="text-danger"></span>
-                </div>
-                <div class="full-span table-meta" data-stock-tracking-hint></div>
-                <div data-stock-tracking-field="lot"><label asp-for="NewLine.LotNumber" class="form-label"></label><input asp-for="NewLine.LotNumber" class="form-control" /><span asp-validation-for="NewLine.LotNumber" class="text-danger"></span></div>
-                @if (Model.RequiresSerializedOutputs)
-                {
-                    <div><label asp-for="NewLine.LotEntryMode" class="form-label"></label><select asp-for="NewLine.LotEntryMode" asp-items="Model.LotEntryModes" class="form-select" data-lot-entry-mode></select></div>
-                    <div class="full-span"><label asp-for="NewLine.LotBreakdown" class="form-label"></label><textarea asp-for="NewLine.LotBreakdown" rows="4" class="form-control" placeholder="Exemple : LOTA;2&#10;LOTB;3"></textarea><div class="table-meta">Repartition : une ligne par lot au format LOT;QUANTITE.</div><span asp-validation-for="NewLine.LotBreakdown" class="text-danger"></span></div>
-                }
-                else
-                {
-                    <div data-stock-tracking-field="lot-batch-mode"><label asp-for="NewLine.LotEntryMode" class="form-label"></label><select asp-for="NewLine.LotEntryMode" asp-items="Model.LotEntryModes" class="form-select" data-lot-entry-mode></select></div>
-                    <div class="full-span" data-stock-tracking-field="lot-batch-list"><label asp-for="NewLine.LotBreakdown" class="form-label"></label><textarea asp-for="NewLine.LotBreakdown" rows="4" class="form-control" placeholder="Exemple : LOTA;2&#10;LOTB;3"></textarea><div class="table-meta">Repartition : une ligne par lot au format LOT;QUANTITE.</div><span asp-validation-for="NewLine.LotBreakdown" class="text-danger"></span></div>
-                }
-                <div data-stock-tracking-field="serial"><label asp-for="NewLine.SerialNumber" class="form-label"></label><input asp-for="NewLine.SerialNumber" class="form-control" /><span asp-validation-for="NewLine.SerialNumber" class="text-danger"></span></div>
-                @if (Model.RequiresSerializedOutputs)
-                {
-                    <div><label asp-for="NewLine.SerialEntryMode" class="form-label"></label><select asp-for="NewLine.SerialEntryMode" asp-items="Model.SerialEntryModes" class="form-select" data-serial-entry-mode></select></div>
-                    <div class="full-span"><label asp-for="NewLine.SerialNumberList" class="form-label"></label><textarea asp-for="NewLine.SerialNumberList" rows="4" class="form-control" placeholder="Exemple : SN0001, SN0002, SN0003"></textarea><div class="table-meta">Enumeration : un numero par ligne, ou separes par virgule / point-virgule.</div><span asp-validation-for="NewLine.SerialNumberList" class="text-danger"></span></div>
-                    <div><label asp-for="NewLine.SerialRangeStart" class="form-label"></label><input asp-for="NewLine.SerialRangeStart" class="form-control" placeholder="Exemple : SN0001" /><span asp-validation-for="NewLine.SerialRangeStart" class="text-danger"></span></div>
-                    <div><label asp-for="NewLine.SerialRangeEnd" class="form-label"></label><input asp-for="NewLine.SerialRangeEnd" class="form-control" placeholder="Exemple : SN0005" /><span asp-validation-for="NewLine.SerialRangeEnd" class="text-danger"></span></div>
-                }
-                else
-                {
-                    <div data-stock-tracking-field="serial-batch-mode"><label asp-for="NewLine.SerialEntryMode" class="form-label"></label><select asp-for="NewLine.SerialEntryMode" asp-items="Model.SerialEntryModes" class="form-select" data-serial-entry-mode></select></div>
-                    <div class="full-span" data-stock-tracking-field="serial-batch-list"><label asp-for="NewLine.SerialNumberList" class="form-label"></label><textarea asp-for="NewLine.SerialNumberList" rows="4" class="form-control" placeholder="Exemple : SN0001, SN0002, SN0003"></textarea><div class="table-meta">Saisis un numero par ligne, ou separe-les par virgule ou point-virgule.</div><span asp-validation-for="NewLine.SerialNumberList" class="text-danger"></span></div>
-                    <div data-stock-tracking-field="serial-batch-start"><label asp-for="NewLine.SerialRangeStart" class="form-label"></label><input asp-for="NewLine.SerialRangeStart" class="form-control" placeholder="Exemple : SN0001" /><span asp-validation-for="NewLine.SerialRangeStart" class="text-danger"></span></div>
-                    <div data-stock-tracking-field="serial-batch-end"><label asp-for="NewLine.SerialRangeEnd" class="form-label"></label><input asp-for="NewLine.SerialRangeEnd" class="form-control" placeholder="Exemple : SN0005" /><span asp-validation-for="NewLine.SerialRangeEnd" class="text-danger"></span></div>
-                }
-                <div data-stock-tracking-field="expiration"><label asp-for="NewLine.ExpirationDate" class="form-label"></label><input asp-for="NewLine.ExpirationDate" class="form-control" /></div>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary-soft">Ajouter la ligne</button>
-            </div>
-        </form>
-    </article>
-</section>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.Number" class="form-label"></label>
+                            <input asp-for="Input.Number" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Status" class="form-label"></label>
+                            <select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select>
+                        </div>
 
-<section class="panel-card">
-    <div class="panel-header">
-        <div>
-            <span class="eyebrow">Lignes</span>
-            <h2>Contenu du document</h2>
+                        <div class="col-12 position-relative" data-partner-assist data-partner-lookup-mode="@Model.PartnerLookupMode" data-partner-entity-label="client">
+                            <label class="form-label">@Model.PartnerLookupLabel</label>
+                            <input asp-for="Input.PartnerId" type="hidden" data-partner-async-hidden />
+                            <input asp-for="PartnerEntry.Lookup"
+                                   class="form-control"
+                                   list="sales-edit-partner-options"
+                                   placeholder="@Model.PartnerLookupPlaceholder"
+                                   data-partner-lookup-input
+                                   data-partner-async-input
+                                   autocomplete="off" />
+                            <div data-partner-async-dropdown></div>
+                            <datalist id="sales-edit-partner-options" data-partner-options>
+                                @foreach (var partner in Model.PartnerOptions)
+                                {
+                                    <option value="@partner.DisplayValue">@partner.Caption</option>
+                                }
+                            </datalist>
+                            <div class="form-text">
+                                <i class="bi bi-search me-1"></i>Recherche fuzzy : tape les premières lettres du code ou du nom · <kbd>↑↓</kbd> naviguer · <kbd>Enter</kbd> sélectionner.
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-partner-create-button>
+                                    <i class="bi bi-plus-lg me-1"></i>Nouveau client
+                                </button>
+                                <span class="form-text mb-0" data-partner-create-status>Selectionne un client existant ou cree-le a la volee.</span>
+                            </div>
+                            <span asp-validation-for="Input.PartnerId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.WarehouseId" class="form-label"></label>
+                            <select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select">
+                                <option value="">Aucun depot</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                            <input asp-for="Input.CurrencyCode" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.DocumentDate" class="form-label"></label>
+                            <input asp-for="Input.DocumentDate" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.DueDate" class="form-label"></label>
+                            <input asp-for="Input.DueDate" class="form-control" />
+                        </div>
+
+                        @* Panneau creation rapide client (visible conditionnel via JS data-partner-create-toggle) *@
+                        <div class="col-12" data-partner-create-panel hidden>
+                            <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <strong>Creation rapide du client</strong>
+                                        <span class="form-text">S'ouvre automatiquement si aucun client correspondant n'est trouve.</span>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input asp-for="PartnerEntry.CreateIfMissing" class="form-check-input" data-partner-create-toggle />
+                                        <label asp-for="PartnerEntry.CreateIfMissing" class="form-check-label"></label>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label asp-for="PartnerEntry.NewCode" class="form-label"></label>
+                                            <input asp-for="PartnerEntry.NewCode" class="form-control" data-partner-new-code />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label asp-for="PartnerEntry.NewName" class="form-label"></label>
+                                            <input asp-for="PartnerEntry.NewName" class="form-control" data-partner-new-name />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label asp-for="PartnerEntry.Email" class="form-label"></label>
+                                            <input asp-for="PartnerEntry.Email" class="form-control" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label asp-for="PartnerEntry.PhoneNumber" class="form-label"></label>
+                                            <input asp-for="PartnerEntry.PhoneNumber" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.Notes" class="form-label"></label>
+                            <textarea asp-for="Input.Notes" rows="3" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3 align-items-center gap-2">
+                        <span class="form-text mb-0 me-auto">
+                            <i class="bi bi-info-circle me-1"></i>Auto-save sur changement de champ · <kbd>Ctrl+S</kbd> sauve maintenant
+                        </span>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Mettre a jour
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Article</th>
-                    <th>Description</th>
-                    <th class="text-end">Qté</th>
-                    <th class="text-end">PU HT</th>
-                    <th class="text-end">Remise</th>
-                    <th class="text-end">Taxe</th>
-                    <th>Lot / Serie</th>
-                    <th class="text-end">TTC</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Lines.Count == 0)
-            {
-                <tr><td colspan="9" class="empty-cell">Aucune ligne dans cette piece.</td></tr>
-            }
-            else
-            {
-                @foreach (var line in Model.Lines)
-                {
+    @* Saisie d'une nouvelle ligne *@
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-plus-square"></i>
+                <span>Ajouter un article</span>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddLine" asp-route-id="@Model.Id"
+                      data-stock-tracking-form
+                      data-stock-tracking-source-id="sales-line-tracking-data"
+                      data-require-serialized-batch="@(Model.RequiresSerializedOutputs ? "true" : "false")"
+                      data-add-line-form>
+                    <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+                    <div class="row g-3">
+                        <div class="col-12 position-relative">
+                            <label asp-for="NewLine.ProductId" class="form-label"></label>
+                            <input type="search"
+                                   class="form-control mb-2"
+                                   placeholder="Recherche fuzzy : SKU ou libellé…"
+                                   data-product-async-input
+                                   autocomplete="off" />
+                            <div data-product-async-dropdown></div>
+                            <select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select" data-stock-tracking-select>
+                                <option value="">Choisir un article</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-search me-1"></i>Tape pour filtrer · <kbd>↑↓</kbd> naviguer · <kbd>Enter</kbd> sélectionner · ou utilise la liste déroulante.
+                            </div>
+                            <span asp-validation-for="NewLine.ProductId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="NewLine.Description" class="form-label"></label>
+                            <input asp-for="NewLine.Description" class="form-control" data-stock-product-description />
+                            <span asp-validation-for="NewLine.Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NewLine.Quantity" class="form-label"></label>
+                            <input asp-for="NewLine.Quantity" type="hidden" />
+                            <input type="text"
+                                   id="NewLine_Quantity_display"
+                                   value="@DisplayFormatter.QuantityEditor(Model.NewLine.Quantity)"
+                                   class="form-control money"
+                                   inputmode="decimal"
+                                   data-format-kind="quantity"
+                                   data-format-target="NewLine_Quantity"
+                                   data-stock-tracking-quantity />
+                            <div class="form-text" data-format-preview-for="NewLine_Quantity_display">
+                                Rendu : @DisplayFormatter.Quantity(Model.NewLine.Quantity)
+                            </div>
+                            <div class="form-text" data-stock-tracking-quantity-hint></div>
+                            <span asp-validation-for="NewLine.Quantity" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewLine.UnitPriceExcludingTax" class="form-label"></label>
+                            <input asp-for="NewLine.UnitPriceExcludingTax" type="hidden" />
+                            <input type="text"
+                                   id="NewLine_UnitPriceExcludingTax_display"
+                                   value="@DisplayFormatter.MoneyEditor(Model.NewLine.UnitPriceExcludingTax)"
+                                   class="form-control money"
+                                   inputmode="decimal"
+                                   data-format-kind="money"
+                                   data-format-target="NewLine_UnitPriceExcludingTax"
+                                   data-format-currency-code="@Model.Input.CurrencyCode"
+                                   data-stock-product-cost />
+                            <div class="form-text" data-format-preview-for="NewLine_UnitPriceExcludingTax_display">
+                                Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPriceExcludingTax, Model.Input.CurrencyCode)
+                            </div>
+                            <span asp-validation-for="NewLine.UnitPriceExcludingTax" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NewLine.DiscountRate" class="form-label"></label>
+                            <input asp-for="NewLine.DiscountRate" type="hidden" />
+                            <input type="text"
+                                   id="NewLine_DiscountRate_display"
+                                   value="@DisplayFormatter.RateEditor(Model.NewLine.DiscountRate)"
+                                   class="form-control money"
+                                   inputmode="decimal"
+                                   data-format-kind="rate"
+                                   data-format-target="NewLine_DiscountRate"
+                                   data-format-decimals="2" />
+                            <div class="form-text" data-format-preview-for="NewLine_DiscountRate_display">
+                                Rendu : @DisplayFormatter.Number(Model.NewLine.DiscountRate, 2) %
+                            </div>
+                            <span asp-validation-for="NewLine.DiscountRate" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewLine.TaxRate" class="form-label"></label>
+                            <input asp-for="NewLine.TaxRate" type="hidden" />
+                            <input type="text"
+                                   id="NewLine_TaxRate_display"
+                                   value="@DisplayFormatter.RateEditor(Model.NewLine.TaxRate)"
+                                   class="form-control money"
+                                   inputmode="decimal"
+                                   data-format-kind="rate"
+                                   data-format-target="NewLine_TaxRate"
+                                   data-format-decimals="2" />
+                            <div class="form-text" data-format-preview-for="NewLine_TaxRate_display">
+                                Rendu : @DisplayFormatter.Number(Model.NewLine.TaxRate, 2) %
+                            </div>
+                            <span asp-validation-for="NewLine.TaxRate" class="text-danger small"></span>
+                        </div>
+
+                        @* Bloc tracabilite (lot/serie) - cache par defaut, gere par data-stock-tracking-* *@
+                        <div class="col-12 form-text" data-stock-tracking-hint></div>
+                        <div class="col-md-6" data-stock-tracking-field="lot">
+                            <label asp-for="NewLine.LotNumber" class="form-label"></label>
+                            <input asp-for="NewLine.LotNumber" class="form-control" />
+                            <span asp-validation-for="NewLine.LotNumber" class="text-danger small"></span>
+                        </div>
+                        @if (Model.RequiresSerializedOutputs)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="NewLine.LotEntryMode" class="form-label"></label>
+                                <select asp-for="NewLine.LotEntryMode" asp-items="Model.LotEntryModes" class="form-select" data-lot-entry-mode></select>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="NewLine.LotBreakdown" class="form-label"></label>
+                                <textarea asp-for="NewLine.LotBreakdown" rows="3" class="form-control" placeholder="Exemple : LOTA;2&#10;LOTB;3"></textarea>
+                                <div class="form-text">Repartition : une ligne par lot au format LOT;QUANTITE.</div>
+                                <span asp-validation-for="NewLine.LotBreakdown" class="text-danger small"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-6" data-stock-tracking-field="lot-batch-mode">
+                                <label asp-for="NewLine.LotEntryMode" class="form-label"></label>
+                                <select asp-for="NewLine.LotEntryMode" asp-items="Model.LotEntryModes" class="form-select" data-lot-entry-mode></select>
+                            </div>
+                            <div class="col-12" data-stock-tracking-field="lot-batch-list">
+                                <label asp-for="NewLine.LotBreakdown" class="form-label"></label>
+                                <textarea asp-for="NewLine.LotBreakdown" rows="3" class="form-control" placeholder="Exemple : LOTA;2&#10;LOTB;3"></textarea>
+                                <div class="form-text">Repartition : une ligne par lot au format LOT;QUANTITE.</div>
+                                <span asp-validation-for="NewLine.LotBreakdown" class="text-danger small"></span>
+                            </div>
+                        }
+
+                        <div class="col-md-6" data-stock-tracking-field="serial">
+                            <label asp-for="NewLine.SerialNumber" class="form-label"></label>
+                            <input asp-for="NewLine.SerialNumber" class="form-control" />
+                            <span asp-validation-for="NewLine.SerialNumber" class="text-danger small"></span>
+                        </div>
+                        @if (Model.RequiresSerializedOutputs)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="NewLine.SerialEntryMode" class="form-label"></label>
+                                <select asp-for="NewLine.SerialEntryMode" asp-items="Model.SerialEntryModes" class="form-select" data-serial-entry-mode></select>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="NewLine.SerialNumberList" class="form-label"></label>
+                                <textarea asp-for="NewLine.SerialNumberList" rows="3" class="form-control" placeholder="Exemple : SN0001, SN0002, SN0003"></textarea>
+                                <div class="form-text">Enumeration : un numero par ligne, ou separes par virgule / point-virgule.</div>
+                                <span asp-validation-for="NewLine.SerialNumberList" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NewLine.SerialRangeStart" class="form-label"></label>
+                                <input asp-for="NewLine.SerialRangeStart" class="form-control" placeholder="Exemple : SN0001" />
+                                <span asp-validation-for="NewLine.SerialRangeStart" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NewLine.SerialRangeEnd" class="form-label"></label>
+                                <input asp-for="NewLine.SerialRangeEnd" class="form-control" placeholder="Exemple : SN0005" />
+                                <span asp-validation-for="NewLine.SerialRangeEnd" class="text-danger small"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-6" data-stock-tracking-field="serial-batch-mode">
+                                <label asp-for="NewLine.SerialEntryMode" class="form-label"></label>
+                                <select asp-for="NewLine.SerialEntryMode" asp-items="Model.SerialEntryModes" class="form-select" data-serial-entry-mode></select>
+                            </div>
+                            <div class="col-12" data-stock-tracking-field="serial-batch-list">
+                                <label asp-for="NewLine.SerialNumberList" class="form-label"></label>
+                                <textarea asp-for="NewLine.SerialNumberList" rows="3" class="form-control" placeholder="Exemple : SN0001, SN0002, SN0003"></textarea>
+                                <div class="form-text">Saisis un numero par ligne, ou separe-les par virgule ou point-virgule.</div>
+                                <span asp-validation-for="NewLine.SerialNumberList" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6" data-stock-tracking-field="serial-batch-start">
+                                <label asp-for="NewLine.SerialRangeStart" class="form-label"></label>
+                                <input asp-for="NewLine.SerialRangeStart" class="form-control" placeholder="Exemple : SN0001" />
+                                <span asp-validation-for="NewLine.SerialRangeStart" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6" data-stock-tracking-field="serial-batch-end">
+                                <label asp-for="NewLine.SerialRangeEnd" class="form-label"></label>
+                                <input asp-for="NewLine.SerialRangeEnd" class="form-control" placeholder="Exemple : SN0005" />
+                                <span asp-validation-for="NewLine.SerialRangeEnd" class="text-danger small"></span>
+                            </div>
+                        }
+
+                        <div class="col-md-6" data-stock-tracking-field="expiration">
+                            <label asp-for="NewLine.ExpirationDate" class="form-label"></label>
+                            <input asp-for="NewLine.ExpirationDate" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Ajouter la ligne
+                        </button>
+                    </div>
+                    <div class="form-text mt-2">
+                        <i class="bi bi-keyboard me-1"></i><kbd>Tab</kbd> entre champs · <kbd>Enter</kbd> sur dernier champ pour ajouter
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ── Récap totaux sticky (3e colonne) ── *@
+    <div class="col-lg-3">
+        <div class="card doc-edit-totals-sticky" data-doc-edit-totals>
+            <div class="section-header">
+                <i class="bi bi-calculator"></i>
+                <span>Récap</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Sous-total HT</span>
+                    <span class="money fw-semibold" data-totals-subtotal>0,00 @Model.Input.CurrencyCode</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">TVA</span>
+                    <span class="money fw-semibold" data-totals-tax>0,00 @Model.Input.CurrencyCode</span>
+                </div>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="small text-muted">Total TTC</span>
+                    <span class="money fw-bold fs-5" data-totals-total style="color:var(--gc-brand-hover)">0,00 @Model.Input.CurrencyCode</span>
+                </div>
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                    <span>Lignes</span>
+                    <span data-totals-lines>@Model.Lines.Count</span>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Articles (qté)</span>
+                    <span data-totals-articles>0</span>
+                </div>
+
+                <hr class="my-3" />
+                <div class="d-grid gap-2">
+                    <a class="btn btn-secondary btn-sm" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Id" asp-page-handler="Pdf">
+                        <i class="bi bi-download me-1"></i>Aperçu PDF
+                    </a>
+                    <a class="btn btn-secondary btn-sm" asp-page="/SalesDocuments/Details" asp-route-id="@Model.Id">
+                        <i class="bi bi-eye me-1"></i>Voir le détail
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Tableau des lignes ── *@
+@{
+    var canEditLines = Model.Input.Status == GescomSaas.Domain.Enums.CommercialDocumentStatus.Draft
+                    || Model.Input.Status == GescomSaas.Domain.Enums.CommercialDocumentStatus.Open;
+}
+<div class="card mt-3">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Contenu du document</span>
+        <span class="ms-3 small text-muted"><i class="bi bi-pencil-square me-1"></i>Cliquez Qte/PU/Remise/Taxe · <i class="bi bi-grip-vertical mx-1"></i>Glissez · <i class="bi bi-check2-square mx-1"></i>Cochez pour groupe</span>
+        <span class="ms-auto small text-muted">@Model.Lines.Count ligne(s)</span>
+    </div>
+
+    @* === Barre d'actions groupees (visible si >= 1 ligne cochee) === *@
+    <div class="bulk-actions-bar" data-bulk-actions hidden>
+        <span>
+            <i class="bi bi-check2-square me-2"></i>
+            <strong data-bulk-count>0</strong> ligne(s) sélectionnée(s)
+        </span>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-primary" data-bulk-apply-discount>
+                <i class="bi bi-percent me-1"></i>Appliquer une remise
+            </button>
+            <button type="button" class="btn btn-sm btn-primary" data-bulk-apply-tax>
+                <i class="bi bi-receipt me-1"></i>Appliquer un taux de taxe
+            </button>
+            <button type="button" class="btn btn-sm btn-link" data-bulk-clear>
+                Désélectionner
+            </button>
+        </div>
+    </div>
+    @if (Model.Lines.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune ligne dans cette piece</h6>
+            <p>Utilise le formulaire ci-dessus pour ajouter ton premier article.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <td>@line.ProductCode</td>
-                        <td>@line.Description</td>
-                        <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
-                        <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Input.CurrencyCode)</td>
-                        <td class="text-end">@DisplayFormatter.Number(line.DiscountRate, 2) %</td>
-                        <td class="text-end">@DisplayFormatter.Number(line.TaxRate, 2) %</td>
-                        <td>@(line.LotNumber ?? line.SerialNumber ?? "-")</td>
-                        <td class="text-end">@DisplayFormatter.Money(line.TotalIncludingTax, Model.Input.CurrencyCode)</td>
-                        <td class="text-end">
-                            <form method="post" asp-page-handler="DeleteLine" asp-route-id="@Model.Id" class="inline-form">
-                                <input type="hidden" name="lineId" value="@line.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-light">Supprimer</button>
-                            </form>
-                        </td>
+                        <th style="width:64px" class="text-center">
+                            @if (canEditLines)
+                            {
+                                <input type="checkbox" class="form-check-input" data-bulk-select-all aria-label="Tout sélectionner" />
+                            }
+                        </th>
+                        <th>Article</th>
+                        <th>Description</th>
+                        <th class="text-end">Qte</th>
+                        <th class="text-end">PU HT</th>
+                        <th class="text-end">Remise</th>
+                        <th class="text-end">Taxe</th>
+                        <th>Lot / Serie</th>
+                        <th class="text-end">TTC</th>
+                        <th class="text-end">Actions</th>
                     </tr>
-                }
-            }
-            </tbody>
-        </table>
-    </div>
-</section>
+                </thead>
+                <tbody data-doc-edit-lines-tbody>
+                    @foreach (var line in Model.Lines)
+                    {
+                        var lineSubtotal = line.UnitPriceExcludingTax * line.Quantity * (1 - (line.DiscountRate / 100m));
+                        var lineTax = lineSubtotal * (line.TaxRate / 100m);
+                        <tr data-line-row
+                            data-line-id="@line.Id"
+                            data-line-quantity="@line.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                            data-line-subtotal="@lineSubtotal.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                            data-line-tax="@lineTax.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                            <td class="text-center">
+                                @if (canEditLines)
+                                {
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <input type="checkbox" class="form-check-input" data-bulk-select data-line-id="@line.Id" aria-label="Sélectionner la ligne @line.ProductCode" />
+                                        <span data-drag-handle aria-label="Glisser pour réordonner" title="Glisser pour réordonner">
+                                            <i class="bi bi-grip-vertical"></i>
+                                        </span>
+                                    </div>
+                                }
+                            </td>
+                            <td><strong>@line.ProductCode</strong></td>
+                            <td>@line.Description</td>
+                            <td class="text-end money @(canEditLines ? "editable-cell" : "")"
+                                data-line-field="quantity"
+                                data-raw-value="@line.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                title="@(canEditLines ? "Cliquer pour modifier la quantité" : null)">
+                                <span data-cell-display>@DisplayFormatter.Quantity(line.Quantity)</span>
+                            </td>
+                            <td class="text-end money @(canEditLines ? "editable-cell" : "")"
+                                data-line-field="unitPrice"
+                                data-raw-value="@line.UnitPriceExcludingTax.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                title="@(canEditLines ? "Cliquer pour modifier le prix unitaire" : null)">
+                                <span data-cell-display>@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Input.CurrencyCode)</span>
+                            </td>
+                            <td class="text-end money @(canEditLines ? "editable-cell" : "")"
+                                data-line-field="discountRate"
+                                data-raw-value="@line.DiscountRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                title="@(canEditLines ? "Cliquer pour modifier la remise" : null)">
+                                <span data-cell-display>@DisplayFormatter.Number(line.DiscountRate, 2) %</span>
+                            </td>
+                            <td class="text-end money @(canEditLines ? "editable-cell" : "")"
+                                data-line-field="taxRate"
+                                data-raw-value="@line.TaxRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                title="@(canEditLines ? "Cliquer pour modifier le taux de taxe" : null)">
+                                <span data-cell-display>@DisplayFormatter.Number(line.TaxRate, 2) %</span>
+                            </td>
+                            <td>@(line.LotNumber ?? line.SerialNumber ?? "—")</td>
+                            <td class="text-end money fw-semibold" data-line-total-display>
+                                @DisplayFormatter.Money(line.TotalIncludingTax, Model.Input.CurrencyCode)
+                            </td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="DeleteLine" asp-route-id="@Model.Id" class="d-inline" data-delete-line-form data-line-label="@line.ProductCode">
+                                    <input type="hidden" name="lineId" value="@line.Id" />
+                                    <button type="submit" class="btn btn-sm btn-secondary"
+                                            aria-label="Supprimer la ligne @line.ProductCode"
+                                            title="Supprimer cette ligne">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+
+</div><!-- /[data-doc-edit-root] -->
 
 @section Scripts {
     <script id="sales-line-tracking-data" type="application/json">@Html.Raw(Model.ProductTrackingMetadataJson)</script>
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/doc-edit-enhancements.js" asp-append-version="true"></script>
 }

@@ -4,60 +4,82 @@
     ViewData["Title"] = "Traitements";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Traitements</span>
-        <h1>Vue d'ensemble des traitements commerciaux</h1>
-        <p class="muted-copy">Point d'entree pour piloter les cycles de vente, d'achat, de finance et de stock dans LigCom.</p>
+        <h1 class="page-header-title">Traitements commerciaux</h1>
+        <div class="page-header-sub">Point d'entree pour piloter les cycles de vente, achat, finance et stock</div>
     </div>
-</section>
+</div>
 
-<section class="card-grid">
+@* Modules principaux *@
+<div class="row g-3 mb-4">
     @foreach (var card in Model.Cards)
     {
-        <a class="module-card nav-card" href="@card.Href">
-            <h3>@card.Title</h3>
-            <p>@card.Description</p>
-            <span>Acceder au module</span>
-        </a>
-    }
-</section>
-
-<section class="content-grid mt-4">
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Cycles metier</span>
-                <h2>Flux couverts</h2>
-            </div>
-        </div>
-        <div class="module-stack">
-            @foreach (var flow in Model.Flows)
-            {
-                <div class="module-card">
-                    <h3>@flow.Title</h3>
-                    <p>@flow.Description</p>
+        <div class="col-md-6 col-lg-4">
+            <a href="@card.Href" class="card h-100 text-decoration-none" style="transition:transform .15s, box-shadow .15s">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-2">@card.Title</h5>
+                    <p class="card-text small text-muted mb-3">@card.Description</p>
+                    <span class="small fw-semibold text-primary">
+                        Acceder au module <i class="bi bi-arrow-right ms-1"></i>
+                    </span>
                 </div>
-            }
+            </a>
         </div>
-    </article>
+    }
+</div>
 
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Acces rapide</span>
-                <h2>Actions frequentes</h2>
+<div class="row g-3">
+    @* Cycles metier *@
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-diagram-3"></i>
+                <span>Flux couverts</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @foreach (var flow in Model.Flows)
+                    {
+                        <div class="col-md-6">
+                            <div class="card border" style="background:var(--gc-brand-50)">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-2">@flow.Title</h6>
+                                    <p class="card-text small text-muted mb-0">@flow.Description</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
-        <div class="module-stack">
-            @foreach (var quickLink in Model.QuickLinks)
-            {
-                <a class="module-card nav-card" href="@quickLink.Href">
-                    <h3>@quickLink.Title</h3>
-                    <p>@quickLink.Description</p>
-                    <span>Ouvrir</span>
-                </a>
-            }
+    </div>
+
+    @* Acces rapide *@
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-lightning"></i>
+                <span>Actions frequentes</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var quickLink in Model.QuickLinks)
+                    {
+                        <a href="@quickLink.Href" class="card border text-decoration-none" style="transition:background .15s">
+                            <div class="card-body py-2">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="fw-semibold text-primary">@quickLink.Title</div>
+                                        <div class="small text-muted">@quickLink.Description</div>
+                                    </div>
+                                    <i class="bi bi-arrow-right text-primary"></i>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
         </div>
-    </article>
-</section>
+    </div>
+</div>

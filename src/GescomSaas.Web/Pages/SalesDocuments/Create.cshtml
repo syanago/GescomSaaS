@@ -4,37 +4,127 @@
     ViewData["Title"] = Model.Title;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Creation</span>
-        <h1>@Model.Title</h1>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Creation d'un nouveau document commercial</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">Retour a la liste</a>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">
+            <i class="bi bi-arrow-left me-1"></i>Retour a la liste
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form">
-        <input type="hidden" asp-for="Type" />
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div id="sales-document-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
-        <div class="form-grid">
-            <div><label asp-for="Input.Number" class="form-label"></label><input asp-for="Input.Number" class="form-control" /></div>
-            <div><label asp-for="Input.PartnerId" class="form-label"></label><select asp-for="Input.PartnerId" asp-items="Model.Partners" class="form-select"><option value="">Choisir un client</option></select><span asp-validation-for="Input.PartnerId" class="text-danger"></span></div>
-            <div><label asp-for="Input.WarehouseId" class="form-label"></label><select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select"><option value="">Aucun depot</option></select></div>
-            <div><label asp-for="Input.Status" class="form-label"></label><select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select></div>
-            <div><label asp-for="Input.DocumentDate" class="form-label"></label><input asp-for="Input.DocumentDate" class="form-control" /></div>
-            <div><label asp-for="Input.DueDate" class="form-label"></label><input asp-for="Input.DueDate" class="form-control" /></div>
-            <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-            <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" id="sales-document-submit-button" class="btn btn-primary-soft">Creer la piece</button>
-            <a class="btn btn-outline-light" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">Annuler</a>
-        </div>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-file-earmark-plus"></i>
+        <span>Informations du document</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Type" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div id="sales-document-quota-warning" class="alert alert-warning" hidden></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Number" class="form-label"></label>
+                    <input asp-for="Input.Number" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Status" class="form-label"></label>
+                    <select asp-for="Input.Status" asp-items="Model.Statuses" class="form-select"></select>
+                </div>
+
+                <div class="col-12" data-partner-assist data-partner-lookup-mode="@Model.PartnerLookupMode" data-partner-entity-label="client">
+                    <label class="form-label">@Model.PartnerLookupLabel</label>
+                    <input asp-for="Input.PartnerId" type="hidden" />
+                    <input asp-for="PartnerEntry.Lookup" class="form-control" list="sales-create-partner-options" placeholder="@Model.PartnerLookupPlaceholder" data-partner-lookup-input />
+                    <datalist id="sales-create-partner-options" data-partner-options>
+                        @foreach (var partner in Model.PartnerOptions)
+                        {
+                            <option value="@partner.DisplayValue">@partner.Caption</option>
+                        }
+                    </datalist>
+                    <div class="form-text">Saisie assistee par @(Model.PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "code" : "nom"). Si le tiers n'existe pas, active la creation rapide ci-dessous.</div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-partner-create-button>
+                            <i class="bi bi-plus-lg me-1"></i>Nouveau client
+                        </button>
+                        <span class="form-text mb-0" data-partner-create-status>Selectionne un client existant ou cree-le a la volee.</span>
+                    </div>
+                    <span asp-validation-for="Input.PartnerId" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.WarehouseId" class="form-label"></label>
+                    <select asp-for="Input.WarehouseId" asp-items="Model.Warehouses" class="form-select">
+                        <option value="">Aucun depot</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                    <input asp-for="Input.CurrencyCode" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.DocumentDate" class="form-label"></label>
+                    <input asp-for="Input.DocumentDate" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.DueDate" class="form-label"></label>
+                    <input asp-for="Input.DueDate" class="form-control" />
+                </div>
+
+                @* Panneau creation rapide client (visible conditionnel via JS data-partner-create-toggle) *@
+                <div class="col-12" data-partner-create-panel hidden>
+                    <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong>Creation rapide du client</strong>
+                                <span class="form-text">S'ouvre automatiquement si aucun client correspondant n'est trouve.</span>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input asp-for="PartnerEntry.CreateIfMissing" class="form-check-input" data-partner-create-toggle />
+                                <label asp-for="PartnerEntry.CreateIfMissing" class="form-check-label"></label>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.NewCode" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.NewCode" class="form-control" data-partner-new-code />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.NewName" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.NewName" class="form-control" data-partner-new-name />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.Email" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.Email" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.PhoneNumber" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.PhoneNumber" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Input.Notes" class="form-label"></label>
+                    <textarea asp-for="Input.Notes" rows="3" class="form-control"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/SalesDocuments/Index" asp-route-type="@Model.Type">Annuler</a>
+                <button type="submit" id="sales-document-submit-button" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Creer la piece
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

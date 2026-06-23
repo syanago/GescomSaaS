@@ -35,7 +35,8 @@ internal static partial class SerializedLineBatchParser
         var values = serialList
             .Split([',', ';', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(NormalizeToken)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(static x => x!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 

@@ -1,4 +1,5 @@
 using GescomSaas.Application.Contracts;
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
@@ -15,8 +16,19 @@ namespace GescomSaas.Web.Pages.SalesDocuments;
 public class EditModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    ICommercialDocumentWorkflowService workflowService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    ICommercialDocumentWorkflowService workflowService,
+    INumberingService numberingService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SalesDocumentsManage];
+
+    private static readonly BusinessPartnerType[] AllowedPartnerTypes =
+    [
+        BusinessPartnerType.Customer,
+        BusinessPartnerType.Both,
+        BusinessPartnerType.Prospect
+    ];
+
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
 
@@ -24,11 +36,15 @@ public class EditModel(
     public SalesDocumentInputModel Input { get; set; } = new();
 
     [BindProperty]
+    public AssistedPartnerEntryInputModel PartnerEntry { get; set; } = new();
+
+    [BindProperty]
     public SalesDocumentLineInputModel NewLine { get; set; } = new();
 
-    public IReadOnlyList<SelectListItem> Partners { get; private set; } = [];
+    public IReadOnlyList<PartnerLookupOption> PartnerOptions { get; private set; } = [];
     public IReadOnlyList<SelectListItem> Warehouses { get; private set; } = [];
     public IReadOnlyList<SelectListItem> Products { get; private set; } = [];
+    public PartnerLookupMode PartnerLookupMode { get; private set; } = GescomSaas.Domain.Enums.PartnerLookupMode.Code;
     public IReadOnlyList<SelectListItem> SerialEntryModes { get; } =
     [
         new("Numero unique", "Single"),
@@ -53,15 +69,18 @@ public class EditModel(
     public IReadOnlyList<DocumentLineItem> Lines { get; private set; } = [];
     public bool RequiresSerializedOutputs =>
         Input.DocumentType is CommercialDocumentType.DeliveryNote or CommercialDocumentType.SalesInvoice;
+    public string PartnerLookupLabel => PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "Code du client" : "Nom du client";
+    public string PartnerLookupPlaceholder => PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "Exemple : CLI-0001" : "Exemple : Maison Atlas";
 
     public async Task<IActionResult> OnGetAsync() => await LoadPageAsync();
 
     public async Task<IActionResult> OnPostAsync()
     {
         ModelState.Clear();
+        await LoadLookupsAsync();
+        await ResolvePartnerAsync();
         if (!TryValidateModel(Input, nameof(Input)))
         {
-            await LoadLookupsAsync();
             await LoadLinesAsync();
             return Page();
         }
@@ -163,9 +182,17 @@ public class EditModel(
             return Page();
         }
 
+        // Calcule l'ordre de tri pour les nouvelles lignes : max actuel + 1, puis incremente
+        var currentMaxSortOrder = await DbContext.CommercialDocumentLines
+            .Where(x => x.CommercialDocumentId == entity.Id)
+            .Select(x => (int?)x.SortOrder)
+            .MaxAsync(HttpContext.RequestAborted) ?? -1;
+
+        var nextSortOrder = currentMaxSortOrder + 1;
         DbContext.CommercialDocumentLines.AddRange(linesToCreate.Select(line =>
         {
             line.CommercialDocumentId = entity.Id;
+            line.SortOrder = nextSortOrder++;
             return line;
         }));
         try
@@ -226,6 +253,261 @@ public class EditModel(
         return RedirectToPage("/SalesDocuments/Edit", new { id = Id });
     }
 
+    public async Task<IActionResult> OnPostUpdateLineAsync(Guid lineId, decimal quantity, decimal unitPrice, decimal discountRate, decimal taxRate)
+    {
+        // Validation cote serveur
+        if (quantity <= 0)
+        {
+            return new JsonResult(new { ok = false, error = "La quantite doit etre superieure a 0." }) { StatusCode = 400 };
+        }
+        if (unitPrice < 0)
+        {
+            return new JsonResult(new { ok = false, error = "Le prix unitaire ne peut pas etre negatif." }) { StatusCode = 400 };
+        }
+        if (discountRate < 0 || discountRate > 100)
+        {
+            return new JsonResult(new { ok = false, error = "La remise doit etre comprise entre 0 et 100." }) { StatusCode = 400 };
+        }
+        if (taxRate < 0 || taxRate > 100)
+        {
+            return new JsonResult(new { ok = false, error = "Le taux de taxe doit etre compris entre 0 et 100." }) { StatusCode = 400 };
+        }
+
+        var tenantId = await GetTenantIdAsync();
+        var doc = await DbContext.CommercialDocuments
+            .AsNoTracking()
+            .Where(x => x.Id == Id && x.TenantId == tenantId)
+            .Select(x => new { x.Id, x.Status })
+            .FirstOrDefaultAsync(HttpContext.RequestAborted);
+
+        if (doc is null)
+        {
+            return new JsonResult(new { ok = false, error = "Document introuvable." }) { StatusCode = 404 };
+        }
+
+        if (doc.Status != CommercialDocumentStatus.Draft && doc.Status != CommercialDocumentStatus.Open)
+        {
+            return new JsonResult(new { ok = false, error = "Le document n'est plus modifiable dans son statut actuel." }) { StatusCode = 409 };
+        }
+
+        var line = await DbContext.CommercialDocumentLines
+            .FirstOrDefaultAsync(x => x.Id == lineId && x.CommercialDocumentId == Id, HttpContext.RequestAborted);
+
+        if (line is null)
+        {
+            return new JsonResult(new { ok = false, error = "Ligne introuvable." }) { StatusCode = 404 };
+        }
+
+        line.Quantity = quantity;
+        line.UnitPriceExcludingTax = unitPrice;
+        line.DiscountRate = discountRate;
+        line.TaxRate = taxRate;
+        ApplyLineTotals(line);
+
+        try
+        {
+            await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+            await RefreshDocumentTotalsAsync(Id, tenantId, doc.Status);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new JsonResult(new { ok = false, error = "La piece a ete modifiee entre-temps. Recharge l'ecran." }) { StatusCode = 409 };
+        }
+
+        var totals = await DbContext.CommercialDocuments
+            .AsNoTracking()
+            .Where(x => x.Id == Id)
+            .Select(x => new { x.TotalExcludingTax, x.TotalTax, x.TotalIncludingTax })
+            .FirstAsync(HttpContext.RequestAborted);
+
+        return new JsonResult(new
+        {
+            ok = true,
+            line = new
+            {
+                id = line.Id,
+                quantity = line.Quantity,
+                unitPrice = line.UnitPriceExcludingTax,
+                discountRate = line.DiscountRate,
+                taxRate = line.TaxRate,
+                subtotal = line.LineTotalExcludingTax,
+                tax = line.LineTaxAmount,
+                total = line.LineTotalIncludingTax
+            },
+            document = new
+            {
+                totalExcludingTax = totals.TotalExcludingTax,
+                totalTax = totals.TotalTax,
+                totalIncludingTax = totals.TotalIncludingTax
+            }
+        });
+    }
+
+    public async Task<IActionResult> OnPostBulkUpdateLinesAsync(List<Guid> lineIds, decimal? discountRate, decimal? taxRate)
+    {
+        if (lineIds is null || lineIds.Count == 0)
+        {
+            return new JsonResult(new { ok = false, error = "Aucune ligne selectionnee." }) { StatusCode = 400 };
+        }
+
+        if (lineIds.Distinct().Count() != lineIds.Count)
+        {
+            return new JsonResult(new { ok = false, error = "Doublons detectes dans la selection." }) { StatusCode = 400 };
+        }
+
+        if (!discountRate.HasValue && !taxRate.HasValue)
+        {
+            return new JsonResult(new { ok = false, error = "Aucune valeur a appliquer (remise ou taxe requise)." }) { StatusCode = 400 };
+        }
+
+        if (discountRate is < 0m or > 100m)
+        {
+            return new JsonResult(new { ok = false, error = "La remise doit etre comprise entre 0 et 100." }) { StatusCode = 400 };
+        }
+
+        if (taxRate is < 0m or > 100m)
+        {
+            return new JsonResult(new { ok = false, error = "Le taux de taxe doit etre compris entre 0 et 100." }) { StatusCode = 400 };
+        }
+
+        var tenantId = await GetTenantIdAsync();
+        var doc = await DbContext.CommercialDocuments
+            .AsNoTracking()
+            .Where(x => x.Id == Id && x.TenantId == tenantId)
+            .Select(x => new { x.Id, x.Status })
+            .FirstOrDefaultAsync(HttpContext.RequestAborted);
+
+        if (doc is null)
+        {
+            return new JsonResult(new { ok = false, error = "Document introuvable." }) { StatusCode = 404 };
+        }
+
+        if (doc.Status != CommercialDocumentStatus.Draft && doc.Status != CommercialDocumentStatus.Open)
+        {
+            return new JsonResult(new { ok = false, error = "Le document n'est plus modifiable." }) { StatusCode = 409 };
+        }
+
+        var lines = await DbContext.CommercialDocumentLines
+            .Where(x => x.CommercialDocumentId == Id && lineIds.Contains(x.Id))
+            .ToListAsync(HttpContext.RequestAborted);
+
+        if (lines.Count != lineIds.Count)
+        {
+            return new JsonResult(new { ok = false, error = "Au moins une ligne n'appartient pas a ce document." }) { StatusCode = 400 };
+        }
+
+        foreach (var line in lines)
+        {
+            if (discountRate.HasValue) line.DiscountRate = discountRate.Value;
+            if (taxRate.HasValue) line.TaxRate = taxRate.Value;
+            ApplyLineTotals(line);
+        }
+
+        try
+        {
+            await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+            await RefreshDocumentTotalsAsync(Id, tenantId, doc.Status);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new JsonResult(new { ok = false, error = "La piece a ete modifiee entre-temps." }) { StatusCode = 409 };
+        }
+
+        var totals = await DbContext.CommercialDocuments
+            .AsNoTracking()
+            .Where(x => x.Id == Id)
+            .Select(x => new { x.TotalExcludingTax, x.TotalTax, x.TotalIncludingTax })
+            .FirstAsync(HttpContext.RequestAborted);
+
+        return new JsonResult(new
+        {
+            ok = true,
+            count = lines.Count,
+            lines = lines.Select(l => new
+            {
+                id = l.Id,
+                quantity = l.Quantity,
+                unitPrice = l.UnitPriceExcludingTax,
+                discountRate = l.DiscountRate,
+                taxRate = l.TaxRate,
+                subtotal = l.LineTotalExcludingTax,
+                tax = l.LineTaxAmount,
+                total = l.LineTotalIncludingTax
+            }),
+            document = new
+            {
+                totalExcludingTax = totals.TotalExcludingTax,
+                totalTax = totals.TotalTax,
+                totalIncludingTax = totals.TotalIncludingTax
+            }
+        });
+    }
+
+    public async Task<IActionResult> OnPostReorderLinesAsync(List<Guid> lineIds)
+    {
+        if (lineIds is null || lineIds.Count == 0)
+        {
+            return new JsonResult(new { ok = false, error = "Liste de lignes vide." }) { StatusCode = 400 };
+        }
+
+        if (lineIds.Distinct().Count() != lineIds.Count)
+        {
+            return new JsonResult(new { ok = false, error = "Doublons detectes dans l'ordre des lignes." }) { StatusCode = 400 };
+        }
+
+        var tenantId = await GetTenantIdAsync();
+        var doc = await DbContext.CommercialDocuments
+            .AsNoTracking()
+            .Where(x => x.Id == Id && x.TenantId == tenantId)
+            .Select(x => new { x.Id, x.Status })
+            .FirstOrDefaultAsync(HttpContext.RequestAborted);
+
+        if (doc is null)
+        {
+            return new JsonResult(new { ok = false, error = "Document introuvable." }) { StatusCode = 404 };
+        }
+
+        if (doc.Status != CommercialDocumentStatus.Draft && doc.Status != CommercialDocumentStatus.Open)
+        {
+            return new JsonResult(new { ok = false, error = "Le document n'est plus modifiable." }) { StatusCode = 409 };
+        }
+
+        var lines = await DbContext.CommercialDocumentLines
+            .Where(x => x.CommercialDocumentId == Id)
+            .ToListAsync(HttpContext.RequestAborted);
+
+        // Verifie que tous les IDs envoyes existent dans le document
+        var existingIds = lines.Select(x => x.Id).ToHashSet();
+        if (lineIds.Any(id => !existingIds.Contains(id)))
+        {
+            return new JsonResult(new { ok = false, error = "Au moins une ligne n'appartient pas a ce document." }) { StatusCode = 400 };
+        }
+
+        // Verifie qu'aucune ligne du document n'est oubliee (sinon ordre incomplet)
+        if (lineIds.Count != lines.Count)
+        {
+            return new JsonResult(new { ok = false, error = "L'ordre fourni ne couvre pas toutes les lignes du document." }) { StatusCode = 400 };
+        }
+
+        // Applique l'ordre : SortOrder = index dans la liste recue
+        var byId = lines.ToDictionary(x => x.Id);
+        for (var i = 0; i < lineIds.Count; i++)
+        {
+            byId[lineIds[i]].SortOrder = i;
+        }
+
+        try
+        {
+            await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new JsonResult(new { ok = false, error = "La piece a ete modifiee entre-temps." }) { StatusCode = 409 };
+        }
+
+        return new JsonResult(new { ok = true, count = lineIds.Count });
+    }
+
     private async Task<IActionResult> LoadPageAsync()
     {
         var tenantId = await GetTenantIdAsync();
@@ -248,12 +530,18 @@ public class EditModel(
     {
         var tenantId = await GetTenantIdAsync();
 
-        Partners = await DbContext.BusinessPartners
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.IsActive && (x.PartnerType == BusinessPartnerType.Customer || x.PartnerType == BusinessPartnerType.Both || x.PartnerType == BusinessPartnerType.Prospect))
-            .OrderBy(x => x.Code)
-            .Select(x => new SelectListItem($"{x.Code} - {x.Name}", x.Id.ToString()))
-            .ToListAsync(HttpContext.RequestAborted);
+        var partnerContext = await PartnerAssistService.LoadOptionsAsync(DbContext, tenantId, AllowedPartnerTypes, HttpContext.RequestAborted);
+        PartnerLookupMode = partnerContext.Tenant.PartnerLookupMode;
+        PartnerOptions = partnerContext.Options;
+
+        if (Input.PartnerId.HasValue && string.IsNullOrWhiteSpace(PartnerEntry.Lookup))
+        {
+            var selectedPartner = PartnerOptions.FirstOrDefault(x => x.Id == Input.PartnerId.Value);
+            if (selectedPartner is not null)
+            {
+                PartnerEntry.Lookup = selectedPartner.DisplayValue;
+            }
+        }
 
         Warehouses = await DbContext.Warehouses
             .AsNoTracking()
@@ -298,7 +586,8 @@ public class EditModel(
             .AsNoTracking()
             .Include(x => x.Product)
             .Where(x => x.CommercialDocumentId == Id)
-            .OrderBy(x => x.CreatedOnUtc)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedOnUtc)
             .Select(x => new DocumentLineItem(
                 x.Id,
                 x.Product != null ? x.Product.Sku : "-",
@@ -426,6 +715,37 @@ public class EditModel(
             ApplyLineTotals(line);
             return line;
         }).ToList();
+    }
+
+    private async Task ResolvePartnerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PartnerEntry.Lookup))
+        {
+            Input.PartnerId = null;
+            return;
+        }
+
+        var tenantId = await GetTenantIdAsync();
+        var result = await PartnerAssistService.ResolveOrCreateAsync(
+            DbContext,
+            numberingService,
+            tenantId,
+            AllowedPartnerTypes,
+            BusinessPartnerType.Customer,
+            ReferenceNumberingScope.Customer,
+            PartnerLookupMode,
+            PartnerEntry,
+            HttpContext.RequestAborted);
+
+        if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+        {
+            ModelState.AddModelError("Input.PartnerId", result.ErrorMessage);
+            Input.PartnerId = null;
+            return;
+        }
+
+        Input.PartnerId = result.PartnerId;
+        PartnerEntry.Lookup = result.LookupValue ?? PartnerEntry.Lookup;
     }
 }
 

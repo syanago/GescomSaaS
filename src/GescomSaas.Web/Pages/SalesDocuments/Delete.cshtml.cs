@@ -1,6 +1,8 @@
 using GescomSaas.Application.Contracts;
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +13,11 @@ namespace GescomSaas.Web.Pages.SalesDocuments;
 public class DeleteModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    ICommercialDocumentWorkflowService workflowService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    ICommercialDocumentWorkflowService workflowService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SalesDocumentsManage];
+
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
 

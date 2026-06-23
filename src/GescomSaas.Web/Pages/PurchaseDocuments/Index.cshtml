@@ -1,66 +1,176 @@
 @page
+@using GescomSaas.Domain.Enums
 @model GescomSaas.Web.Pages.PurchaseDocuments.IndexModel
 @{
     ViewData["Title"] = Model.Title;
+    var documentCount = Model.Documents.Count;
+    var totalAmount = Model.Documents.Sum(x => x.TotalIncludingTax);
+    var openCount = Model.Documents.Count(x => x.Status == CommercialDocumentStatus.Open);
+    var draftCount = Model.Documents.Count(x => x.Status == CommercialDocumentStatus.Draft);
+    var closedCount = Model.Documents.Count(x => x.Status == CommercialDocumentStatus.Completed);
+    var inProgressCount = Model.Documents.Count(x => x.Status == CommercialDocumentStatus.PartiallyProcessed);
+    var firstCurrency = Model.Documents.FirstOrDefault()?.CurrencyCode;
 }
 
-<div class="workspace-shell">
-    <section class="workspace-hero">
-        <div class="workspace-copy">
-            <span class="workspace-kicker">Traitements commerciaux</span>
-            <h1>@Model.Title</h1>
-            <p class="muted-copy">Suivre les demandes, commandes, receptions et factures fournisseurs avec un repere visuel stable par type de piece.</p>
-            <div class="workspace-actions">
-                <a class="btn btn-primary-soft" asp-page="/PurchaseDocuments/Create" asp-route-type="@Model.CurrentType">Nouvelle piece</a>
-                <a class="btn btn-outline-light" asp-page="/CommercialOperations/Index">Retour aux traitements</a>
-            </div>
-            <div class="segment-bar">
-                @foreach (var type in GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.PurchaseTypes)
-                {
-                    var isActive = type == Model.CurrentType;
-                    <a class="segment-link @(isActive ? "is-active" : string.Empty)" asp-page="/PurchaseDocuments/Index" asp-route-type="@type">@GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.Label(type)</a>
-                }
-            </div>
-        </div>
-        <div class="workspace-summary-grid">
-            <article class="workspace-summary-card">
-                <span class="signal-label">Pieces visibles</span>
-                <strong>@DisplayFormatter.Number(Model.Documents.Count, 0)</strong>
-                <span class="table-meta">documents du type @Model.Title.ToLowerInvariant()</span>
-            </article>
-            <article class="workspace-summary-card">
-                <span class="signal-label">Montant cumule</span>
-                <strong>@DisplayFormatter.Money(Model.Documents.Sum(x => x.TotalIncludingTax), Model.Documents.FirstOrDefault()?.CurrencyCode)</strong>
-                <span class="table-meta">total des pieces chargees a l'ecran</span>
-            </article>
-            @if (Model.DocumentQuota is not null)
-            {
-                <article class="workspace-summary-card">
-                    <span class="signal-label">Documents du mois</span>
-                    <strong>@Model.DocumentQuota.Used / @Model.DocumentQuota.Limit</strong>
-                    <span class="table-meta">
-                        @if (Model.DocumentQuota.IsExceeded)
-                        {
-                            <text>depassement de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</text>
-                        }
-                        else
-                        {
-                            <text>@(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</text>
-                        }
-                    </span>
-                </article>
-            }
-        </div>
-    </section>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Suivi du cycle d'achat fournisseur</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/CommercialOperations/Index">
+            <i class="bi bi-arrow-left me-1"></i>Traitements
+        </a>
+        <a class="btn btn-primary" asp-page="/PurchaseDocuments/Create" asp-route-type="@Model.CurrentType">
+            <i class="bi bi-plus-lg me-1"></i>Nouvelle piece
+        </a>
+    </div>
+</div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+<ul class="nav nav-pills mb-3 flex-wrap">
+    @foreach (var type in GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.PurchaseTypes)
     {
-        <div class="app-alert">@Model.StatusMessage</div>
+        var isActive = type == Model.CurrentType;
+        <li class="nav-item">
+            <a class="nav-link @(isActive ? "active" : string.Empty)"
+               asp-page="/PurchaseDocuments/Index"
+               asp-route-type="@type"
+               asp-route-partnerName="@Model.PartnerName"
+               asp-route-partnerNumber="@Model.PartnerNumber"
+               asp-route-documentNumber="@Model.DocumentNumber"
+               asp-route-status="@Model.Status"
+               asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
+               asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")">@GescomSaas.Web.Pages.PurchaseDocuments.PurchaseDocumentCatalog.Label(type)</a>
+        </li>
     }
+</ul>
 
-    <section class="workspace-table">
-        <div class="table-shell">
-            <table class="table table-darkless align-middle app-table">
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Pieces chargees</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(documentCount, 0)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-emerald"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant cumule</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(totalAmount, firstCurrency)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon @(draftCount > 0 ? "stat-icon-amber" : "stat-icon-slate")"><i class="bi bi-pencil-square"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Brouillons</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(draftCount, 0)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon @(openCount > 0 ? "stat-icon-rose" : "stat-icon-slate")"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Ouverts</div>
+                <div class="stat-card-value @(openCount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Number(openCount, 0)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.DocumentQuota is not null)
+{
+    var quotaExceeded = Model.DocumentQuota.IsExceeded;
+    <div class="alert @(quotaExceeded ? "alert-danger" : "alert-info") mb-3">
+        <i class="bi bi-speedometer2 me-2"></i>
+        <strong>Documents du mois</strong> : @Model.DocumentQuota.Used / @Model.DocumentQuota.Limit
+        @if (quotaExceeded)
+        {
+            <span>· depassement de @(Model.DocumentQuota.Used - Model.DocumentQuota.Limit)</span>
+        }
+        else
+        {
+            <span>· @(Model.DocumentQuota.Limit - Model.DocumentQuota.Used) restant(s)</span>
+        }
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-funnel"></i>
+        <span>Filtres</span>
+        @if (Model.HasActiveFilters)
+        {
+            <span class="badge ms-2" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">Actifs</span>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <input type="hidden" name="Type" value="@Model.Type" />
+            <div class="col-md-6 col-lg-3">
+                <input type="text" name="PartnerName" value="@Model.PartnerName" class="form-control form-control-sm" placeholder="Nom du tiers" />
+            </div>
+            <div class="col-md-6 col-lg-2">
+                <input type="text" name="PartnerNumber" value="@Model.PartnerNumber" class="form-control form-control-sm" placeholder="Numero tiers" />
+            </div>
+            <div class="col-md-6 col-lg-2">
+                <input type="text" name="DocumentNumber" value="@Model.DocumentNumber" class="form-control form-control-sm" placeholder="N° document" />
+            </div>
+            <div class="col-md-6 col-lg-2">
+                <select asp-for="Status" class="form-select form-select-sm" asp-items="Model.StatusOptions">
+                    <option value="">Tous statuts</option>
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-3 d-flex gap-1">
+                <input type="date" name="DateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+                <input type="date" name="DateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-page="/PurchaseDocuments/Index" asp-route-type="@Model.Type">
+                    <i class="bi bi-x-circle me-1"></i>Reinitialiser
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Documents</span>
+        <span class="ms-auto small text-muted">@documentCount resultat(s)</span>
+    </div>
+    @if (documentCount == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune piece pour ce type</h6>
+            <p>Commence par creer une piece ou change de vue pour consulter un autre type du cycle achat.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/PurchaseDocuments/Create" asp-route-type="@Model.CurrentType">
+                <i class="bi bi-plus-lg me-1"></i>Creer une piece
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Document</th>
@@ -73,38 +183,42 @@
                     </tr>
                 </thead>
                 <tbody>
-                @if (Model.Documents.Count == 0)
-                {
-                    <tr><td colspan="7" class="empty-cell">Aucune piece pour ce type.</td></tr>
-                }
-                else
-                {
                     @foreach (var document in Model.Documents)
                     {
                         <tr>
                             <td>
-                                <div class="doc-number">
-                                    <strong>@document.Number</strong>
-                                    <span class="doc-meta">@Model.Title · @document.DocumentDate.ToString("dd MMM yyyy")</span>
-                                </div>
+                                <strong>@document.Number</strong>
+                                <div class="small text-muted">@Model.Title · @document.DocumentDate.ToString("dd MMM yyyy")</div>
                             </td>
                             <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
-                            <td>@document.PartnerName</td>
-                            <td>@(document.SourceNumber ?? "-")</td>
-                            <td><span class="badge rounded-pill status-pill">@document.Status</span></td>
-                            <td class="text-end">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
+                            <td>
+                                <strong>@document.PartnerName</strong>
+                                <div class="small text-muted">@(document.PartnerCode ?? "—")</div>
+                            </td>
+                            <td>@(document.SourceNumber ?? "—")</td>
+                            <td>
+                                <span class="badge doc-status-@document.Status.ToString().ToLowerInvariant()">
+                                    @document.Status
+                                </span>
+                            </td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
                             <td class="text-end">
-                                <div class="row-actions">
-                                    <a class="action-link" asp-page="/PurchaseDocuments/Details" asp-route-id="@document.Id">Voir</a>
-                                    <a class="action-link" asp-page="/PurchaseDocuments/Edit" asp-route-id="@document.Id">Modifier</a>
-                                    <a class="action-link" asp-page="/PurchaseDocuments/Delete" asp-route-id="@document.Id">Supprimer</a>
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/PurchaseDocuments/Details" asp-route-id="@document.Id" title="Voir">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a class="btn btn-sm btn-secondary" asp-page="/PurchaseDocuments/Edit" asp-route-id="@document.Id" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/PurchaseDocuments/Delete" asp-route-id="@document.Id" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
                     }
-                }
                 </tbody>
             </table>
         </div>
-    </section>
+    }
 </div>
