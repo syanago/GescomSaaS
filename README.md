@@ -53,10 +53,50 @@ Base de solution Visual Studio pour une application web de gestion commerciale S
 - Utilisateur libre a rattacher : `consultant@gescom.local / Demo123!`
 - Invitation en attente : `buyer@demo.gescom.local`
 
+## Tests
+
+- Suite xUnit : `dotnet test GescomSaas.sln`
+- Tests d'integration sur les services critiques avec EF Core InMemory
+- Tests unitaires sur le middleware d'exception (ProblemDetails RFC 7807)
+
+## Health checks
+
+Endpoints exposes pour Kubernetes / load balancer :
+
+| Endpoint | Probe | Verifie |
+|---|---|---|
+| `GET /health/live` | `livenessProbe` | L'app repond. Aucune dependance externe testee |
+| `GET /health/ready` | `readinessProbe` | DB connectable, Identity OK, espace disque > 100 Mo |
+| `GET /health/startup` | `startupProbe` | Migrations EF Core appliquees |
+| `GET /health` | (debug) | Tous les checks, format JSON detaille |
+
+Reponse JSON typique :
+
+```json
+{
+  "status": "Healthy",
+  "totalDurationMs": 12.4,
+  "checks": [
+    { "name": "database", "status": "Healthy", "durationMs": 8.2 },
+    { "name": "disk-space", "status": "Healthy", "data": { "freeGB": 142.7 } },
+    { "name": "identity", "status": "Healthy" }
+  ]
+}
+```
+
+## Documentation technique
+
+- [`docs/FunctionalCoverage.md`](docs/FunctionalCoverage.md) : cadrage fonctionnel
+- [`docs/DesignSystem.md`](docs/DesignSystem.md) : design system et direction UI (branche `UI_UX`)
+- [`docs/Migrations.md`](docs/Migrations.md) : workflow EF Core Migrations (cloud SQL Server)
+- [`docs/ApiErrorCodes.md`](docs/ApiErrorCodes.md) : reference des codes d'erreur API stables (ProblemDetails)
+- [`docs/Observability.md`](docs/Observability.md) : pipeline de logs structures (Serilog + correlation ID + enrichers TenantId/UserId)
+- [`docs/Validation.md`](docs/Validation.md) : validation des entrees avec FluentValidation
+- [`docs/ApiVersioning.md`](docs/ApiVersioning.md) : strategie de versioning de l'API REST (Asp.Versioning)
+- [`docs/UiTheme.md`](docs/UiTheme.md) : layout alternatif "ComptaSaaS-like" avec palette verte (sidebar dark, command palette Ctrl+K, quotas widget)
+
 ## Notes
 
-- La base est creee via `EnsureCreated` pour accelerer le bootstrap initial.
-- Si le modele evolue fortement, il est recommande de regenerer la base pour aligner le schema.
-- La prochaine etape recommandee est la mise en place de migrations EF Core versionnees et des ecrans CRUD par module.
-- Le cadrage fonctionnel est detaille dans `docs/FunctionalCoverage.md`.
-- Le design system et la direction UI de la branche `UI_UX` sont poses dans `docs/DesignSystem.md`.
+- **SQL Server (cloud / multi-tenant)** : migrations EF Core versionnees, appliquees automatiquement au demarrage via `MigrateAsync`. Pour basculer une base existante creee avec `EnsureCreated`, executer [`scripts/migrate-from-ensurecreated.sql`](scripts/migrate-from-ensurecreated.sql).
+- **SQLite (LocalNode offline)** : conserve `EnsureCreated` car concu pour des installations standalone sans evolution de schema continue.
+- Toutes les erreurs metier sont retournees au format ProblemDetails (`application/problem+json`) avec un `errorCode` stable pour le branchement client. Voir [`docs/ApiErrorCodes.md`](docs/ApiErrorCodes.md).
