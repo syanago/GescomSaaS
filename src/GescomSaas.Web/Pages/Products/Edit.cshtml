@@ -4,63 +4,81 @@
     ViewData["Title"] = "Modifier un article";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Edition</span>
-        <h1>Modifier un article</h1>
+        <h1 class="page-header-title">Modifier un article</h1>
+        <div class="page-header-sub">Edition de la fiche article</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Products/Index">Retour a la liste</a>
+    <div>
+        <a class="btn btn-secondary" asp-page="/Products/Index">
+            <i class="bi bi-arrow-left me-1"></i>Retour a la liste
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div id="product-edit-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
-        <div class="form-grid">
-            <div><label asp-for="Input.Sku" class="form-label"></label><input asp-for="Input.Sku" class="form-control" /><span asp-validation-for="Input.Sku" class="text-danger"></span></div>
-            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
-            <div><label asp-for="Input.ProductType" class="form-label"></label><select asp-for="Input.ProductType" asp-items="Model.ProductTypes" class="form-select"></select></div>
-            <div><label asp-for="Input.UnitOfMeasure" class="form-label"></label><input asp-for="Input.UnitOfMeasure" class="form-control" /></div>
-            <div><label asp-for="Input.ProductCategoryId" class="form-label"></label><select asp-for="Input.ProductCategoryId" asp-items="Model.Categories" class="form-select"><option value="">Aucune</option></select></div>
-            <div><label asp-for="Input.TaxCodeId" class="form-label"></label><select asp-for="Input.TaxCodeId" asp-items="Model.TaxCodes" class="form-select"><option value="">Aucune</option></select></div>
-            <div><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
-            <div><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
-            <div>
-                <label asp-for="Input.PurchasePrice" class="form-label"></label>
-                <input asp-for="Input.PurchasePrice" type="hidden" />
-                <input type="text" id="Input_PurchasePrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.PurchasePrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_PurchasePrice" />
-                <div class="table-meta" data-format-preview-for="Input_PurchasePrice_display">Rendu : @DisplayFormatter.Money(Model.Input.PurchasePrice)</div>
-                <span asp-validation-for="Input.PurchasePrice" class="text-danger"></span>
-            </div>
-            <div>
-                <label asp-for="Input.SalesPrice" class="form-label"></label>
-                <input asp-for="Input.SalesPrice" type="hidden" />
-                <input type="text" id="Input_SalesPrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.SalesPrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_SalesPrice" />
-                <div class="table-meta" data-format-preview-for="Input_SalesPrice_display">Rendu : @DisplayFormatter.Money(Model.Input.SalesPrice)</div>
-                <span asp-validation-for="Input.SalesPrice" class="text-danger"></span>
-            </div>
-            <div class="full-span"><label asp-for="Input.Description" class="form-label"></label><textarea asp-for="Input.Description" rows="4" class="form-control"></textarea></div>
-        </div>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-pencil"></i>
+        <span>Informations article</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div id="product-edit-quota-warning" class="alert alert-warning" hidden></div>
 
-        <div class="inline-checks">
-            <div class="form-check form-switch">
-                <input asp-for="Input.TrackStock" class="form-check-input" />
-                <label asp-for="Input.TrackStock" class="form-check-label"></label>
-            </div>
-            <div class="form-check form-switch">
-                <input asp-for="Input.IsActive" class="form-check-input" />
-                <label asp-for="Input.IsActive" class="form-check-label"></label>
-            </div>
-        </div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Input.Sku" class="form-label"></label><input asp-for="Input.Sku" class="form-control" /><span asp-validation-for="Input.Sku" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.ProductType" class="form-label"></label><select asp-for="Input.ProductType" asp-items="Model.ProductTypes" class="form-select"></select></div>
+                <div class="col-md-6"><label asp-for="Input.UnitOfMeasure" class="form-label"></label><input asp-for="Input.UnitOfMeasure" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.ProductCategoryId" class="form-label"></label><select asp-for="Input.ProductCategoryId" asp-items="Model.Categories" class="form-select"><option value="">Aucune</option></select></div>
+                <div class="col-md-6"><label asp-for="Input.TaxCodeId" class="form-label"></label><select asp-for="Input.TaxCodeId" asp-items="Model.TaxCodes" class="form-select"><option value="">Aucune</option></select></div>
+                <div class="col-md-6"><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
+                <div class="col-md-6"><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
 
-        <div class="form-actions">
-            <button type="submit" id="product-edit-submit-button" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/Products/Index">Annuler</a>
-        </div>
-    </form>
-</section>
+                <div class="col-md-6">
+                    <label asp-for="Input.PurchasePrice" class="form-label"></label>
+                    <input asp-for="Input.PurchasePrice" type="hidden" />
+                    <input type="text" id="Input_PurchasePrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.PurchasePrice)" class="form-control money" inputmode="decimal" data-format-kind="money" data-format-target="Input_PurchasePrice" />
+                    <div class="form-text" data-format-preview-for="Input_PurchasePrice_display">Rendu : @DisplayFormatter.Money(Model.Input.PurchasePrice)</div>
+                    <span asp-validation-for="Input.PurchasePrice" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.SalesPrice" class="form-label"></label>
+                    <input asp-for="Input.SalesPrice" type="hidden" />
+                    <input type="text" id="Input_SalesPrice_display" value="@DisplayFormatter.MoneyEditor(Model.Input.SalesPrice)" class="form-control money" inputmode="decimal" data-format-kind="money" data-format-target="Input_SalesPrice" />
+                    <div class="form-text" data-format-preview-for="Input_SalesPrice_display">Rendu : @DisplayFormatter.Money(Model.Input.SalesPrice)</div>
+                    <span asp-validation-for="Input.SalesPrice" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Input.Description" class="form-label"></label>
+                    <textarea asp-for="Input.Description" rows="3" class="form-control"></textarea>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.TrackStock" class="form-check-input" />
+                        <label asp-for="Input.TrackStock" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.IsActive" class="form-check-input" />
+                        <label asp-for="Input.IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/Products/Index">Annuler</a>
+                <button type="submit" id="product-edit-submit-button" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -82,7 +100,7 @@
                 submitButton.disabled = blocked;
                 warning.hidden = !blocked;
                 warning.textContent = blocked
-                    ? `Modification bloquee avant soumission : quota articles atteint (${used}/${limit}). Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.`
+                    ? `Modification bloquee : quota articles atteint (${used}/${limit}).`
                     : '';
             }
 

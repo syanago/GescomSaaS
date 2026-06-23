@@ -4,99 +4,117 @@
     ViewData["Title"] = "Articles";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Catalogue</span>
-        <h1>Articles</h1>
-        <p class="muted-copy">Administrez les references, familles, taxes et prix d'achat/vente.</p>
+        <h1 class="page-header-title">Articles</h1>
+        <div class="page-header-sub">References, familles, taxes et prix d'achat/vente</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="/Products/Create">Nouvel article</a>
+    <div>
+        <a class="btn btn-primary" asp-page="/Products/Create">
+            <i class="bi bi-plus-lg me-1"></i>Nouvel article
+        </a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
 @if (Model.ProductQuota is not null)
 {
-    <section class="quota-badge-row">
-        <span class="tag-pill @(Model.ProductQuota.IsExceeded ? "tag-pill-danger" : (Model.ProductQuota.Used >= Model.ProductQuota.Limit ? "tag-pill-warning" : string.Empty))">
-            Articles : @Model.ProductQuota.Used / @Model.ProductQuota.Limit
-        </span>
-        <span class="table-meta">
-            @if (Model.ProductQuota.IsExceeded)
-            {
-                <text>Depasse de @(Model.ProductQuota.Used - Model.ProductQuota.Limit)</text>
-            }
-            else
-            {
-                <text>@(Model.ProductQuota.Limit - Model.ProductQuota.Used) restant(s)</text>
-            }
-        </span>
-    </section>
+    var quotaExceeded = Model.ProductQuota.IsExceeded;
+    <div class="alert @(quotaExceeded ? "alert-danger" : "alert-info") mb-3">
+        <i class="bi bi-speedometer2 me-2"></i>
+        <strong>Articles</strong> : @Model.ProductQuota.Used / @Model.ProductQuota.Limit
+        @if (quotaExceeded)
+        {
+            <span>· depasse de @(Model.ProductQuota.Used - Model.ProductQuota.Limit)</span>
+        }
+        else
+        {
+            <span>· @(Model.ProductQuota.Limit - Model.ProductQuota.Used) restant(s)</span>
+        }
+    </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Reference</th>
-                    <th>Libelle</th>
-                    <th>Type</th>
-                    <th>Famille</th>
-                    <th>TVA</th>
-                    <th>Suivi stock</th>
-                    <th>Lot / serie</th>
-                    <th class="text-end">Achat</th>
-                    <th class="text-end">Vente</th>
-                    <th>Etat</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Products.Count == 0)
-            {
-                <tr>
-                    <td colspan="11" class="empty-cell">Aucun article n'est encore defini.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var product in Model.Products)
-                {
-                    <tr>
-                        <td>@product.Sku</td>
-                        <td>
-                            <strong>@product.Label</strong>
-                            <div class="table-meta">@product.UnitOfMeasure @(product.TrackStock ? "• Stocke" : "• Service")</div>
-                        </td>
-                        <td>@GetTypeLabel(product.ProductType)</td>
-                        <td>@product.CategoryLabel</td>
-                        <td>@product.TaxCode</td>
-                        <td>@GetValuationLabel(product.StockValuationMethod)</td>
-                        <td>@GetIdentityLabel(product.StockIdentityTrackingMode)</td>
-                        <td class="text-end">@DisplayFormatter.Money(product.PurchasePrice)</td>
-                        <td class="text-end">@DisplayFormatter.Money(product.SalesPrice)</td>
-                        <td>
-                            <span class="badge rounded-pill @(product.IsActive ? "status-pill" : "status-pill-off")">
-                                @(product.IsActive ? "Actif" : "Inactif")
-                            </span>
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/Products/Edit" asp-route-id="@product.Id">Modifier</a>
-                            <a asp-page="/Products/Delete" asp-route-id="@product.Id">Supprimer</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-box-seam"></i>
+        <span>Catalogue articles</span>
+        <span class="ms-auto small text-muted">@Model.Products.Count article(s)</span>
     </div>
-</section>
+    @if (Model.Products.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun article</h6>
+            <p>Cree ton premier article pour demarrer le catalogue.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Products/Create">
+                <i class="bi bi-plus-lg me-1"></i>Nouvel article
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Libelle</th>
+                        <th>Type</th>
+                        <th>Famille</th>
+                        <th>TVA</th>
+                        <th>Suivi stock</th>
+                        <th>Lot / Serie</th>
+                        <th class="text-end">Achat</th>
+                        <th class="text-end">Vente</th>
+                        <th>Etat</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in Model.Products)
+                    {
+                        <tr>
+                            <td><strong>@product.Sku</strong></td>
+                            <td>
+                                <strong>@product.Label</strong>
+                                <div class="small text-muted">@product.UnitOfMeasure @(product.TrackStock ? "• Stocke" : "• Service")</div>
+                            </td>
+                            <td>@GetTypeLabel(product.ProductType)</td>
+                            <td>@product.CategoryLabel</td>
+                            <td>@product.TaxCode</td>
+                            <td><span class="badge" style="background:#e0f2fe;color:#075985">@GetValuationLabel(product.StockValuationMethod)</span></td>
+                            <td>@GetIdentityLabel(product.StockIdentityTrackingMode)</td>
+                            <td class="text-end money">@DisplayFormatter.Money(product.PurchasePrice)</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(product.SalesPrice)</td>
+                            <td>
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:#f3f4f6; color:#6b7280">Inactif</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/Products/Edit" asp-route-id="@product.Id" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/Products/Delete" asp-route-id="@product.Id" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @functions {
     private static string GetTypeLabel(GescomSaas.Domain.Enums.ProductType type) => type switch
@@ -111,15 +129,15 @@
     {
         GescomSaas.Domain.Enums.StockValuationMethod.Cmup => "CMUP",
         GescomSaas.Domain.Enums.StockValuationMethod.Fifo => "FIFO",
-        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix d'achat",
+        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix",
         _ => method.ToString()
     };
 
     private static string GetIdentityLabel(GescomSaas.Domain.Enums.StockIdentityTrackingMode mode) => mode switch
     {
-        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "Aucun",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "—",
         GescomSaas.Domain.Enums.StockIdentityTrackingMode.Lot => "Par lot",
-        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par numero de serie",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par serie",
         _ => mode.ToString()
     };
 }

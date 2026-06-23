@@ -3,6 +3,7 @@ using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,12 @@ namespace GescomSaas.Web.Pages.Warehouses;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    IUserPermissionService userPermissionService,
     INumberingService numberingService,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.ReferencesWarehousesManage];
+
     [BindProperty]
     public WarehouseInputModel Input { get; set; } = new();
 

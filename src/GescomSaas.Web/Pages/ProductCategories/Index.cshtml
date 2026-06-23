@@ -4,74 +4,89 @@
     ViewData["Title"] = "Familles d'articles";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Referentiel</span>
-        <h1>Familles d'articles</h1>
-        <p class="muted-copy">Structurez le catalogue par famille pour faciliter tarifs, reporting et recherche.</p>
+        <h1 class="page-header-title">Familles d'articles</h1>
+        <div class="page-header-sub">Structurez le catalogue par famille pour faciliter tarifs, reporting et recherche</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="/ProductCategories/Create">Nouvelle famille</a>
+    <div>
+        <a class="btn btn-primary" asp-page="/ProductCategories/Create">
+            <i class="bi bi-plus-lg me-1"></i>Nouvelle famille
+        </a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Libelle</th>
-                    <th>Suivi stock</th>
-                    <th>Lot / serie</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Categories.Count == 0)
-            {
-                <tr><td colspan="5" class="empty-cell">Aucune famille d'articles.</td></tr>
-            }
-            else
-            {
-                @foreach (var item in Model.Categories)
-                {
-                    <tr>
-                        <td>@item.Code</td>
-                        <td>@item.Label</td>
-                        <td>@GetValuationLabel(item.StockValuationMethod)</td>
-                        <td>@GetIdentityLabel(item.StockIdentityTrackingMode)</td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/ProductCategories/Edit" asp-route-id="@item.Id">Modifier</a>
-                            <a asp-page="/ProductCategories/Delete" asp-route-id="@item.Id">Supprimer</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-tags"></i>
+        <span>Familles</span>
+        <span class="ms-auto small text-muted">@Model.Categories.Count famille(s)</span>
     </div>
-</section>
+    @if (Model.Categories.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune famille</h6>
+            <p>Cree ta premiere famille pour structurer le catalogue.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/ProductCategories/Create"><i class="bi bi-plus-lg me-1"></i>Nouvelle famille</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Libelle</th>
+                        <th>Suivi stock</th>
+                        <th>Lot / Serie</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Categories)
+                    {
+                        <tr>
+                            <td><strong>@item.Code</strong></td>
+                            <td>@item.Label</td>
+                            <td><span class="badge" style="background:#e0f2fe;color:#075985">@GetValuationLabel(item.StockValuationMethod)</span></td>
+                            <td>@GetIdentityLabel(item.StockIdentityTrackingMode)</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/ProductCategories/Edit" asp-route-id="@item.Id" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/ProductCategories/Delete" asp-route-id="@item.Id" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @functions {
     private static string GetValuationLabel(GescomSaas.Domain.Enums.StockValuationMethod method) => method switch
     {
         GescomSaas.Domain.Enums.StockValuationMethod.Cmup => "CMUP",
         GescomSaas.Domain.Enums.StockValuationMethod.Fifo => "FIFO",
-        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix d'achat",
+        GescomSaas.Domain.Enums.StockValuationMethod.LastPurchaseCost => "Dernier prix",
         _ => method.ToString()
     };
 
     private static string GetIdentityLabel(GescomSaas.Domain.Enums.StockIdentityTrackingMode mode) => mode switch
     {
-        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "Aucun",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.None => "—",
         GescomSaas.Domain.Enums.StockIdentityTrackingMode.Lot => "Par lot",
-        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par numero de serie",
+        GescomSaas.Domain.Enums.StockIdentityTrackingMode.SerialNumber => "Par serie",
         _ => mode.ToString()
     };
 }

@@ -4,62 +4,80 @@
     ViewData["Title"] = "Listes de prix";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Referentiel</span>
-        <h1>Listes de prix</h1>
-        <p class="muted-copy">Administrez les tarifs par devise et les prix specifiques des articles.</p>
+        <h1 class="page-header-title">Listes de prix</h1>
+        <div class="page-header-sub">Administrez les tarifs par devise et les prix specifiques des articles.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="/PriceLists/Create">Nouvelle liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-page="/PriceLists/Create"><i class="bi bi-plus-lg me-1"></i>Nouvelle liste</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Libelle</th>
-                    <th>Devise</th>
-                    <th class="text-end">Lignes</th>
-                    <th>Statut</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.PriceLists.Count == 0)
-            {
-                <tr><td colspan="6" class="empty-cell">Aucune liste de prix.</td></tr>
-            }
-            else
-            {
-                @foreach (var item in Model.PriceLists)
-                {
-                    <tr>
-                        <td>@item.Code</td>
-                        <td>@item.Label</td>
-                        <td>@item.CurrencyCode</td>
-                        <td class="text-end">@item.LineCount</td>
-                        <td>
-                            <span class="badge rounded-pill @(item.IsDefault ? "status-pill" : "status-pill-off")">
-                                @(item.IsDefault ? "Par defaut" : "Secondaire")
-                            </span>
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/PriceLists/Edit" asp-route-id="@item.Id">Ouvrir</a>
-                            <a asp-page="/PriceLists/Delete" asp-route-id="@item.Id">Supprimer</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Listes de prix</span>
+        <span class="ms-auto small text-muted">@Model.PriceLists.Count resultat(s)</span>
     </div>
-</section>
+    @if (Model.PriceLists.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune liste de prix</h6>
+            <p>Creez votre premiere liste de prix pour gerer vos tarifs par devise.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/PriceLists/Create"><i class="bi bi-plus-lg me-1"></i>Nouvelle liste</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Libelle</th>
+                        <th>Devise</th>
+                        <th class="text-end money">Lignes</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.PriceLists)
+                    {
+                        <tr>
+                            <td><strong>@item.Code</strong></td>
+                            <td>@item.Label</td>
+                            <td>@item.CurrencyCode</td>
+                            <td class="text-end money">@item.LineCount</td>
+                            <td>
+                                @if (item.IsDefault)
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">Par defaut</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:#f3f4f6; color:#6b7280">Secondaire</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/PriceLists/Edit" asp-route-id="@item.Id" title="Ouvrir"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/PriceLists/Delete" asp-route-id="@item.Id" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

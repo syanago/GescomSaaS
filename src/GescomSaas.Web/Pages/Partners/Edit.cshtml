@@ -4,101 +4,122 @@
     ViewData["Title"] = Model.Title;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Edition</span>
-        <h1>@Model.Title</h1>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Modification d'une fiche tiers</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">Retour a la liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/Partners/Details" asp-route-id="@Model.Id" asp-route-scope="@Model.Scope">
+            <i class="bi bi-eye me-1"></i>Voir la fiche
+        </a>
+        <a class="btn btn-secondary" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">
+            <i class="bi bi-arrow-left me-1"></i>Retour a la liste
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form">
-        <input type="hidden" asp-for="Scope" />
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div id="partner-edit-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-pencil"></i>
+        <span>Informations tiers</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Scope" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div id="partner-edit-quota-warning" class="alert alert-warning" hidden></div>
 
-        <div class="form-grid">
-            <div>
-                <label asp-for="Input.Code" class="form-label"></label>
-                <input asp-for="Input.Code" class="form-control" />
-                <span asp-validation-for="Input.Code" class="text-danger"></span>
-            </div>
-            <div>
-                <label asp-for="Input.Name" class="form-label"></label>
-                <input asp-for="Input.Name" class="form-control" />
-                <span asp-validation-for="Input.Name" class="text-danger"></span>
-            </div>
-            <div>
-                <label asp-for="Input.PartnerType" class="form-label"></label>
-                <select asp-for="Input.PartnerType" asp-items="Model.PartnerTypes" class="form-select"></select>
-            </div>
-            <div>
-                <label asp-for="Input.PaymentTermId" class="form-label"></label>
-                <select asp-for="Input.PaymentTermId" asp-items="Model.PaymentTerms" class="form-select">
-                    <option value="">Aucune</option>
-                </select>
-            </div>
-            <div>
-                <label asp-for="Input.Email" class="form-label"></label>
-                <input asp-for="Input.Email" class="form-control" />
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <input asp-for="Input.PhoneNumber" class="form-control" />
-            </div>
-            <div>
-                <label asp-for="Input.VatNumber" class="form-label"></label>
-                <input asp-for="Input.VatNumber" class="form-control" />
-            </div>
-            <div>
-                <label asp-for="Input.CreditLimit" class="form-label"></label>
-                <input asp-for="Input.CreditLimit" class="form-control" />
-            </div>
-        </div>
-
-        <div class="form-check form-switch mb-4">
-            <input asp-for="Input.IsActive" class="form-check-input" />
-            <label asp-for="Input.IsActive" class="form-check-label"></label>
-        </div>
-
-        <div class="address-grid">
-            <fieldset class="subpanel">
-                <legend>Adresse de facturation</legend>
-                <div class="form-grid">
-                    <div><label asp-for="Input.BillingAddress.Recipient" class="form-label"></label><input asp-for="Input.BillingAddress.Recipient" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.StreetLine1" class="form-label">Adresse</label><input asp-for="Input.BillingAddress.StreetLine1" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.StreetLine2" class="form-label">Complement</label><input asp-for="Input.BillingAddress.StreetLine2" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.PostalCode" class="form-label">Code postal</label><input asp-for="Input.BillingAddress.PostalCode" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.City" class="form-label">Ville</label><input asp-for="Input.BillingAddress.City" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.State" class="form-label">Province / Etat</label><input asp-for="Input.BillingAddress.State" class="form-control" /></div>
-                    <div><label asp-for="Input.BillingAddress.Country" class="form-label">Pays</label><input asp-for="Input.BillingAddress.Country" class="form-control" /></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Code" class="form-label"></label>
+                    <input asp-for="Input.Code" class="form-control" />
+                    <span asp-validation-for="Input.Code" class="text-danger small"></span>
                 </div>
-            </fieldset>
-
-            <fieldset class="subpanel">
-                <legend>Adresse de livraison</legend>
-                <div class="form-grid">
-                    <div><label asp-for="Input.ShippingAddress.Recipient" class="form-label"></label><input asp-for="Input.ShippingAddress.Recipient" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.StreetLine1" class="form-label">Adresse</label><input asp-for="Input.ShippingAddress.StreetLine1" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.StreetLine2" class="form-label">Complement</label><input asp-for="Input.ShippingAddress.StreetLine2" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.PostalCode" class="form-label">Code postal</label><input asp-for="Input.ShippingAddress.PostalCode" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.City" class="form-label">Ville</label><input asp-for="Input.ShippingAddress.City" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.State" class="form-label">Province / Etat</label><input asp-for="Input.ShippingAddress.State" class="form-control" /></div>
-                    <div><label asp-for="Input.ShippingAddress.Country" class="form-label">Pays</label><input asp-for="Input.ShippingAddress.Country" class="form-control" /></div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger small"></span>
                 </div>
-            </fieldset>
-        </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.PartnerType" class="form-label"></label>
+                    <select asp-for="Input.PartnerType" asp-items="Model.PartnerTypes" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.PaymentTermId" class="form-label"></label>
+                    <select asp-for="Input.PaymentTermId" asp-items="Model.PaymentTerms" class="form-select">
+                        <option value="">Aucune</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email" class="form-control" />
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                    <input asp-for="Input.PhoneNumber" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.VatNumber" class="form-label"></label>
+                    <input asp-for="Input.VatNumber" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.CreditLimit" class="form-label"></label>
+                    <input asp-for="Input.CreditLimit" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.IsActive" class="form-check-input" />
+                        <label asp-for="Input.IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
 
-        <div class="form-actions">
-            <button type="submit" id="partner-edit-submit-button" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">Annuler</a>
-        </div>
-    </form>
-</section>
+            <div class="row g-3 mt-3">
+                <div class="col-lg-6">
+                    <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <h6 class="mb-3"><i class="bi bi-receipt me-1"></i>Adresse de facturation</h6>
+                            <div class="row g-2">
+                                <div class="col-12"><label asp-for="Input.BillingAddress.Recipient" class="form-label"></label><input asp-for="Input.BillingAddress.Recipient" class="form-control form-control-sm" /></div>
+                                <div class="col-12"><label asp-for="Input.BillingAddress.StreetLine1" class="form-label">Adresse</label><input asp-for="Input.BillingAddress.StreetLine1" class="form-control form-control-sm" /></div>
+                                <div class="col-12"><label asp-for="Input.BillingAddress.StreetLine2" class="form-label">Complement</label><input asp-for="Input.BillingAddress.StreetLine2" class="form-control form-control-sm" /></div>
+                                <div class="col-md-4"><label asp-for="Input.BillingAddress.PostalCode" class="form-label">CP</label><input asp-for="Input.BillingAddress.PostalCode" class="form-control form-control-sm" /></div>
+                                <div class="col-md-8"><label asp-for="Input.BillingAddress.City" class="form-label">Ville</label><input asp-for="Input.BillingAddress.City" class="form-control form-control-sm" /></div>
+                                <div class="col-md-6"><label asp-for="Input.BillingAddress.State" class="form-label">Province</label><input asp-for="Input.BillingAddress.State" class="form-control form-control-sm" /></div>
+                                <div class="col-md-6"><label asp-for="Input.BillingAddress.Country" class="form-label">Pays</label><input asp-for="Input.BillingAddress.Country" class="form-control form-control-sm" /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <h6 class="mb-3"><i class="bi bi-truck me-1"></i>Adresse de livraison</h6>
+                            <div class="row g-2">
+                                <div class="col-12"><label asp-for="Input.ShippingAddress.Recipient" class="form-label"></label><input asp-for="Input.ShippingAddress.Recipient" class="form-control form-control-sm" /></div>
+                                <div class="col-12"><label asp-for="Input.ShippingAddress.StreetLine1" class="form-label">Adresse</label><input asp-for="Input.ShippingAddress.StreetLine1" class="form-control form-control-sm" /></div>
+                                <div class="col-12"><label asp-for="Input.ShippingAddress.StreetLine2" class="form-label">Complement</label><input asp-for="Input.ShippingAddress.StreetLine2" class="form-control form-control-sm" /></div>
+                                <div class="col-md-4"><label asp-for="Input.ShippingAddress.PostalCode" class="form-label">CP</label><input asp-for="Input.ShippingAddress.PostalCode" class="form-control form-control-sm" /></div>
+                                <div class="col-md-8"><label asp-for="Input.ShippingAddress.City" class="form-label">Ville</label><input asp-for="Input.ShippingAddress.City" class="form-control form-control-sm" /></div>
+                                <div class="col-md-6"><label asp-for="Input.ShippingAddress.State" class="form-label">Province</label><input asp-for="Input.ShippingAddress.State" class="form-control form-control-sm" /></div>
+                                <div class="col-md-6"><label asp-for="Input.ShippingAddress.Country" class="form-label">Pays</label><input asp-for="Input.ShippingAddress.Country" class="form-control form-control-sm" /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">Annuler</a>
+                <button type="submit" id="partner-edit-submit-button" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -115,13 +136,8 @@
             const originalType = '@Model.OriginalPartnerType';
             const originalIsActive = @Model.OriginalIsActive.ToString().ToLowerInvariant();
 
-            function consumesCustomer(type) {
-                return type === 'Customer' || type === 'Both' || type === 'Prospect';
-            }
-
-            function consumesSupplier(type) {
-                return type === 'Supplier' || type === 'Both';
-            }
+            function consumesCustomer(type) { return type === 'Customer' || type === 'Both' || type === 'Prospect'; }
+            function consumesSupplier(type) { return type === 'Supplier' || type === 'Both'; }
 
             function refreshQuotaGuard() {
                 const selectedType = partnerType?.value ?? originalType;
@@ -135,7 +151,6 @@
                 if (projectedCustomers > customerLimit && projectedCustomers > customerUsed) {
                     blocked.push(`quota clients atteint (${customerUsed}/${customerLimit})`);
                 }
-
                 if (projectedSuppliers > supplierLimit && projectedSuppliers > supplierUsed) {
                     blocked.push(`quota fournisseurs atteint (${supplierUsed}/${supplierLimit})`);
                 }
@@ -143,7 +158,7 @@
                 submitButton.disabled = blocked.length > 0;
                 warning.hidden = blocked.length === 0;
                 warning.textContent = blocked.length > 0
-                    ? `Modification bloquee avant soumission : ${blocked.join(' | ')}. Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.`
+                    ? `Modification bloquee : ${blocked.join(' | ')}.`
                     : '';
             }
 

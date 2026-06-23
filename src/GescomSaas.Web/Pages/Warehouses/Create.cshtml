@@ -4,34 +4,50 @@
     ViewData["Title"] = "Nouveau depot";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Creation</span>
-        <h1>Nouveau depot</h1>
+        <h1 class="page-header-title">Nouveau depot</h1>
+        <div class="page-header-sub">Creation d'un depot</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Retour a la liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/Warehouses/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form compact-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div id="warehouse-quota-warning" class="app-alert warning quota-inline-warning" hidden></div>
-        <div class="form-grid">
-            <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
-            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
-        </div>
-        <div class="form-check form-switch mb-4">
-            <input asp-for="Input.IsDefault" class="form-check-input" />
-            <label asp-for="Input.IsDefault" class="form-check-label"></label>
-        </div>
-        <div class="form-actions">
-            <button type="submit" id="warehouse-submit-button" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Annuler</a>
-        </div>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-house-gear"></i>
+        <span>Informations</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div id="warehouse-quota-warning" class="alert alert-warning" hidden></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Code" class="form-label"></label>
+                    <input asp-for="Input.Code" class="form-control" />
+                    <span asp-validation-for="Input.Code" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Label" class="form-label"></label>
+                    <input asp-for="Input.Label" class="form-control" />
+                    <span asp-validation-for="Input.Label" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.IsDefault" class="form-check-input" />
+                        <label asp-for="Input.IsDefault" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/Warehouses/Index">Annuler</a>
+                <button type="submit" id="warehouse-submit-button" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

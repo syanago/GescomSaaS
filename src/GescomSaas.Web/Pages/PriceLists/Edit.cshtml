@@ -4,129 +4,148 @@
     ViewData["Title"] = "Modifier une liste de prix";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Edition</span>
-        <h1>Modifier une liste de prix</h1>
+        <h1 class="page-header-title">Modifier une liste de prix</h1>
+        <div class="page-header-sub">Edition d'une liste de prix</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/PriceLists/Index">Retour a la liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/PriceLists/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
-<section class="content-grid blueprint-grid">
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Entete</span>
-                <h2>Parametres du tarif</h2>
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-currency-euro"></i>
+        <span>Parametres du tarif</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Code" class="form-label"></label>
+                    <input asp-for="Input.Code" class="form-control" />
+                    <span asp-validation-for="Input.Code" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Label" class="form-label"></label>
+                    <input asp-for="Input.Label" class="form-control" />
+                    <span asp-validation-for="Input.Label" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                    <input asp-for="Input.CurrencyCode" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.IsDefault" class="form-check-input" />
+                        <label asp-for="Input.IsDefault" class="form-check-label"></label>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <form method="post" class="stack-form">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-grid">
-                <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
-                <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
-                <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-            </div>
-            <div class="form-check form-switch mb-4">
-                <input asp-for="Input.IsDefault" class="form-check-input" />
-                <label asp-for="Input.IsDefault" class="form-check-label"></label>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary-soft">Mettre a jour</button>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Mettre a jour</button>
             </div>
         </form>
-    </article>
+    </div>
+</div>
 
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Nouvelle ligne</span>
-                <h2>Ajouter un prix article</h2>
-            </div>
-        </div>
-
-        <form method="post" asp-page-handler="AddLine" class="stack-form">
-            <div class="form-grid">
-                <div class="full-span">
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-plus-circle"></i>
+        <span>Ajouter un prix article</span>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="AddLine">
+            <div class="row g-3">
+                <div class="col-12">
                     <label asp-for="NewLine.ProductId" class="form-label"></label>
                     <select asp-for="NewLine.ProductId" asp-items="Model.Products" class="form-select">
                         <option value="">Choisir un article</option>
                     </select>
-                    <span asp-validation-for="NewLine.ProductId" class="text-danger"></span>
+                    <span asp-validation-for="NewLine.ProductId" class="text-danger small"></span>
                 </div>
-                <div>
+                <div class="col-md-6">
                     <label asp-for="NewLine.UnitPrice" class="form-label"></label>
                     <input asp-for="NewLine.UnitPrice" type="hidden" />
                     <input type="text" id="NewLine_UnitPrice_display" value="@DisplayFormatter.MoneyEditor(Model.NewLine.UnitPrice)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="NewLine_UnitPrice" data-format-currency-code="@Model.Input.CurrencyCode" />
-                    <div class="table-meta" data-format-preview-for="NewLine_UnitPrice_display">Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPrice, Model.Input.CurrencyCode)</div>
-                    <span asp-validation-for="NewLine.UnitPrice" class="text-danger"></span>
+                    <div class="form-text" data-format-preview-for="NewLine_UnitPrice_display">Rendu : @DisplayFormatter.Money(Model.NewLine.UnitPrice, Model.Input.CurrencyCode)</div>
+                    <span asp-validation-for="NewLine.UnitPrice" class="text-danger small"></span>
                 </div>
-                <div><label asp-for="NewLine.ValidFrom" class="form-label"></label><input asp-for="NewLine.ValidFrom" class="form-control" /></div>
-                <div><label asp-for="NewLine.ValidTo" class="form-label"></label><input asp-for="NewLine.ValidTo" class="form-control" /></div>
+                <div class="col-md-3">
+                    <label asp-for="NewLine.ValidFrom" class="form-label"></label>
+                    <input asp-for="NewLine.ValidFrom" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="NewLine.ValidTo" class="form-label"></label>
+                    <input asp-for="NewLine.ValidTo" class="form-control" />
+                </div>
             </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary-soft">Ajouter la ligne</button>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Ajouter la ligne</button>
             </div>
         </form>
-    </article>
-</section>
+    </div>
+</div>
 
-<section class="panel-card">
-    <div class="panel-header">
-        <div>
-            <span class="eyebrow">Lignes tarifaires</span>
-            <h2>Prix definis</h2>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Prix definis</span>
+        <span class="ms-auto small text-muted">@Model.Lines.Count resultat(s)</span>
+    </div>
+    @if (Model.Lines.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune ligne tarifaire</h6>
+            <p>Ajoutez un prix article au formulaire ci-dessus pour commencer.</p>
         </div>
-    </div>
-
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Article</th>
-                    <th>Libelle</th>
-                    <th class="text-end">Prix</th>
-                    <th>Valide du</th>
-                    <th>Valide au</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Lines.Count == 0)
-            {
-                <tr><td colspan="6" class="empty-cell">Aucune ligne tarifaire.</td></tr>
-            }
-            else
-            {
-                @foreach (var line in Model.Lines)
-                {
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <td>@line.ProductCode</td>
-                        <td>@line.ProductLabel</td>
-                        <td class="text-end">@DisplayFormatter.Money(line.UnitPrice, Model.Input.CurrencyCode)</td>
-                        <td>@(line.ValidFrom?.ToString("dd/MM/yyyy") ?? "-")</td>
-                        <td>@(line.ValidTo?.ToString("dd/MM/yyyy") ?? "-")</td>
-                        <td class="text-end">
-                            <form method="post" asp-page-handler="DeleteLine" class="inline-form">
-                                <input type="hidden" name="lineId" value="@line.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-light">Supprimer</button>
-                            </form>
-                        </td>
+                        <th>Article</th>
+                        <th>Libelle</th>
+                        <th class="text-end money">Prix</th>
+                        <th>Valide du</th>
+                        <th>Valide au</th>
+                        <th class="text-end">Actions</th>
                     </tr>
-                }
-            }
-            </tbody>
-        </table>
-    </div>
-</section>
+                </thead>
+                <tbody>
+                    @foreach (var line in Model.Lines)
+                    {
+                        <tr>
+                            <td><strong>@line.ProductCode</strong></td>
+                            <td>@line.ProductLabel</td>
+                            <td class="text-end money">@DisplayFormatter.Money(line.UnitPrice, Model.Input.CurrencyCode)</td>
+                            <td>@(line.ValidFrom?.ToString("dd/MM/yyyy") ?? "-")</td>
+                            <td>@(line.ValidTo?.ToString("dd/MM/yyyy") ?? "-")</td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="DeleteLine" class="d-inline">
+                                    <input type="hidden" name="lineId" value="@line.Id" />
+                                    <button type="submit" class="btn btn-sm btn-secondary text-danger" title="Supprimer"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

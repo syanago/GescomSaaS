@@ -2,97 +2,181 @@
 @model GescomSaas.Web.Pages.Partners.IndexModel
 @{
     ViewData["Title"] = Model.Title;
+    var activeCount = Model.Partners.Count(x => x.IsActive);
+    var inactiveCount = Model.Partners.Count(x => !x.IsActive);
+    var isCustomers = Model.Scope == "customers";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Referentiel tiers</span>
-        <h1>@Model.Title</h1>
-        <p class="muted-copy">Gerez les fiches tiers, les conditions de paiement et l'etat d'activation.</p>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Fiches tiers, conditions de paiement et etat d'activation</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="customers">Clients</a>
-        <a class="btn btn-outline-light" asp-page="/Partners/Index" asp-route-scope="suppliers">Fournisseurs</a>
-        <a class="btn btn-primary-soft" asp-page="/Partners/Create" asp-route-scope="@Model.Scope">Nouveau</a>
+    <div>
+        <a class="btn btn-primary" asp-page="/Partners/Create" asp-route-scope="@Model.Scope">
+            <i class="bi bi-plus-lg me-1"></i>Nouveau
+        </a>
     </div>
-</section>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(isCustomers ? "active" : "")" asp-page="/Partners/Index" asp-route-scope="customers" asp-route-search="@Model.Search" asp-route-status="@Model.Status">
+            <i class="bi bi-people me-1"></i>Clients
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(!isCustomers ? "active" : "")" asp-page="/Partners/Index" asp-route-scope="suppliers" asp-route-search="@Model.Search" asp-route-status="@Model.Status">
+            <i class="bi bi-truck me-1"></i>Fournisseurs
+        </a>
+    </li>
+</ul>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
 @if (Model.ScopeQuota is not null)
 {
-    <section class="quota-badge-row">
-        <span class="tag-pill @(Model.ScopeQuota.IsExceeded ? "tag-pill-danger" : (Model.ScopeQuota.Used >= Model.ScopeQuota.Limit ? "tag-pill-warning" : string.Empty))">
-            @Model.QuotaLabel : @Model.ScopeQuota.Used / @Model.ScopeQuota.Limit
-        </span>
-        <span class="table-meta">
-            @if (Model.ScopeQuota.IsExceeded)
-            {
-                <text>Depasse de @(Model.ScopeQuota.Used - Model.ScopeQuota.Limit)</text>
-            }
-            else
-            {
-                <text>@(Model.ScopeQuota.Limit - Model.ScopeQuota.Used) restant(s)</text>
-            }
-        </span>
-    </section>
+    var quotaExceeded = Model.ScopeQuota.IsExceeded;
+    <div class="alert @(quotaExceeded ? "alert-danger" : "alert-info") mb-3">
+        <i class="bi bi-speedometer2 me-2"></i>
+        <strong>@Model.QuotaLabel</strong> : @Model.ScopeQuota.Used / @Model.ScopeQuota.Limit
+        @if (quotaExceeded)
+        {
+            <span>· depasse de @(Model.ScopeQuota.Used - Model.ScopeQuota.Limit)</span>
+        }
+        else
+        {
+            <span>· @(Model.ScopeQuota.Limit - Model.ScopeQuota.Used) restant(s)</span>
+        }
+    </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Raison sociale</th>
-                    <th>Type</th>
-                    <th>Contact</th>
-                    <th>Condition</th>
-                    <th class="text-end">Credit</th>
-                    <th>Etat</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Partners.Count == 0)
-            {
-                <tr>
-                    <td colspan="8" class="empty-cell">Aucune fiche disponible pour cette vue.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var partner in Model.Partners)
-                {
-                    <tr>
-                        <td>@partner.Code</td>
-                        <td>
-                            <strong>@partner.Name</strong>
-                            <div class="table-meta">@partner.Email</div>
-                        </td>
-                        <td>@GetTypeLabel(partner.PartnerType)</td>
-                        <td>@(string.IsNullOrWhiteSpace(partner.PhoneNumber) ? "-" : partner.PhoneNumber)</td>
-                        <td>@partner.PaymentTermLabel</td>
-                        <td class="text-end">@DisplayFormatter.Money(partner.CreditLimit)</td>
-                        <td>
-                            <span class="badge rounded-pill @(partner.IsActive ? "status-pill" : "status-pill-off")">
-                                @(partner.IsActive ? "Actif" : "Inactif")
-                            </span>
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/Partners/Edit" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope">Modifier</a>
-                            <a asp-page="/Partners/Delete" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope">Supprimer</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Actifs</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(activeCount, 0)</div>
+            </div>
+        </div>
     </div>
-</section>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-slate"><i class="bi bi-pause-circle"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Inactifs</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(inactiveCount, 0)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-funnel"></i>
+        <span>Filtres</span>
+        @if (Model.HasActiveFilters)
+        {
+            <span class="badge ms-2" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">Actifs</span>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <input type="hidden" name="Scope" value="@Model.Scope" />
+            <div class="col-md-6 col-lg-7">
+                <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" placeholder="Recherche rapide" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select asp-for="Status" class="form-select form-select-sm" asp-items="Model.StatusOptions"></select>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">
+                    <i class="bi bi-x-circle me-1"></i>Reinitialiser
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-people"></i>
+        <span>Tiers</span>
+        <span class="ms-auto small text-muted">@Model.Partners.Count resultat(s)</span>
+    </div>
+    @if (Model.Partners.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucune fiche disponible</h6>
+            <p>Cree ton premier tiers ou ajuste tes filtres.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Partners/Create" asp-route-scope="@Model.Scope">
+                <i class="bi bi-plus-lg me-1"></i>Nouveau tiers
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Raison sociale</th>
+                        <th>Type</th>
+                        <th>Contact</th>
+                        <th>Condition</th>
+                        <th class="text-end">Credit</th>
+                        <th>Etat</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var partner in Model.Partners)
+                    {
+                        <tr>
+                            <td><strong>@partner.Code</strong></td>
+                            <td>
+                                <a asp-page="/Partners/Details" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope"><strong>@partner.Name</strong></a>
+                                <div class="small text-muted">@partner.Email</div>
+                            </td>
+                            <td>@GetTypeLabel(partner.PartnerType)</td>
+                            <td>@(string.IsNullOrWhiteSpace(partner.PhoneNumber) ? "—" : partner.PhoneNumber)</td>
+                            <td>@partner.PaymentTermLabel</td>
+                            <td class="text-end money">@DisplayFormatter.Money(partner.CreditLimit)</td>
+                            <td>
+                                @if (partner.IsActive)
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:#f3f4f6; color:#6b7280">Inactif</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/Partners/Details" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope" title="Fiche"><i class="bi bi-eye"></i></a>
+                                    <a class="btn btn-sm btn-secondary" asp-page="/Partners/Edit" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/Partners/Delete" asp-route-id="@partner.Id" asp-route-scope="@Model.Scope" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @functions {
     private static string GetTypeLabel(GescomSaas.Domain.Enums.BusinessPartnerType type) => type switch

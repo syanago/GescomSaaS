@@ -2,34 +2,54 @@
 @model GescomSaas.Web.Pages.PaymentTerms.DeleteModel
 @{
     ViewData["Title"] = "Supprimer une condition de paiement";
+    var canDelete = string.IsNullOrWhiteSpace(Model.BlockingReason);
 }
 
-<section class="page-header-card">
-    <div><span class="eyebrow">Suppression</span><h1>Supprimer @Model.PaymentTerm?.Code</h1></div>
-    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/PaymentTerms/Index">Retour a la liste</a></div>
-</section>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Supprimer @Model.PaymentTerm?.Code</h1>
+        <div class="page-header-sub">Suppression d'une condition de paiement</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/PaymentTerms/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<section class="panel-card">
-    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
-    {
-        <div class="app-alert warning">@Model.BlockingReason</div>
-    }
-    else
-    {
-        <p>La condition <strong>@Model.PaymentTerm?.Label</strong> sera supprimee.</p>
-    }
+@if (!canDelete)
+{
+    <div class="alert alert-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Suppression bloquee</strong> &mdash; @Model.BlockingReason</div>
+}
+else
+{
+    <div class="alert alert-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Attention</strong> &mdash; la condition <strong>@Model.PaymentTerm?.Label</strong> sera supprimee.</div>
+}
 
-    <dl class="detail-list">
-        <div><dt>Code</dt><dd>@Model.PaymentTerm?.Code</dd></div>
-        <div><dt>Libelle</dt><dd>@Model.PaymentTerm?.Label</dd></div>
-        <div><dt>Jours</dt><dd>@Model.PaymentTerm?.DueInDays</dd></div>
-    </dl>
-
-    <form method="post" class="form-actions">
-        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
-        {
-            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
-        }
-        <a class="btn btn-outline-light" asp-page="/PaymentTerms/Index">Annuler</a>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-trash"></i>
+        <span>Recapitulatif</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="small text-muted">Code</div>
+                <div class="fw-semibold">@Model.PaymentTerm?.Code</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Libelle</div>
+                <div class="fw-semibold">@Model.PaymentTerm?.Label</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Jours</div>
+                <div class="fw-semibold">@Model.PaymentTerm?.DueInDays</div>
+            </div>
+        </div>
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <a class="btn btn-secondary" asp-page="/PaymentTerms/Index">Annuler</a>
+            @if (canDelete)
+            {
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Confirmer la suppression</button>
+            }
+        </form>
+    </div>
+</div>

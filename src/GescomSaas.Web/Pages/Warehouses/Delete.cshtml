@@ -2,39 +2,54 @@
 @model GescomSaas.Web.Pages.Warehouses.DeleteModel
 @{
     ViewData["Title"] = "Supprimer un depot";
+    var canDelete = string.IsNullOrWhiteSpace(Model.BlockingReason);
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Suppression</span>
-        <h1>Supprimer @Model.Warehouse?.Code</h1>
+        <h1 class="page-header-title">Supprimer @Model.Warehouse?.Code</h1>
+        <div class="page-header-sub">Suppression d'un depot</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Retour a la liste</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/Warehouses/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    @if (!string.IsNullOrWhiteSpace(Model.BlockingReason))
-    {
-        <div class="app-alert warning">@Model.BlockingReason</div>
-    }
-    else
-    {
-        <p>Le depot <strong>@Model.Warehouse?.Label</strong> sera supprime definitivement.</p>
-    }
+@if (!canDelete)
+{
+    <div class="alert alert-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Suppression bloquee</strong> &mdash; @Model.BlockingReason</div>
+}
+else
+{
+    <div class="alert alert-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Attention</strong> &mdash; le depot <strong>@Model.Warehouse?.Label</strong> sera supprime definitivement.</div>
+}
 
-    <dl class="detail-list">
-        <div><dt>Code</dt><dd>@Model.Warehouse?.Code</dd></div>
-        <div><dt>Libelle</dt><dd>@Model.Warehouse?.Label</dd></div>
-        <div><dt>Depot par defaut</dt><dd>@(Model.Warehouse?.IsDefault == true ? "Oui" : "Non")</dd></div>
-    </dl>
-
-    <form method="post" class="form-actions">
-        @if (string.IsNullOrWhiteSpace(Model.BlockingReason))
-        {
-            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
-        }
-        <a class="btn btn-outline-light" asp-page="/Warehouses/Index">Annuler</a>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-trash"></i>
+        <span>Recapitulatif</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="small text-muted">Code</div>
+                <div class="fw-semibold">@Model.Warehouse?.Code</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Libelle</div>
+                <div class="fw-semibold">@Model.Warehouse?.Label</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Depot par defaut</div>
+                <div class="fw-semibold">@(Model.Warehouse?.IsDefault == true ? "Oui" : "Non")</div>
+            </div>
+        </div>
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <a class="btn btn-secondary" asp-page="/Warehouses/Index">Annuler</a>
+            @if (canDelete)
+            {
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Confirmer la suppression</button>
+            }
+        </form>
+    </div>
+</div>

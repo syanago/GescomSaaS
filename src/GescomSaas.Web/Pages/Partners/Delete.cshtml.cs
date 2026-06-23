@@ -1,6 +1,8 @@
 using GescomSaas.Application.Contracts;
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +12,11 @@ namespace GescomSaas.Web.Pages.Partners;
 [Authorize]
 public class DeleteModel(
     ApplicationDbContext dbContext,
-    ICurrentTenantAccessor currentTenantAccessor) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ICurrentTenantAccessor currentTenantAccessor,
+    IUserPermissionService userPermissionService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.ReferencesPartnersManage];
+
     [BindProperty(SupportsGet = true)]
     public string Scope { get; set; } = PartnerScope.Customers;
 

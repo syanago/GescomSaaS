@@ -4,26 +4,34 @@
     ViewData["Title"] = "Modifier une famille d'articles";
 }
 
-<section class="page-header-card">
-    <div><span class="eyebrow">Edition</span><h1>Modifier une famille d'articles</h1></div>
-    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/ProductCategories/Index">Retour a la liste</a></div>
-</section>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Modifier une famille d'articles</h1>
+        <div class="page-header-sub">Edition d'une famille de catalogue</div>
+    </div>
+    <div>
+        <a class="btn btn-secondary" asp-page="/ProductCategories/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form compact-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="form-grid">
-            <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
-            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
-            <div><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
-            <div><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/ProductCategories/Index">Annuler</a>
-        </div>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header"><i class="bi bi-pencil"></i><span>Informations famille</span></div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.StockValuationMethod" class="form-label"></label><select asp-for="Input.StockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select></div>
+                <div class="col-md-6"><label asp-for="Input.StockIdentityTrackingMode" class="form-label"></label><select asp-for="Input.StockIdentityTrackingMode" asp-items="Model.StockIdentityTrackingModeOptions" class="form-select"></select></div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/ProductCategories/Index">Annuler</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

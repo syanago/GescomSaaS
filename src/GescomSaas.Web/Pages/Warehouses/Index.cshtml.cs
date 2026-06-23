@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +11,11 @@ namespace GescomSaas.Web.Pages.Warehouses;
 public class IndexModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.ReferencesWarehousesManage];
+
     public IReadOnlyList<WarehouseListItem> Warehouses { get; private set; } = [];
     public QuotaUsageItem? WarehouseQuota { get; private set; }
 

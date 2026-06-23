@@ -3,6 +3,7 @@ using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,9 +15,12 @@ namespace GescomSaas.Web.Pages.Partners;
 public class CreateModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
+    IUserPermissionService userPermissionService,
     INumberingService numberingService,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.ReferencesPartnersManage];
+
     [BindProperty]
     public PartnerInputModel Input { get; set; } = new();
 
@@ -95,7 +99,7 @@ public class CreateModel(
         await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
 
         StatusMessage = $"{PartnerScope.CreateTitle(Scope)} enregistre.";
-        return RedirectToPage("/Partners/Index", new { scope = Scope });
+        return RedirectToPage("/Partners/Details", new { id = partner.Id, scope = Scope });
     }
 
     public string Title => PartnerScope.CreateTitle(Scope);

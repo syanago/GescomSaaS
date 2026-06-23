@@ -4,29 +4,32 @@
     ViewData["Title"] = "Depots";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Stocks</span>
-        <h1>Depots</h1>
-        <p class="muted-copy">Organisez les points de stockage et identifiez le depot par defaut.</p>
+        <h1 class="page-header-title">Depots</h1>
+        <div class="page-header-sub">Organisez les points de stockage et identifiez le depot par defaut.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="/Warehouses/Create">Nouveau depot</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-page="/Warehouses/Create"><i class="bi bi-plus-lg me-1"></i>Nouveau depot</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
 @if (Model.WarehouseQuota is not null)
 {
-    <section class="quota-badge-row">
-        <span class="tag-pill @(Model.WarehouseQuota.IsExceeded ? "tag-pill-danger" : (Model.WarehouseQuota.Used >= Model.WarehouseQuota.Limit ? "tag-pill-warning" : string.Empty))">
-            Depots : @Model.WarehouseQuota.Used / @Model.WarehouseQuota.Limit
-        </span>
-        <span class="table-meta">
+    var quotaClass = Model.WarehouseQuota.IsExceeded
+        ? "alert-danger"
+        : (Model.WarehouseQuota.Used >= Model.WarehouseQuota.Limit ? "alert-warning" : "alert-info");
+    <div class="alert @quotaClass d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-house-gear"></i>
+        <span><strong>Depots :</strong> @Model.WarehouseQuota.Used / @Model.WarehouseQuota.Limit</span>
+        <span class="ms-2 small">
             @if (Model.WarehouseQuota.IsExceeded)
             {
                 <text>Depasse de @(Model.WarehouseQuota.Used - Model.WarehouseQuota.Limit)</text>
@@ -36,47 +39,62 @@
                 <text>@(Model.WarehouseQuota.Limit - Model.WarehouseQuota.Used) restant(s)</text>
             }
         </span>
-    </section>
+    </div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Libelle</th>
-                    <th>Statut</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Warehouses.Count == 0)
-            {
-                <tr>
-                    <td colspan="4" class="empty-cell">Aucun depot n'est encore defini.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var warehouse in Model.Warehouses)
-                {
-                    <tr>
-                        <td>@warehouse.Code</td>
-                        <td>@warehouse.Label</td>
-                        <td>
-                            <span class="badge rounded-pill @(warehouse.IsDefault ? "status-pill" : "status-pill-off")">
-                                @(warehouse.IsDefault ? "Par defaut" : "Secondaire")
-                            </span>
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/Warehouses/Edit" asp-route-id="@warehouse.Id">Modifier</a>
-                            <a asp-page="/Warehouses/Delete" asp-route-id="@warehouse.Id">Supprimer</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-house-gear"></i>
+        <span>Depots</span>
+        <span class="ms-auto small text-muted">@Model.Warehouses.Count resultat(s)</span>
     </div>
-</section>
+    @if (Model.Warehouses.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun depot</h6>
+            <p>Aucun depot n'est encore defini. Creez votre premier point de stockage.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Warehouses/Create"><i class="bi bi-plus-lg me-1"></i>Nouveau depot</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Libelle</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var warehouse in Model.Warehouses)
+                    {
+                        <tr>
+                            <td><strong>@warehouse.Code</strong></td>
+                            <td>@warehouse.Label</td>
+                            <td>
+                                @if (warehouse.IsDefault)
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">Par defaut</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:#f3f4f6; color:#6b7280">Secondaire</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/Warehouses/Edit" asp-route-id="@warehouse.Id" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary text-danger" asp-page="/Warehouses/Delete" asp-route-id="@warehouse.Id" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,291 @@
+@page "{id:guid}"
+@model GescomSaas.Web.Pages.Partners.DetailsModel
+@using Microsoft.AspNetCore.Html
+@{
+    ViewData["Title"] = "Fiche tiers";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">@Model.Partner!.Code — @Model.Partner.Name</h1>
+        <div class="page-header-sub">
+            <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@GetTypeLabel(Model.Partner.PartnerType)</span>
+            @if (Model.Partner.IsActive)
+            {
+                <span class="badge ms-1" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">Actif</span>
+            }
+            else
+            {
+                <span class="badge ms-1" style="background:#f3f4f6; color:#6b7280">Inactif</span>
+            }
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Partners/Index" asp-route-scope="@Model.Scope">
+            <i class="bi bi-arrow-left me-1"></i>Liste
+        </a>
+        <a class="btn btn-primary" asp-page="/Partners/Edit" asp-route-id="@Model.Id" asp-route-scope="@Model.Scope">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        @if (Model.ReceivablesAccount is not null)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/CustomerAccount" asp-route-partnerId="@Model.Id" asp-route-scope="receivables">
+                <i class="bi bi-person-lines-fill me-1"></i>Situation client
+            </a>
+        }
+        @if (Model.PayablesAccount is not null)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/CustomerAccount" asp-route-partnerId="@Model.Id" asp-route-scope="payables">
+                <i class="bi bi-truck me-1"></i>Situation fournisseur
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon @(Model.Partner.IsActive ? "stat-icon-emerald" : "stat-icon-slate")"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Etat</div>
+                <div class="stat-card-value">@(Model.Partner.IsActive ? "Actif" : "Inactif")</div>
+                <div class="form-text mb-0">@GetTypeLabel(Model.Partner.PartnerType)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Condition</div>
+                <div class="stat-card-value" style="font-size:1rem">@(Model.Partner.PaymentTerm?.Label ?? "Aucune")</div>
+                <div class="form-text mb-0">@(Model.Partner.PaymentTerm?.Code ?? "—")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-amber"><i class="bi bi-credit-card"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Credit</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.Partner.CreditLimit)</div>
+                <div class="form-text mb-0">plafond accorde</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-violet"><i class="bi bi-telephone"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Contact</div>
+                <div class="stat-card-value" style="font-size:1rem">@(string.IsNullOrWhiteSpace(Model.Partner.PhoneNumber) ? "—" : Model.Partner.PhoneNumber)</div>
+                <div class="form-text mb-0">@(string.IsNullOrWhiteSpace(Model.Partner.Email) ? "Aucun email" : Model.Partner.Email)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-info-circle"></i>
+                <span>Informations generales</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="small text-muted">Code</div><div class="fw-semibold">@Model.Partner.Code</div></div>
+                    <div class="col-md-6"><div class="small text-muted">Type</div><div class="fw-semibold">@GetTypeLabel(Model.Partner.PartnerType)</div></div>
+                    <div class="col-12"><div class="small text-muted">Raison sociale</div><div class="fw-semibold">@Model.Partner.Name</div></div>
+                    <div class="col-md-6"><div class="small text-muted">Email</div><div>@(string.IsNullOrWhiteSpace(Model.Partner.Email) ? "—" : Model.Partner.Email)</div></div>
+                    <div class="col-md-6"><div class="small text-muted">Telephone</div><div>@(string.IsNullOrWhiteSpace(Model.Partner.PhoneNumber) ? "—" : Model.Partner.PhoneNumber)</div></div>
+                    <div class="col-md-6"><div class="small text-muted">Numero TVA</div><div>@(string.IsNullOrWhiteSpace(Model.Partner.VatNumber) ? "—" : Model.Partner.VatNumber)</div></div>
+                    <div class="col-md-6"><div class="small text-muted">Plafond credit</div><div class="fw-semibold money">@DisplayFormatter.Money(Model.Partner.CreditLimit)</div></div>
+                    <div class="col-12"><div class="small text-muted">Condition de paiement</div><div>@(Model.Partner.PaymentTerm is null ? "Aucune" : $"{Model.Partner.PaymentTerm.Code} — {Model.Partner.PaymentTerm.Label}")</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-geo-alt"></i>
+                <span>Adresses</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                            <div class="card-body">
+                                <h6 class="mb-2"><i class="bi bi-receipt me-1"></i>Facturation</h6>
+                                @RenderAddress(Model.Partner.BillingAddress)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                            <div class="card-body">
+                                <h6 class="mb-2"><i class="bi bi-truck me-1"></i>Livraison</h6>
+                                @RenderAddress(Model.Partner.ShippingAddress)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.ReceivablesAccount is not null)
+{
+    <div class="card mb-3">
+        <div class="section-header">
+            <i class="bi bi-people"></i>
+            <span>Situation client</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Encours client</div>
+                    <div class="fw-bold money">@DisplayFormatter.Money(Model.ReceivablesAccount.OpenAmount)</div>
+                    <div class="form-text">@DisplayFormatter.Number(Model.ReceivablesAccount.OpenDocumentCount, 0) facture(s)</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Impayes</div>
+                    <div class="fw-bold money @(Model.ReceivablesAccount.OverdueAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(Model.ReceivablesAccount.OverdueAmount)</div>
+                    <div class="form-text">@DisplayFormatter.Number(Model.ReceivablesAccount.OverdueDocumentCount, 0) en retard</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Acomptes disponibles</div>
+                    <div class="fw-bold money stat-value-pos">@DisplayFormatter.Money(Model.ReceivablesAccount.AvailableDepositAmount)</div>
+                    <div class="form-text">credits imputables</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Reglements non affectes</div>
+                    <div class="fw-bold money">@DisplayFormatter.Money(Model.ReceivablesAccount.UnallocatedPaymentAmount)</div>
+                    <div class="form-text">hors acomptes</div>
+                </div>
+            </div>
+
+            @if (Model.ReceivablesAccount.OpenItems.Count == 0)
+            {
+                <div class="empty-state">
+                    <p class="mb-0 small">Aucune facture client ouverte.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr><th>Facture</th><th>Date</th><th>Echeance</th><th class="text-end">Reste du</th><th>Statut</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ReceivablesAccount.OpenItems.Take(6))
+                            {
+                                <tr>
+                                    <td><strong>@item.Number</strong></td>
+                                    <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td class="text-end money fw-semibold">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
+                                    <td><span class="badge doc-status-@item.PaymentStatus.ToString().ToLowerInvariant()">@item.PaymentStatus</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.PayablesAccount is not null)
+{
+    <div class="card">
+        <div class="section-header">
+            <i class="bi bi-truck"></i>
+            <span>Situation fournisseur</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Encours fournisseur</div>
+                    <div class="fw-bold money">@DisplayFormatter.Money(Model.PayablesAccount.OpenAmount)</div>
+                    <div class="form-text">@DisplayFormatter.Number(Model.PayablesAccount.OpenDocumentCount, 0) facture(s)</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Echeances en retard</div>
+                    <div class="fw-bold money @(Model.PayablesAccount.OverdueAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(Model.PayablesAccount.OverdueAmount)</div>
+                    <div class="form-text">@DisplayFormatter.Number(Model.PayablesAccount.OverdueDocumentCount, 0) en retard</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Reglements disponibles</div>
+                    <div class="fw-bold money">@DisplayFormatter.Money(Model.PayablesAccount.UnallocatedPaymentAmount)</div>
+                    <div class="form-text">non encore affectes</div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="small text-muted">Credit restant</div>
+                    <div class="fw-bold money">@(Model.PayablesAccount.CreditLimit > 0m ? DisplayFormatter.Money(Model.PayablesAccount.CreditRemaining) : "Non limite")</div>
+                </div>
+            </div>
+
+            @if (Model.PayablesAccount.OpenItems.Count == 0)
+            {
+                <div class="empty-state">
+                    <p class="mb-0 small">Aucune facture fournisseur ouverte.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr><th>Facture</th><th>Date</th><th>Echeance</th><th class="text-end">Reste du</th><th>Statut</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PayablesAccount.OpenItems.Take(6))
+                            {
+                                <tr>
+                                    <td><strong>@item.Number</strong></td>
+                                    <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td class="text-end money fw-semibold">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
+                                    <td><span class="badge doc-status-@item.PaymentStatus.ToString().ToLowerInvariant()">@item.PaymentStatus</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@functions {
+    private static string GetTypeLabel(GescomSaas.Domain.Enums.BusinessPartnerType type) => type switch
+    {
+        GescomSaas.Domain.Enums.BusinessPartnerType.Customer => "Client",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Supplier => "Fournisseur",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Both => "Mixte",
+        GescomSaas.Domain.Enums.BusinessPartnerType.Prospect => "Prospect",
+        _ => type.ToString()
+    };
+
+    private static IHtmlContent RenderAddress(GescomSaas.Domain.Entities.Commercial.Address address)
+    {
+        var lines = new List<string?>
+        {
+            address.Recipient,
+            address.StreetLine1,
+            address.StreetLine2,
+            string.Join(" ", new[] { address.PostalCode, address.City }.Where(x => !string.IsNullOrWhiteSpace(x))),
+            address.State,
+            address.Country
+        };
+        var normalized = lines.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+        return new HtmlString(normalized.Count == 0
+            ? "<div class=\"small text-muted\">Aucune adresse renseignee.</div>"
+            : "<div class=\"small\">" + string.Join("<br />", normalized) + "</div>");
+    }
+}

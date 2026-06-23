@@ -4,21 +4,26 @@
     ViewData["Title"] = "Referentiels";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Parametrage</span>
-        <h1>Referentiels commerciaux</h1>
-        <p class="muted-copy">Point d'entree vers les bases de donnees metier qui structurent la gestion commerciale.</p>
+        <h1 class="page-header-title">Referentiels commerciaux</h1>
+        <div class="page-header-sub">Point d'entree vers les bases de donnees metier qui structurent la gestion commerciale</div>
     </div>
-</section>
+</div>
 
-<section class="card-grid">
+<div class="row g-3">
     @foreach (var card in Model.Cards)
     {
-        <a class="module-card nav-card" href="@card.Href">
-            <h3>@card.Title</h3>
-            <p>@card.Description</p>
-            <span>Ouvrir</span>
-        </a>
+        <div class="col-md-6 col-lg-4">
+            <a href="@card.Href" class="card h-100 text-decoration-none">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-2">@card.Title</h5>
+                    <p class="card-text small text-muted mb-3">@card.Description</p>
+                    <span class="small fw-semibold text-primary">
+                        Ouvrir <i class="bi bi-arrow-right ms-1"></i>
+                    </span>
+                </div>
+            </a>
+        </div>
     }
-</section>
+</div>

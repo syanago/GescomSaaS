@@ -4,29 +4,53 @@
     ViewData["Title"] = "Nouvelle liste de prix";
 }
 
-<section class="page-header-card">
-    <div><span class="eyebrow">Creation</span><h1>Nouvelle liste de prix</h1></div>
-    <div class="header-actions"><a class="btn btn-outline-light" asp-page="/PriceLists/Index">Retour a la liste</a></div>
-</section>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Nouvelle liste de prix</h1>
+        <div class="page-header-sub">Creation d'une liste de prix</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-secondary" asp-page="/PriceLists/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form compact-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="form-grid">
-            <div><label asp-for="Input.Code" class="form-label"></label><input asp-for="Input.Code" class="form-control" /><span asp-validation-for="Input.Code" class="text-danger"></span></div>
-            <div><label asp-for="Input.Label" class="form-label"></label><input asp-for="Input.Label" class="form-control" /><span asp-validation-for="Input.Label" class="text-danger"></span></div>
-            <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-        </div>
-        <div class="form-check form-switch mb-4">
-            <input asp-for="Input.IsDefault" class="form-check-input" />
-            <label asp-for="Input.IsDefault" class="form-check-label"></label>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Creer</button>
-            <a class="btn btn-outline-light" asp-page="/PriceLists/Index">Annuler</a>
-        </div>
-    </form>
-</section>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-currency-euro"></i>
+        <span>Parametres du tarif</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Code" class="form-label"></label>
+                    <input asp-for="Input.Code" class="form-control" />
+                    <span asp-validation-for="Input.Code" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Label" class="form-label"></label>
+                    <input asp-for="Input.Label" class="form-control" />
+                    <span asp-validation-for="Input.Label" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                    <input asp-for="Input.CurrencyCode" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="Input.IsDefault" class="form-check-input" />
+                        <label asp-for="Input.IsDefault" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/PriceLists/Index">Annuler</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Creer</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

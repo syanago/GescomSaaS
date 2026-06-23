@@ -2,6 +2,7 @@ using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
 using GescomSaas.Infrastructure.Persistence;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,8 +14,11 @@ namespace GescomSaas.Web.Pages.Partners;
 public class EditModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    ITenantQuotaEnforcementService tenantQuotaEnforcementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.ReferencesPartnersManage];
+
     [BindProperty]
     public PartnerInputModel Input { get; set; } = new();
 
@@ -100,7 +104,7 @@ public class EditModel(
         await DbContext.SaveChangesAsync(HttpContext.RequestAborted);
 
         StatusMessage = $"{PartnerScope.Title(Scope).TrimEnd('s')} mis a jour.";
-        return RedirectToPage("/Partners/Index", new { scope = Scope });
+        return RedirectToPage("/Partners/Details", new { id = entity.Id, scope = Scope });
     }
 
     public string Title => $"Modifier {PartnerScope.Title(Scope).TrimEnd('s').ToLowerInvariant()}";
