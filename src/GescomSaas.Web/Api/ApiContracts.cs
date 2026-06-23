@@ -202,9 +202,13 @@ public sealed record ApiDocumentResponse(
     IReadOnlyList<ApiDocumentLineResponse> Lines);
 
 public sealed record ApiPaymentRequest(
-    Guid DocumentId,
+    Guid? DocumentId,
+    Guid PartnerId,
+    PaymentDirection Direction,
     DateOnly PaymentDate,
     decimal Amount,
+    PaymentType Type,
+    PaymentAllocationMode AllocationMode,
     PaymentMethod Method,
     string? ReferenceNumber,
     string? Notes);
