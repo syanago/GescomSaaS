@@ -1,0 +1,59 @@
+# Permet d'avoir un build context tres reduit : sans ca, le `dotnet restore` du
+# Dockerfile recopie inutilement les bin/, obj/, logs et .vs (~1 Go).
+
+# Build output
+**/bin/
+**/obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+publish/
+
+# IDE / Visual Studio
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Tests
+TestResults/
+coverage/
+*.coverage
+*.trx
+*.cobertura.xml
+
+# Logs et fichiers temporaires
+*.log
+tmp-*
+*.tmp
+**/App_Data/logs/
+**/App_Data/*.keys
+**/App_Data/*.localappdata
+**/App_Data/LigComRuntimeOptions.json
+
+# Git et metadonnees
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Documentation et assets non requis pour le build
+docs/
+*.md
+!README.md
+*.png
+
+# Configuration locale / secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pfx
+
+# Docker meta
+docker-compose*.yml
+Dockerfile
+
+# OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  CONFIGURATION: Release
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore GescomSaas.sln
+
+      - name: Build
+        run: dotnet build GescomSaas.sln --configuration $CONFIGURATION --no-restore
+
+      - name: Test
+        run: >
+          dotnet test GescomSaas.sln
+          --configuration $CONFIGURATION
+          --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+          --
+          RunConfiguration.CollectSourceInformation=true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults/**/*.trx
+          retention-days: 14
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ./TestResults/**/coverage.cobertura.xml
+          retention-days: 14
+
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore GescomSaas.sln
+
+      - name: Verify code format
+        run: dotnet format GescomSaas.sln --verify-no-changes --severity warning
+
+  migrations:
+    name: EF Core migrations check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install dotnet-ef
+        run: dotnet tool install --global dotnet-ef --version 9.0.*
+
+      - name: Restore
+        run: dotnet restore GescomSaas.sln
+
+      - name: Build Infrastructure
+        run: dotnet build src/GescomSaas.Infrastructure --no-restore --configuration Release
+
+      # Echoue si le snapshot du modele ne correspond plus aux entites :
+      # forme de garantir qu'on ne merge pas un changement de modele sans migration.
+      - name: Verify migrations are up-to-date
+        run: |
+          dotnet ef migrations has-pending-model-changes \
+            -p src/GescomSaas.Infrastructure \
+            -s src/GescomSaas.Web \
+            --no-build --configuration Release && \
+          echo "OK : aucune divergence entre le modele et les migrations." || \
+          (echo "::error::Le modele a change sans migration correspondante. Lancez 'dotnet ef migrations add <Nom>'." && exit 1)
+
+      - name: Generate idempotent migration script
+        run: |
+          mkdir -p artifacts
+          dotnet ef migrations script --idempotent \
+            -p src/GescomSaas.Infrastructure \
+            -s src/GescomSaas.Web \
+            --no-build --configuration Release \
+            -o artifacts/migrate.sql
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-script
+          path: artifacts/migrate.sql
+          retention-days: 30

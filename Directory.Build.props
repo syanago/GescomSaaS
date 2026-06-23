@@ -1,0 +1,26 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Qualite : on commence permissif sur le legacy puis on durcira projet par projet.
+         Pour activer la rigueur : passer TreatWarningsAsErrors a true dans le csproj ciblé. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-default</AnalysisLevel>
+
+    <!-- Reproductibilite -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Metadonnees -->
+    <Company>GescomSaas</Company>
+    <Product>GescomSaas</Product>
+    <Copyright>Copyright (c) GescomSaas</Copyright>
+  </PropertyGroup>
+
+</Project>

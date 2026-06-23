@@ -1,5 +1,60 @@
+# Visual Studio / Rider
 .vs/
-**/bin/
-**/obj/
+.idea/
 *.user
 *.suo
+*.userprefs
+
+# Build output
+**/bin/
+**/obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+publish/
+
+# Test output
+TestResults/
+coverage/
+*.coverage
+*.trx
+*.cobertura.xml
+
+# Logs et fichiers temporaires
+*.log
+tmp-*
+*.tmp
+run-*.err.log
+run-*.out.log
+web-run-*.log
+web-build-*.log
+infra-*.log
+spn-*.log
+encrypt-*.log
+combo-*.log
+
+# Captures et artefacts ponctuels (autorise les assets versionnés)
+*.png
+!docs/**/*.png
+!src/**/wwwroot/**/*.png
+
+# Donnees runtime locales / secrets
+src/**/App_Data/
+src/**/.keys/
+src/**/App_Data/*.keys
+src/**/App_Data/*.localappdata
+src/**/App_Data/LigComRuntimeOptions.json
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pfx
+
+# Sauvegardes parasites et fichiers de diagnostic ponctuels
+*.bak
+*.codex.bak
+_tmp_sqlite_check/
+check_db.csx
+
+# OS
+Thumbs.db
+.DS_Store

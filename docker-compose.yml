@@ -1,0 +1,80 @@
+# Stack de developpement local : application + SQL Server + Seq (logs structures).
+#
+# Demarrage :
+#   docker compose up --build
+# Acces :
+#   - App  : http://localhost:8080
+#   - Seq  : http://localhost:5341 (UI logs structures)
+#   - SQL  : localhost:1433 (sa / Demo123!)
+#
+# Reset complet :
+#   docker compose down -v   (efface les volumes mssql + app)
+
+services:
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: gescom-mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Demo123!Demo"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Demo123!Demo' -C -Q 'SELECT 1' || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  seq:
+    image: datalust/seq:latest
+    container_name: gescom-seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+    volumes:
+      - seq-data:/data
+
+  app:
+    build:
+      context: .
+      args:
+        BUILD_CONFIGURATION: Release
+        SKIP_TESTS: "true"
+    container_name: gescom-app
+    depends_on:
+      mssql:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=GescomSaas;User Id=sa;Password=Demo123!Demo;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=true"
+      LigComRuntime__DatabaseProvider: "SqlServer"
+      LigComRuntime__InitializeDatabaseOnStartup: "true"
+      # Branche un sink Seq supplementaire dans Serilog. Le binding par variable
+      # d'environnement utilise les conventions Microsoft.Extensions.Configuration.
+      Serilog__WriteTo__2__Name: "Seq"
+      Serilog__WriteTo__2__Args__serverUrl: "http://seq:80"
+    volumes:
+      # Persiste les data protection keys et la base SQLite eventuelle entre
+      # restarts du conteneur (sinon les sessions invalident a chaque deploy).
+      - app-data:/app/App_Data
+      - app-keys:/app/.keys
+    restart: unless-stopped
+
+volumes:
+  mssql-data:
+  seq-data:
+  app-data:
+  app-keys:
