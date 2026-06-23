@@ -1,21 +1,25 @@
 using GescomSaas.Application.Contracts;
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.Commercial;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Infrastructure.Configuration;
 using GescomSaas.Infrastructure.Persistence;
-using GescomSaas.Web.Pages;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace GescomSaas.Web.Pages.Settings;
 
-[Authorize(Roles = "TenantOwner,PlatformAdmin")]
 public class NumberingModel(
     ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    INumberingService numberingService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    INumberingService numberingService,
+    IOptions<LigComRuntimeOptions> runtimeOptions) : SettingsPageModel(dbContext, currentTenantAccessor, userPermissionService, runtimeOptions)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SettingsNumberingManage];
+
     [BindProperty]
     public NumberingSettingsInputModel Input { get; set; } = new();
 

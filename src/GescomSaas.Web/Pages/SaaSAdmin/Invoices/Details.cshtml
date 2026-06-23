@@ -4,74 +4,122 @@
     ViewData["Title"] = "Facture plateforme";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>@Model.Invoice?.InvoiceNumber</h1>
-        <p class="muted-copy">@Model.Invoice?.Tenant?.CompanyName</p>
+        <h1 class="page-header-title">@Model.Invoice?.InvoiceNumber</h1>
+        <div class="page-header-sub">@Model.Invoice?.Tenant?.CompanyName</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="./Details" asp-route-id="@Model.Id" asp-page-handler="Pdf">Telecharger PDF</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" asp-page="./Details" asp-route-id="@Model.Id" asp-page-handler="Pdf"><i class="bi bi-file-earmark-pdf me-1"></i>Telecharger PDF</a>
         @if (Model.Invoice?.Status == GescomSaas.Domain.Enums.PlatformInvoiceStatus.Issued || Model.Invoice?.Status == GescomSaas.Domain.Enums.PlatformInvoiceStatus.Overdue)
         {
-            <form method="post" asp-page-handler="MarkPaid" class="inline-form">
-                <button type="submit" class="btn btn-primary-soft">Marquer payee</button>
+            <form method="post" asp-page-handler="MarkPaid" class="d-inline">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Marquer payee</button>
             </form>
-            <form method="post" asp-page-handler="Cancel" class="inline-form">
-                <button type="submit" class="btn btn-outline-light">Annuler</button>
+            <form method="post" asp-page-handler="Cancel" class="d-inline">
+                <button type="submit" class="btn btn-secondary"><i class="bi bi-x-lg me-1"></i>Annuler</button>
             </form>
         }
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Invoices/Index">Retour</a>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Invoices/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
 @if (Model.Invoice is not null)
 {
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card">
-            <dl class="detail-list">
-                <div><dt>Periode</dt><dd>@Model.Invoice.PeriodStart.ToString("dd/MM/yyyy") - @Model.Invoice.PeriodEnd.ToString("dd/MM/yyyy")</dd></div>
-                <div><dt>Emission</dt><dd>@Model.Invoice.IssueDate.ToString("dd/MM/yyyy")</dd></div>
-                <div><dt>Echeance</dt><dd>@Model.Invoice.DueDate.ToString("dd/MM/yyyy")</dd></div>
-                <div><dt>Statut</dt><dd>@Model.Invoice.Status</dd></div>
-                <div><dt>Payee le</dt><dd>@(Model.Invoice.PaidOn?.ToString("dd/MM/yyyy") ?? "-")</dd></div>
-            </dl>
-            <div class="totals-box">
-                <div><span>Total HT</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalExcludingTax, Model.Invoice.CurrencyCode)</strong></div>
-                <div><span>Total taxe</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalTax, Model.Invoice.CurrencyCode)</strong></div>
-                <div><span>Total TTC</span><strong>@DisplayFormatter.Money(Model.Invoice.TotalIncludingTax, Model.Invoice.CurrencyCode)</strong></div>
-            </div>
-        </article>
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-info-circle"></i><span>Informations</span></div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="small text-muted">Periode</div>
+                            <div class="fw-semibold">@Model.Invoice.PeriodStart.ToString("dd/MM/yyyy") - @Model.Invoice.PeriodEnd.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Emission</div>
+                            <div class="fw-semibold">@Model.Invoice.IssueDate.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Echeance</div>
+                            <div class="fw-semibold">@Model.Invoice.DueDate.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Statut</div>
+                            <div class="fw-semibold">@Model.Invoice.Status</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Payee le</div>
+                            <div class="fw-semibold">@(Model.Invoice.PaidOn?.ToString("dd/MM/yyyy") ?? "-")</div>
+                        </div>
+                    </div>
 
-        <article class="panel-card">
-            <div class="table-shell">
-                <table class="table table-darkless align-middle app-table">
-                    <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th class="text-end">Quantite</th>
-                            <th class="text-end">PU HT</th>
-                            <th class="text-end">Total HT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var line in Model.Invoice.Lines.OrderBy(x => x.CreatedOnUtc))
-                    {
-                        <tr>
-                            <td>@line.Description</td>
-                            <td class="text-end">@DisplayFormatter.Quantity(line.Quantity)</td>
-                            <td class="text-end">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Invoice.CurrencyCode)</td>
-                            <td class="text-end">@DisplayFormatter.Money(line.LineTotalExcludingTax, Model.Invoice.CurrencyCode)</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+                    <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <h6 class="mb-3"><i class="bi bi-cash-stack me-1"></i>Totaux</h6>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total HT</span>
+                                <strong class="money">@DisplayFormatter.Money(Model.Invoice.TotalExcludingTax, Model.Invoice.CurrencyCode)</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total taxe</span>
+                                <strong class="money">@DisplayFormatter.Money(Model.Invoice.TotalTax, Model.Invoice.CurrencyCode)</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                                <span class="fw-semibold">Total TTC</span>
+                                <strong class="money">@DisplayFormatter.Money(Model.Invoice.TotalIncludingTax, Model.Invoice.CurrencyCode)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </article>
-    </section>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-list-ul"></i><span>Lignes de facture</span></div>
+                <div class="card-body">
+                    @if (!Model.Invoice.Lines.Any())
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-inbox empty-icon"></i>
+                            <h6>Aucune ligne</h6>
+                            <p class="mb-0">Cette facture ne contient aucune ligne.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-end">Quantite</th>
+                                        <th class="text-end">PU HT</th>
+                                        <th class="text-end">Total HT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var line in Model.Invoice.Lines.OrderBy(x => x.CreatedOnUtc))
+                                {
+                                    <tr>
+                                        <td>@line.Description</td>
+                                        <td class="text-end money">@DisplayFormatter.Quantity(line.Quantity)</td>
+                                        <td class="text-end money">@DisplayFormatter.Money(line.UnitPriceExcludingTax, Model.Invoice.CurrencyCode)</td>
+                                        <td class="text-end money">@DisplayFormatter.Money(line.LineTotalExcludingTax, Model.Invoice.CurrencyCode)</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 }

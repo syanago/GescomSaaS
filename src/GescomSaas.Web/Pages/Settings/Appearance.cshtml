@@ -1,0 +1,389 @@
+@page
+@model GescomSaas.Web.Pages.Settings.AppearanceModel
+@{
+    ViewData["Title"] = "Apparence et préférences locales";
+}
+
+<div class="lc-page-header">
+    <div>
+        <h1 class="lc-page-title">Apparence &amp; préférences locales</h1>
+        <p class="lc-page-sub">
+            Personnalise l'affichage de LigCom sur cet appareil. Les choix sont sauvegardés localement
+            (localStorage) et ne sont pas synchronisés entre tes différents postes.
+        </p>
+    </div>
+    <div>
+        <a class="btn btn-secondary" asp-page="/Settings/Index">
+            <i data-lucide="arrow-left" style="width:14px;height:14px"></i>Retour aux paramètres
+        </a>
+    </div>
+</div>
+
+<div class="lc-settings">
+
+    @* ===== Apparence ===== *@
+    <div class="lc-settings__group">
+        <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="palette" style="width:18px;height:18px"></i></div>
+            <div>
+                <h2 class="lc-settings__group-title">Apparence</h2>
+                <p class="lc-settings__group-sub">Thème, densité d'affichage et comportement de la sidebar.</p>
+            </div>
+        </div>
+        <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Thème</p>
+                    <p class="lc-settings__row-hint">
+                        <strong>Système</strong> suit automatiquement la préférence claire/sombre de ton OS.
+                        <strong>Clair</strong> ou <strong>Sombre</strong> forcent un mode quel que soit l'OS.
+                    </p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <div class="lc-theme-grid" role="radiogroup" aria-label="Choix du thème">
+                        <button type="button" class="lc-theme-card" data-theme-card="system" role="radio" aria-checked="false" onclick="LigCom.setThemeMode('system')">
+                            <div class="lc-theme-card__preview lc-theme-card__preview--system">
+                                <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                                <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                            </div>
+                            <div class="lc-theme-card__body">
+                                <i data-lucide="monitor" class="lc-theme-card__icon"></i>
+                                <span class="lc-theme-card__title">Système</span>
+                            </div>
+                            <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                        </button>
+
+                        <button type="button" class="lc-theme-card" data-theme-card="light" role="radio" aria-checked="false" onclick="LigCom.setThemeMode('light')">
+                            <div class="lc-theme-card__preview lc-theme-card__preview--light">
+                                <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                                <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                            </div>
+                            <div class="lc-theme-card__body">
+                                <i data-lucide="sun" class="lc-theme-card__icon"></i>
+                                <span class="lc-theme-card__title">Clair</span>
+                            </div>
+                            <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                        </button>
+
+                        <button type="button" class="lc-theme-card" data-theme-card="dark" role="radio" aria-checked="false" onclick="LigCom.setThemeMode('dark')">
+                            <div class="lc-theme-card__preview lc-theme-card__preview--dark">
+                                <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                                <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                            </div>
+                            <div class="lc-theme-card__body">
+                                <i data-lucide="moon" class="lc-theme-card__icon"></i>
+                                <span class="lc-theme-card__title">Sombre</span>
+                            </div>
+                            <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Densité d'affichage</p>
+                    <p class="lc-settings__row-hint">Hauteur des lignes de tableau et marges. <strong>Compact</strong> recommandé pour les power users (saisie clavier intensive).</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <div class="lc-density-pills" role="radiogroup" aria-label="Densité">
+                        <button type="button" class="is-active" data-density="compact" onclick="setDensity('compact')">Compact</button>
+                        <button type="button" data-density="comfortable" onclick="setDensity('comfortable')">Confortable</button>
+                        <button type="button" data-density="spacious" onclick="setDensity('spacious')">Spacieux</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Sidebar réduite par défaut</p>
+                    <p class="lc-settings__row-hint">Démarre avec uniquement les icônes de la barre latérale. Étend à la demande.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <label class="lc-switch">
+                        <input type="checkbox" id="prefSidebarCollapsed" onchange="setSidebarCollapsedDefault(this.checked)">
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        <span>Démarrer en mode réduit</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Animations d'interface</p>
+                    <p class="lc-settings__row-hint">Active transitions et hovers. À désactiver pour un rendu strictement instantané.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <label class="lc-switch">
+                        <input type="checkbox" id="prefAnimations" checked onchange="setAnimations(this.checked)">
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        <span>Animations activées</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Régional ===== *@
+    <div class="lc-settings__group">
+        <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="globe" style="width:18px;height:18px"></i></div>
+            <div>
+                <h2 class="lc-settings__group-title">Régional</h2>
+                <p class="lc-settings__group-sub">Langue, devise par défaut et formats locaux. Ces préférences peuvent être surchargées par les paramètres de la société.</p>
+            </div>
+        </div>
+        <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Langue de l'interface</p>
+                    <p class="lc-settings__row-hint">Affecte les libellés, messages et formats de date.</p>
+                </div>
+                <div class="lc-settings__row-control" style="max-width:280px">
+                    <select class="form-select" id="prefLang" onchange="setPref('lc-lang', this.value)">
+                        <option value="fr" selected>Français (FR)</option>
+                        <option value="en">English (EN)</option>
+                        <option value="pt">Português (PT)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Devise pré-sélectionnée</p>
+                    <p class="lc-settings__row-hint">Devise par défaut à la création d'un nouveau document. La devise du document reste modifiable au cas par cas.</p>
+                </div>
+                <div class="lc-settings__row-control" style="max-width:300px">
+                    <select class="form-select" id="prefCurrency" onchange="setPref('lc-currency', this.value)">
+                        <option value="XOF" selected>XOF — Franc CFA UEMOA</option>
+                        <option value="XAF">XAF — Franc CFA CEMAC</option>
+                        <option value="EUR">EUR — Euro</option>
+                        <option value="USD">USD — US Dollar</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Format de date</p>
+                    <p class="lc-settings__row-hint">Affichage des dates dans les listes, formulaires et exports.</p>
+                </div>
+                <div class="lc-settings__row-control" style="max-width:300px">
+                    <select class="form-select" id="prefDateFormat" onchange="setPref('lc-date-format', this.value)">
+                        <option value="dd/MM/yyyy" selected>27/04/2026 (DD/MM/YYYY)</option>
+                        <option value="dd MMM yyyy">27 avr. 2026 (DD MMM YYYY)</option>
+                        <option value="dd MMMM yyyy">27 avril 2026 (DD MMMM YYYY)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Premier jour de la semaine</p>
+                    <p class="lc-settings__row-hint">Affecte les calendriers et les rapports hebdomadaires.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <div class="lc-density-pills" role="radiogroup">
+                        <button type="button" class="is-active" data-weekstart="1" onclick="setPref('lc-week-start','1')">Lundi</button>
+                        <button type="button" data-weekstart="0" onclick="setPref('lc-week-start','0')">Dimanche</button>
+                        <button type="button" data-weekstart="6" onclick="setPref('lc-week-start','6')">Samedi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Synchronisation & données ===== *@
+    <div class="lc-settings__group">
+        <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="cloud-cog" style="width:18px;height:18px"></i></div>
+            <div>
+                <h2 class="lc-settings__group-title">Synchronisation &amp; données</h2>
+                <p class="lc-settings__group-sub">Comportement hors ligne et cache local de l'application.</p>
+            </div>
+        </div>
+        <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Synchronisation automatique</p>
+                    <p class="lc-settings__row-hint">Pousse les modifications dès qu'une connexion est disponible. Recommandé activé.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <label class="lc-switch">
+                        <input type="checkbox" id="prefAutoSync" checked onchange="setPref('lc-auto-sync', this.checked ? '1' : '0')">
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        <span>Activée</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Synchroniser uniquement en Wi-Fi</p>
+                    <p class="lc-settings__row-hint">Évite la consommation de données mobiles lors des déplacements.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <label class="lc-switch">
+                        <input type="checkbox" id="prefWifiOnly" onchange="setPref('lc-wifi-only', this.checked ? '1' : '0')">
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        <span>Limiter au Wi-Fi</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Espace utilisé localement</p>
+                    <p class="lc-settings__row-hint" id="cacheSize">Calcul…</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <button class="btn btn-secondary" onclick="clearLocalCache()">
+                        <i data-lucide="trash-2" style="width:14px;height:14px"></i>Vider le cache local
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Zone dangereuse ===== *@
+    <div class="lc-settings__group lc-settings__danger">
+        <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="alert-triangle" style="width:18px;height:18px"></i></div>
+            <div>
+                <h2 class="lc-settings__group-title">Zone dangereuse</h2>
+                <p class="lc-settings__group-sub">Actions irréversibles. Vérifie deux fois avant de cliquer.</p>
+            </div>
+        </div>
+        <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+                <div>
+                    <p class="lc-settings__row-label">Réinitialiser toutes les préférences</p>
+                    <p class="lc-settings__row-hint">Remet thème, densité, langue et tous les paramètres locaux aux valeurs par défaut. La session reste active.</p>
+                </div>
+                <div class="lc-settings__row-control">
+                    <button class="btn btn-secondary" onclick="resetAllPreferences()" style="color:var(--color-error-700,#B42318);border-color:var(--color-error-100,#FEE4E2)">
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+/* =========================================================================
+   Pré-remplissage des contrôles à partir du localStorage + helpers
+   ========================================================================= */
+(function initAppearancePrefs() {
+    function read(key, fallback) {
+        try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+    }
+    // Densité
+    const dens = read('lc-density', 'compact');
+    document.querySelectorAll('[data-density]').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.density === dens);
+    });
+    document.documentElement.setAttribute('data-density', dens);
+
+    // Sidebar collapsed default
+    const sbDef = read('lc-sidebar-collapsed-default', '0') === '1';
+    const cb = document.getElementById('prefSidebarCollapsed');
+    if (cb) cb.checked = sbDef;
+
+    // Animations
+    const anim = read('lc-animations', '1') === '1';
+    const cbA = document.getElementById('prefAnimations');
+    if (cbA) cbA.checked = anim;
+    document.documentElement.classList.toggle('no-animations', !anim);
+
+    // Régional
+    const lang = read('lc-lang', 'fr');
+    const langSel = document.getElementById('prefLang');
+    if (langSel) langSel.value = lang;
+    const cur = read('lc-currency', 'XOF');
+    const curSel = document.getElementById('prefCurrency');
+    if (curSel) curSel.value = cur;
+    const df = read('lc-date-format', 'dd/MM/yyyy');
+    const dfSel = document.getElementById('prefDateFormat');
+    if (dfSel) dfSel.value = df;
+    const ws = read('lc-week-start', '1');
+    document.querySelectorAll('[data-weekstart]').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.weekstart === ws);
+    });
+
+    // Sync prefs
+    const autoSync = read('lc-auto-sync', '1') === '1';
+    const cbAS = document.getElementById('prefAutoSync');
+    if (cbAS) cbAS.checked = autoSync;
+    const wifiOnly = read('lc-wifi-only', '0') === '1';
+    const cbW = document.getElementById('prefWifiOnly');
+    if (cbW) cbW.checked = wifiOnly;
+
+    // Espace cache local (estimation)
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+        navigator.storage.estimate().then(({ usage }) => {
+            const mb = (usage / (1024 * 1024)).toFixed(1);
+            const el = document.getElementById('cacheSize');
+            if (el) el.textContent = `${mb} Mo utilisés sur cet appareil.`;
+        }).catch(() => {});
+    } else {
+        const el = document.getElementById('cacheSize');
+        if (el) el.textContent = 'Estimation indisponible sur ce navigateur.';
+    }
+})();
+
+function setPref(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch {}
+    if (window.LigComToast) {
+        LigComToast.push({ kind: 'success', title: 'Préférence enregistrée', timeout: 2000 });
+    }
+}
+
+function setDensity(d) {
+    setPref('lc-density', d);
+    document.documentElement.setAttribute('data-density', d);
+    document.querySelectorAll('[data-density]').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.density === d);
+    });
+}
+
+function setSidebarCollapsedDefault(checked) {
+    setPref('lc-sidebar-collapsed-default', checked ? '1' : '0');
+}
+
+function setAnimations(checked) {
+    setPref('lc-animations', checked ? '1' : '0');
+    document.documentElement.classList.toggle('no-animations', !checked);
+}
+
+function clearLocalCache() {
+    if (!confirm('Vider le cache local ? Les données non synchronisées seront perdues.')) return;
+    try {
+        // Conserve les préférences UI mais vide les caches data
+        ['lc-data-cache', 'lc-mutations-queue'].forEach(k => localStorage.removeItem(k));
+        if ('caches' in window) {
+            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+        }
+        if (window.LigComToast) LigComToast.push({ kind: 'success', title: 'Cache local vidé' });
+    } catch (e) {
+        if (window.LigComToast) LigComToast.push({ kind: 'error', title: 'Erreur lors du nettoyage' });
+    }
+}
+
+function resetAllPreferences() {
+    if (!confirm('Réinitialiser toutes les préférences locales (thème, densité, langue, synchro) ?')) return;
+    try {
+        ['lc-theme-mode','lc-theme','lc-density','lc-lang','lc-currency','lc-date-format','lc-week-start','lc-auto-sync','lc-wifi-only','lc-sidebar-collapsed-default','lc-animations']
+            .forEach(k => localStorage.removeItem(k));
+    } catch {}
+    if (window.LigCom) LigCom.setThemeMode('system');
+    setTimeout(() => location.reload(), 600);
+}
+</script>
+}

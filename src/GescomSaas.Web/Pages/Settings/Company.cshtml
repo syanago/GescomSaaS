@@ -6,185 +6,369 @@
     var currencySymbolMapJson = System.Text.Json.JsonSerializer.Serialize(Model.CurrencySymbolMap);
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Parametres</span>
-        <h1>Societe et formats d'affichage</h1>
-        <p class="muted-copy">Pilotez les informations de societe, les regles de presentation et le gabarit visuel de LigCom.</p>
+        <h1 class="page-header-title">Societe et formats d'affichage</h1>
+        <div class="page-header-sub">Configure l'identite de l'entreprise, les formats metier et le gabarit visuel depuis un seul workspace clair.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Settings/Index">Retour</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Settings/Index"><i class="bi bi-arrow-left me-1"></i>Retour aux parametres</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><strong>Parametres enregistres</strong> &mdash; @Model.StatusMessage</div>
 }
 
-<section class="content-grid dashboard-grid">
-    <form method="post" class="panel-card stack-form compact-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="row g-3">
+    <div class="col-lg-8">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-        <fieldset class="subpanel">
-            <legend>Gabarit</legend>
-            <div class="form-grid">
-                <div class="full-span">
-                    <label asp-for="Input.VisualTheme" class="form-label"></label>
-                    <select asp-for="Input.VisualTheme" asp-items="Model.ThemeOptions" class="form-select"></select>
-                    <div class="table-meta">Le gabarit clair reprend majoritairement les tons de l'image vert 2, avec des accents emeraude et dore inspires de l'image vert 1.</div>
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-palette"></i>
+                    <span>Gabarit visuel</span>
                 </div>
-            </div>
-            <div class="theme-option-grid">
-                <article class="theme-option-card">
-                    <span class="theme-chip theme-chip-midnight">LigCom Nuit</span>
-                    <strong>Gabarit actuel</strong>
-                    <p class="muted-copy">Ambiance sombre, contraste fort et accent ambre pour les usages intensifs.</p>
-                </article>
-                <article class="theme-option-card theme-option-card-light">
-                    <span class="theme-chip theme-chip-emerald">LigCom Vert Clair</span>
-                    <strong>25 % vert 1, 75 % vert 2</strong>
-                    <p class="muted-copy">Fond clair mineral, surfaces sauge et accents emeraude pour un rendu plus doux en journee.</p>
-                </article>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Societe</legend>
-            <div class="form-grid">
-                <div><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger"></span></div>
-                <div><label asp-for="Input.CompanyLegalName" class="form-label"></label><input asp-for="Input.CompanyLegalName" class="form-control" /><span asp-validation-for="Input.CompanyLegalName" class="text-danger"></span></div>
-                <div><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger"></span></div>
-                <div><label asp-for="Input.PhoneNumber" class="form-label"></label><input asp-for="Input.PhoneNumber" class="form-control" /></div>
-                <div><label asp-for="Input.AddressLine1" class="form-label"></label><input asp-for="Input.AddressLine1" class="form-control" /></div>
-                <div><label asp-for="Input.AddressLine2" class="form-label"></label><input asp-for="Input.AddressLine2" class="form-control" /></div>
-                <div><label asp-for="Input.PostalCode" class="form-label"></label><input asp-for="Input.PostalCode" class="form-control" /></div>
-                <div><label asp-for="Input.City" class="form-label"></label><input asp-for="Input.City" class="form-control" /></div>
-                <div><label asp-for="Input.State" class="form-label"></label><input asp-for="Input.State" class="form-control" /></div>
-                <div><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Devise</legend>
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Input.CurrencyCode" class="form-label"></label>
-                    <select asp-for="Input.CurrencyCode" asp-items="Model.CurrencyOptions" class="form-select" data-currency-select="company"></select>
-                    <span asp-validation-for="Input.CurrencyCode" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.CashCurrencyCode" class="form-label"></label>
-                    <select asp-for="Input.CashCurrencyCode" asp-items="Model.CurrencyOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.CashCurrencyCode" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.CurrencySymbol" class="form-label"></label>
-                    <input asp-for="Input.CurrencySymbol" class="form-control" data-currency-symbol-input="true" />
-                    <span asp-validation-for="Input.CurrencySymbol" class="text-danger"></span>
-                    <div class="table-meta">Le symbole se met a jour automatiquement quand la devise societe change, puis reste modifiable si besoin.</div>
-                </div>
-                <div>
-                    <label asp-for="Input.CurrencySymbolPosition" class="form-label"></label>
-                    <select asp-for="Input.CurrencySymbolPosition" asp-items="Model.CurrencySymbolPositionOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.CurrencySymbolPosition" class="text-danger"></span>
-                </div>
-            </div>
-            <div class="table-meta">Tu peux choisir une devise de tenue generale et une devise specifique de caisse.</div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Formats d'affichage</legend>
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Input.MoneyDecimalSeparator" class="form-label"></label>
-                    <select asp-for="Input.MoneyDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.MoneyDecimalSeparator" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.MoneyGroupSeparator" class="form-label"></label>
-                    <select asp-for="Input.MoneyGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.MoneyGroupSeparator" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.MoneyDecimalPlaces" class="form-label"></label>
-                    <input asp-for="Input.MoneyDecimalPlaces" class="form-control" />
-                    <span asp-validation-for="Input.MoneyDecimalPlaces" class="text-danger"></span>
-                    <div class="table-meta">Si tu mets `0`, le separateur decimal de la monnaie n'est plus utilise.</div>
-                </div>
-                <div>
-                    <label asp-for="Input.QuantityDecimalSeparator" class="form-label"></label>
-                    <select asp-for="Input.QuantityDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.QuantityDecimalSeparator" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.QuantityGroupSeparator" class="form-label"></label>
-                    <select asp-for="Input.QuantityGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.QuantityGroupSeparator" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.QuantityDecimalPlaces" class="form-label"></label>
-                    <input asp-for="Input.QuantityDecimalPlaces" class="form-control" />
-                    <span asp-validation-for="Input.QuantityDecimalPlaces" class="text-danger"></span>
-                    <div class="table-meta">Si tu gardes des decimales sur les quantites, il faut un separateur de milliers different.</div>
-                </div>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Stock</legend>
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Input.DefaultStockValuationMethod" class="form-label"></label>
-                    <select asp-for="Input.DefaultStockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select>
-                    <span asp-validation-for="Input.DefaultStockValuationMethod" class="text-danger"></span>
-                    <div class="table-meta">Cette methode sera proposee par defaut sur les familles et les articles. Par defaut : CMUP.</div>
-                </div>
-                <div class="full-span">
-                    <div class="form-check form-switch mt-2">
-                        <input asp-for="Input.AllowNegativeStock" class="form-check-input" />
-                        <label asp-for="Input.AllowNegativeStock" class="form-check-label"></label>
+                <div class="card-body">
+                    <p class="text-muted">Choisis le territoire visuel de LigCom avant de regler le reste.</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Input.VisualTheme" class="form-label"></label>
+                            <select asp-for="Input.VisualTheme" asp-items="Model.ThemeOptions" class="form-select"></select>
+                            <div class="form-text">Choisis entre un mode nuit dense, un clair emeraude lumineux, ou un gabarit ivoire plus chaleureux et institutionnel.</div>
+                        </div>
                     </div>
-                    <span asp-validation-for="Input.AllowNegativeStock" class="text-danger"></span>
-                    <div class="table-meta">Si l'option est decochee, les ajustements et sorties stock seront bloques quand la quantite disponible n'est pas suffisante.</div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">LigCom Nuit</span>
+                                    <div class="fw-semibold mt-2">Contraste fort</div>
+                                    <div class="small text-muted">Pense pour les utilisateurs intensifs et les longues sessions metier.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">LigCom Vert Clair</span>
+                                    <div class="fw-semibold mt-2">25 % vert 1, 75 % vert 2</div>
+                                    <div class="small text-muted">Ambiance plus lumineuse, lisible et premium pour les usages de jour.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <span class="badge" style="background:#f3f4f6; color:#6b7280">LigCom Ivoire</span>
+                                    <div class="fw-semibold mt-2">Clair, pro et accueillant</div>
+                                    <div class="small text-muted">Un territoire plus doux, plus institutionnel et tres confortable pour la bureautique quotidienne.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </fieldset>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-            <button type="submit" asp-page-handler="ResynchronizeCurrencies" class="btn btn-outline-light">Resynchroniser les devises existantes</button>
-            <a class="btn btn-outline-light" asp-page="/Settings/Index">Annuler</a>
-        </div>
-        <div class="table-meta">Ce bouton force toutes les pieces, reglements, listes de prix et factures plateforme du tenant a utiliser la devise societe actuelle.</div>
-    </form>
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-building"></i>
+                    <span>Identite et coordonnees</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ces informations structurent l'en-tete de l'application, les documents et les exports.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.CompanyLegalName" class="form-label"></label><input asp-for="Input.CompanyLegalName" class="form-control" /><span asp-validation-for="Input.CompanyLegalName" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.PhoneNumber" class="form-label"></label><input asp-for="Input.PhoneNumber" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.AddressLine1" class="form-label"></label><input asp-for="Input.AddressLine1" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.AddressLine2" class="form-label"></label><input asp-for="Input.AddressLine2" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.PostalCode" class="form-label"></label><input asp-for="Input.PostalCode" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.City" class="form-label"></label><input asp-for="Input.City" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.State" class="form-label"></label><input asp-for="Input.State" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
+                    </div>
+                </div>
+            </div>
 
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Apercu</span>
-                <h2>Rendu actuel</h2>
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-currency-exchange"></i>
+                    <span>Devise et symbole</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ajuste la devise de tenue et le rendu de la monnaie dans toutes les vues LigCom.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.CurrencyCode" class="form-label"></label>
+                            <select asp-for="Input.CurrencyCode" asp-items="Model.CurrencyOptions" class="form-select" data-currency-select="company"></select>
+                            <span asp-validation-for="Input.CurrencyCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.CashCurrencyCode" class="form-label"></label>
+                            <select asp-for="Input.CashCurrencyCode" asp-items="Model.CurrencyOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.CashCurrencyCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.CurrencySymbol" class="form-label"></label>
+                            <input asp-for="Input.CurrencySymbol" class="form-control" data-currency-symbol-input="true" />
+                            <span asp-validation-for="Input.CurrencySymbol" class="text-danger small"></span>
+                            <div class="form-text">Le symbole se met a jour automatiquement quand la devise societe change, puis reste modifiable si besoin.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.CurrencySymbolPosition" class="form-label"></label>
+                            <select asp-for="Input.CurrencySymbolPosition" asp-items="Model.CurrencySymbolPositionOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.CurrencySymbolPosition" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-123"></i>
+                    <span>Monnaie et quantites</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ces regles pilotent les listes, KPI, formulaires, paiements, documents et impressions.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.MoneyDecimalSeparator" class="form-label"></label>
+                            <select asp-for="Input.MoneyDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.MoneyDecimalSeparator" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.MoneyGroupSeparator" class="form-label"></label>
+                            <select asp-for="Input.MoneyGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.MoneyGroupSeparator" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.MoneyDecimalPlaces" class="form-label"></label>
+                            <input asp-for="Input.MoneyDecimalPlaces" class="form-control" />
+                            <span asp-validation-for="Input.MoneyDecimalPlaces" class="text-danger small"></span>
+                            <div class="form-text">Si tu mets `0`, le separateur decimal de la monnaie n'est plus utilise.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.QuantityDecimalSeparator" class="form-label"></label>
+                            <select asp-for="Input.QuantityDecimalSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.QuantityDecimalSeparator" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.QuantityGroupSeparator" class="form-label"></label>
+                            <select asp-for="Input.QuantityGroupSeparator" asp-items="Model.SeparatorOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.QuantityGroupSeparator" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.QuantityDecimalPlaces" class="form-label"></label>
+                            <input asp-for="Input.QuantityDecimalPlaces" class="form-control" />
+                            <span asp-validation-for="Input.QuantityDecimalPlaces" class="text-danger small"></span>
+                            <div class="form-text">Si tu gardes des decimales sur les quantites, il faut un separateur de milliers different.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Modes de reglement</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Choisis les modes proposes dans les ecrans de reglement et d'acompte. Par defaut, LigCom active virement, especes et cheque.</p>
+                    <div class="row g-2">
+                        @foreach (var option in Model.PaymentMethodOptions)
+                        {
+                            var methodId = $"payment-method-{option.Method}";
+                            <div class="col-md-6">
+                                @if (Model.Input.EnabledPaymentMethods.Contains(option.Method))
+                                {
+                                    <label class="form-check" for="@methodId">
+                                        <input class="form-check-input" type="checkbox" id="@methodId" name="Input.EnabledPaymentMethods" value="@option.Method" checked />
+                                        <span class="form-check-label">@option.Label</span>
+                                    </label>
+                                }
+                                else
+                                {
+                                    <label class="form-check" for="@methodId">
+                                        <input class="form-check-input" type="checkbox" id="@methodId" name="Input.EnabledPaymentMethods" value="@option.Method" />
+                                        <span class="form-check-label">@option.Label</span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <span asp-validation-for="Input.EnabledPaymentMethods" class="text-danger small"></span>
+                    <div class="form-text">Les modes coches seront les seuls proposes au moment de saisir un reglement ou un acompte.</div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-cash-coin"></i>
+                    <span>Reglements, impayes et blocages</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ces regles pilotent l'affectation automatique des reglements clients, la file de relance et le blocage des commandes ou livraisons.</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Input.IncomingPaymentAllocationMode" class="form-label"></label>
+                            <select asp-for="Input.IncomingPaymentAllocationMode" asp-items="Model.PaymentAllocationModeOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.IncomingPaymentAllocationMode" class="text-danger small"></span>
+                            <div class="form-text">Si aucun document n'est choisi pendant la saisie d'un reglement client standard, LigCom utilisera ce mode par defaut.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.ReminderFriendlyDelayDays" class="form-label"></label>
+                            <input asp-for="Input.ReminderFriendlyDelayDays" class="form-control" />
+                            <span asp-validation-for="Input.ReminderFriendlyDelayDays" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.ReminderFormalDelayDays" class="form-label"></label>
+                            <input asp-for="Input.ReminderFormalDelayDays" class="form-control" />
+                            <span asp-validation-for="Input.ReminderFormalDelayDays" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.ReminderFinalNoticeDelayDays" class="form-label"></label>
+                            <input asp-for="Input.ReminderFinalNoticeDelayDays" class="form-control" />
+                            <span asp-validation-for="Input.ReminderFinalNoticeDelayDays" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-check">
+                                        <input asp-for="Input.BlockSalesOrdersOnCreditLimit" class="form-check-input" />
+                                        <span class="form-check-label">Bloquer les commandes si le plafond client est depasse</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-check">
+                                        <input asp-for="Input.BlockSalesOrdersOnOverdue" class="form-check-input" />
+                                        <span class="form-check-label">Bloquer les commandes s'il existe des impayes</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-check">
+                                        <input asp-for="Input.BlockDeliveriesOnCreditLimit" class="form-check-input" />
+                                        <span class="form-check-label">Bloquer les livraisons si le plafond client est depasse</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-check">
+                                        <input asp-for="Input.BlockDeliveriesOnOverdue" class="form-check-input" />
+                                        <span class="form-check-label">Bloquer les livraisons s'il existe des impayes</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-people"></i>
+                    <span>Saisie assistee des tiers</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Choisis si les utilisateurs retrouvent les tiers d'abord par code ou par nom pendant la saisie des documents et des reglements.</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Input.PartnerLookupMode" class="form-label"></label>
+                            <select asp-for="Input.PartnerLookupMode" asp-items="Model.PartnerLookupModeOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.PartnerLookupMode" class="text-danger small"></span>
+                            <div class="form-text">La saisie assistee proposera aussi une creation rapide du tiers si aucune correspondance n'est trouvee.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Regles par defaut du stock</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Ces choix determinent le comportement propose sur les familles, articles et mouvements de stock.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.DefaultStockValuationMethod" class="form-label"></label>
+                            <select asp-for="Input.DefaultStockValuationMethod" asp-items="Model.StockValuationMethodOptions" class="form-select"></select>
+                            <span asp-validation-for="Input.DefaultStockValuationMethod" class="text-danger small"></span>
+                            <div class="form-text">Par defaut : CMUP. Cette methode est proposee sur les familles et les articles.</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-4">
+                                <input asp-for="Input.AllowNegativeStock" class="form-check-input" />
+                                <label asp-for="Input.AllowNegativeStock" class="form-check-label"></label>
+                            </div>
+                            <span asp-validation-for="Input.AllowNegativeStock" class="text-danger small"></span>
+                            <div class="form-text">Si l'option est decochee, les ajustements et sorties stock sont bloques quand la quantite disponible n'est pas suffisante.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3 flex-wrap">
+                <a class="btn btn-secondary" asp-page="/Settings/Index">Annuler</a>
+                <button type="submit" asp-page-handler="ResynchronizeCurrencies" class="btn btn-secondary"><i class="bi bi-arrow-repeat me-1"></i>Resynchroniser les devises existantes</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+            </div>
+            <div class="form-text mt-2">Le bouton de resynchronisation force les pieces, reglements, listes de prix et factures plateforme du tenant a reprendre la devise societe actuelle.</div>
+        </form>
+    </div>
+
+    <aside class="col-lg-4">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-eye"></i>
+                <span>Apercu en direct</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="small text-muted">Societe active</div>
+                    <div class="fw-semibold">@currentSettings.CompanyName</div>
+                    <div class="small text-muted">@currentSettings.CompanyLegalName</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Monnaie</div>
+                    <div class="fw-semibold">@DisplayFormatter.Money(12345.678m)</div>
+                    <div class="small text-muted">@currentSettings.CurrencyCode &middot; symbole @currentSettings.CurrencySymbol</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Quantite</div>
+                    <div class="fw-semibold">@DisplayFormatter.Quantity(12345.678m)</div>
+                    <div class="small text-muted">Apercu instantane du format de quantite</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Reglements</div>
+                    <div class="fw-semibold">@string.Join(", ", Model.Input.EnabledPaymentMethods.Select(GescomSaas.Application.Models.PaymentMethodCatalog.GetLabel))</div>
+                    <div class="small text-muted">Liste proposee lors de la saisie finance</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Recherche tiers</div>
+                    <div class="fw-semibold">@(Model.Input.PartnerLookupMode == GescomSaas.Domain.Enums.PartnerLookupMode.Code ? "Par code" : "Par nom")</div>
+                    <div class="small text-muted">Mode utilise dans les documents et les reglements</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Recouvrement</div>
+                    <div class="fw-semibold">@(Model.Input.IncomingPaymentAllocationMode == GescomSaas.Domain.Enums.PaymentAllocationMode.Manual ? "Affectation manuelle" : "Affectation auto")</div>
+                    <div class="small text-muted">Relances a J+@Model.Input.ReminderFriendlyDelayDays / J+@Model.Input.ReminderFormalDelayDays / J+@Model.Input.ReminderFinalNoticeDelayDays</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Gabarit</div>
+                    <div class="fw-semibold">@currentSettings.ThemeLabel</div>
+                    <div class="small text-muted">Le rendu general de LigCom se met a jour a partir du theme choisi</div>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Ces reglages s'appliquent au cockpit, aux listes, aux formulaires, aux documents et aux ecrans financiers. L'objectif est de garder une seule logique d'affichage partout.
+                </div>
             </div>
         </div>
-        <div class="workspace-summary-grid">
-            <article class="workspace-summary-card">
-                <span class="signal-label">Societe active</span>
-                <strong>@currentSettings.CompanyName</strong>
-                <span class="table-meta">@currentSettings.CompanyLegalName</span>
-            </article>
-            <article class="workspace-summary-card">
-                <span class="signal-label">Devise principale</span>
-                <strong>@currentSettings.CurrencyCode</strong>
-                <span class="table-meta">@DisplayFormatter.Money(12345.678m)</span>
-            </article>
-            <article class="workspace-summary-card">
-                <span class="signal-label">Gabarit</span>
-                <strong>@currentSettings.ThemeLabel</strong>
-                <span class="table-meta">Apercu instantane dans le panneau de droite</span>
-            </article>
-        </div>
-    </article>
-</section>
+    </aside>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

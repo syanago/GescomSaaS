@@ -1,18 +1,22 @@
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Infrastructure.Configuration;
 using GescomSaas.Infrastructure.Persistence;
-using GescomSaas.Web.Pages;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace GescomSaas.Web.Pages.Settings;
 
-[Authorize(Roles = "TenantOwner,PlatformAdmin")]
 public class CompanyModel(
     ApplicationDbContext dbContext,
-    GescomSaas.Application.Contracts.ICurrentTenantAccessor currentTenantAccessor) : CommercialPageModel(dbContext, currentTenantAccessor)
+    GescomSaas.Application.Contracts.ICurrentTenantAccessor currentTenantAccessor,
+    GescomSaas.Application.Contracts.IUserPermissionService userPermissionService,
+    IOptions<LigComRuntimeOptions> runtimeOptions) : SettingsPageModel(dbContext, currentTenantAccessor, userPermissionService, runtimeOptions)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SettingsCompanyManage];
+
     [BindProperty]
     public CompanyInputModel Input { get; set; } = new();
 
@@ -65,7 +69,8 @@ public class CompanyModel(
     public IReadOnlyList<SelectListItem> ThemeOptions { get; } =
     [
         new("LigCom Nuit - gabarit actuel", ApplicationTheme.LigComMidnight.ToString()),
-        new("LigCom Vert Clair - 75 % vert 2, 25 % vert 1", ApplicationTheme.LigComEmeraldLight.ToString())
+        new("LigCom Vert Clair - 75 % vert 2, 25 % vert 1", ApplicationTheme.LigComEmeraldLight.ToString()),
+        new("LigCom Ivoire - clair, professionnel et convivial", ApplicationTheme.LigComIvoryLight.ToString())
     ];
 
     public IReadOnlyList<SelectListItem> CurrencySymbolPositionOptions { get; } =
@@ -81,6 +86,21 @@ public class CompanyModel(
         new("Dernier prix d'achat", StockValuationMethod.LastPurchaseCost.ToString())
     ];
 
+    public IReadOnlyList<PaymentMethodOptionDefinition> PaymentMethodOptions => PaymentMethodCatalog.All;
+
+    public IReadOnlyList<SelectListItem> PartnerLookupModeOptions { get; } =
+    [
+        new("Par code du tiers", PartnerLookupMode.Code.ToString()),
+        new("Par nom du tiers", PartnerLookupMode.Name.ToString())
+    ];
+
+    public IReadOnlyList<SelectListItem> PaymentAllocationModeOptions { get; } =
+    [
+        new("Saisie manuelle", PaymentAllocationMode.Manual.ToString()),
+        new("Affecter sur les echeances les plus anciennes", PaymentAllocationMode.OldestDueDate.ToString()),
+        new("Affecter sur les factures les plus anciennes", PaymentAllocationMode.OldestDocumentDate.ToString())
+    ];
+
     public async Task<IActionResult> OnGetAsync()
     {
         var tenant = await LoadTenantAsync();
@@ -93,6 +113,22 @@ public class CompanyModel(
         var tenant = await LoadTenantAsync();
         var previousCurrencyCode = tenant.CurrencyCode;
         var adjustments = NormalizeFormatSelections();
+        Input.EnabledPaymentMethods ??= [];
+
+        if (Input.EnabledPaymentMethods.Count == 0)
+        {
+            ModelState.AddModelError("Input.EnabledPaymentMethods", "Selectionne au moins un mode de reglement.");
+        }
+
+        if (Input.ReminderFormalDelayDays < Input.ReminderFriendlyDelayDays)
+        {
+            ModelState.AddModelError("Input.ReminderFormalDelayDays", "Le delai de relance formelle doit etre superieur ou egal au delai preventif.");
+        }
+
+        if (Input.ReminderFinalNoticeDelayDays < Input.ReminderFormalDelayDays)
+        {
+            ModelState.AddModelError("Input.ReminderFinalNoticeDelayDays", "Le dernier avis doit etre programme apres la relance formelle.");
+        }
 
         if (!ModelState.IsValid)
         {
@@ -238,7 +274,7 @@ public class CompanyModel(
 
     private List<string> NormalizeFormatSelections()
     {
-        var adjustments = new List<string>();
+        List<string> adjustments = [];
 
         if (Input.MoneyDecimalPlaces > 0 && NormalizeSeparator(Input.MoneyDecimalSeparator) == NormalizeSeparator(Input.MoneyGroupSeparator))
         {

@@ -4,105 +4,139 @@
     ViewData["Title"] = "Numerotation";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Parametres</span>
-        <h1>Numerotation</h1>
-        <p class="muted-copy">Choisissez, pour chaque referentiel et pour chaque type de piece, si LigCom doit generer la valeur automatiquement ou laisser une saisie manuelle.</p>
+        <h1 class="page-header-title">Numerotation</h1>
+        <div class="page-header-sub">Reglez les modes, racines et tailles des codes LigCom pour les referentiels et les pieces, avec apercu immediat.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Settings/Index">Retour</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Settings/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><strong>Numerotation mise a jour</strong> &mdash; @Model.StatusMessage</div>
 }
 
-<form method="post" class="stack-form">
-    <section class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Referentiels</span>
-                <h2>Regles de base</h2>
+<div class="row g-3">
+    <div class="col-lg-8">
+        <form method="post">
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-receipt-cutoff"></i>
+                    <span>Regles de base des referentiels</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Definis comment LigCom genere les codes des clients, fournisseurs, articles et autres referentiels structurants.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Element</th>
+                                    <th>Mode</th>
+                                    <th>Racine</th>
+                                    <th>Taille</th>
+                                    <th>Apercu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @for (var i = 0; i < Model.Input.References.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Input.References[i].Label
+                                        <input type="hidden" asp-for="Input.References[i].Key" />
+                                        <input type="hidden" asp-for="Input.References[i].Label" />
+                                    </td>
+                                    <td><select asp-for="Input.References[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
+                                    <td><input asp-for="Input.References[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
+                                    <td><input asp-for="Input.References[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
+                                    <td class="small text-muted" data-numbering-preview="true">@Model.Input.References[i].Preview</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="table-shell">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Element</th>
-                        <th>Mode</th>
-                        <th>Racine</th>
-                        <th>Taille</th>
-                        <th>Apercu</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @for (var i = 0; i < Model.Input.References.Count; i++)
-                {
-                    <tr>
-                        <td>
-                            @Model.Input.References[i].Label
-                            <input type="hidden" asp-for="Input.References[i].Key" />
-                            <input type="hidden" asp-for="Input.References[i].Label" />
-                        </td>
-                        <td><select asp-for="Input.References[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
-                        <td><input asp-for="Input.References[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
-                        <td><input asp-for="Input.References[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
-                        <td class="table-meta" data-numbering-preview="true">@Model.Input.References[i].Preview</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </section>
 
-    <section class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Documents</span>
-                <h2>Numerotation des pieces</h2>
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-receipt-cutoff"></i>
+                    <span>Numerotation des pieces</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Chaque type de document peut suivre sa propre logique de numerotation, independamment des referentiels.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Piece</th>
+                                    <th>Mode</th>
+                                    <th>Racine</th>
+                                    <th>Taille</th>
+                                    <th>Apercu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @for (var i = 0; i < Model.Input.Documents.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Input.Documents[i].Label
+                                        <input type="hidden" asp-for="Input.Documents[i].Key" />
+                                        <input type="hidden" asp-for="Input.Documents[i].Label" />
+                                    </td>
+                                    <td><select asp-for="Input.Documents[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
+                                    <td><input asp-for="Input.Documents[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
+                                    <td><input asp-for="Input.Documents[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
+                                    <td class="small text-muted" data-numbering-preview="true">@Model.Input.Documents[i].Preview</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="table-shell">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Piece</th>
-                        <th>Mode</th>
-                        <th>Racine</th>
-                        <th>Taille</th>
-                        <th>Apercu</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @for (var i = 0; i < Model.Input.Documents.Count; i++)
-                {
-                    <tr>
-                        <td>
-                            @Model.Input.Documents[i].Label
-                            <input type="hidden" asp-for="Input.Documents[i].Key" />
-                            <input type="hidden" asp-for="Input.Documents[i].Label" />
-                        </td>
-                        <td><select asp-for="Input.Documents[i].Mode" asp-items="Model.ModeOptions" class="form-select" data-numbering-mode="true"></select></td>
-                        <td><input asp-for="Input.Documents[i].Prefix" class="form-control" data-numbering-prefix="true" /></td>
-                        <td><input asp-for="Input.Documents[i].NumberLength" class="form-control" type="number" min="1" max="12" data-numbering-length="true" /></td>
-                        <td class="table-meta" data-numbering-preview="true">@Model.Input.Documents[i].Preview</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </section>
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-        <a class="btn btn-outline-light" asp-page="/Settings/Index">Annuler</a>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/Settings/Index">Annuler</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+            </div>
+            <div class="form-text mt-2">La taille par defaut est de 4 caracteres numeriques, par exemple `CLI-0001` ou `FAC-2026-0001`.</div>
+        </form>
     </div>
-    <div class="table-meta">La taille par defaut est de 4 caracteres numeriques, par exemple `CLI-0001` ou `FAC-2026-0001`.</div>
-</form>
+
+    <aside class="col-lg-4">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-info-circle"></i>
+                <span>Reperes</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="small text-muted">Modes disponibles</div>
+                    <div class="fw-semibold">Automatique, manuel avec racine, manuel</div>
+                    <div class="small text-muted">Une seule logique de lecture partout dans LigCom.</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Taille par defaut</div>
+                    <div class="fw-semibold">4</div>
+                    <div class="small text-muted">Exemples : CLI-0001, ART-0001, FAC-0001</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Usage recommande</div>
+                    <div class="fw-semibold">Automatique avec racine</div>
+                    <div class="small text-muted">Ideal pour garder une lecture stable et eviter les collisions de saisie.</div>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Le mode `Manuel` coupe la generation automatique. Le mode `Manuel avec racine` garde le prefixe visuel mais laisse la saisie de la partie numerique a l'utilisateur.
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
 
 @section Scripts {
     <script>

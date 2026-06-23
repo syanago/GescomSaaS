@@ -4,56 +4,71 @@
     ViewData["Title"] = "Plans SaaS";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Plans SaaS</h1>
-        <p class="muted-copy">Maintenez les editions, les limites et la logique d'overage de la plateforme.</p>
+        <h1 class="page-header-title">Plans SaaS</h1>
+        <div class="page-header-sub">Maintenez les editions, les limites et la logique d'overage de la plateforme.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Index">Cockpit</a>
-        <a class="btn btn-primary-soft" asp-page="/SaaSAdmin/Plans/Create">Nouveau plan</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Index"><i class="bi bi-speedometer2 me-1"></i>Cockpit</a>
+        <a class="btn btn-primary" asp-page="/SaaSAdmin/Plans/Create"><i class="bi bi-plus-lg me-1"></i>Nouveau plan</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Libelle</th>
-                    <th>Edition</th>
-                    <th class="text-end">Prix mensuel</th>
-                    <th>Utilisateurs</th>
-                    <th>Articles</th>
-                    <th>Docs/mois</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var plan in Model.Plans)
-            {
-                <tr>
-                    <td>@plan.Code</td>
-                    <td>@plan.Label</td>
-                    <td>@plan.Edition</td>
-                    <td class="text-end">@DisplayFormatter.Money(plan.MonthlyPrice)</td>
-                    <td>@plan.MaxUsers</td>
-                    <td>@plan.MaxProducts</td>
-                    <td>@plan.MaxMonthlyDocuments</td>
-                    <td class="text-end action-cell">
-                        <a asp-page="/SaaSAdmin/Plans/Edit" asp-route-id="@plan.Id">Editer</a>
-                        <a asp-page="/SaaSAdmin/Plans/Delete" asp-route-id="@plan.Id">Supprimer</a>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header"><i class="bi bi-tag"></i><span>Plans</span></div>
+    <div class="card-body">
+        @if (Model.Plans.Count == 0)
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox empty-icon"></i>
+                <h6>Aucun plan</h6>
+                <p class="mb-0">Aucun plan d'abonnement n'a ete defini.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Libelle</th>
+                            <th>Edition</th>
+                            <th class="text-end">Prix mensuel</th>
+                            <th>Utilisateurs</th>
+                            <th>Articles</th>
+                            <th>Docs/mois</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var plan in Model.Plans)
+                    {
+                        <tr>
+                            <td>@plan.Code</td>
+                            <td>@plan.Label</td>
+                            <td>@plan.Edition</td>
+                            <td class="text-end money">@DisplayFormatter.Money(plan.MonthlyPrice)</td>
+                            <td>@plan.MaxUsers</td>
+                            <td>@plan.MaxProducts</td>
+                            <td>@plan.MaxMonthlyDocuments</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/SaaSAdmin/Plans/Edit" asp-route-id="@plan.Id" title="Editer"><i class="bi bi-pencil"></i></a>
+                                    <a class="btn btn-sm btn-secondary" asp-page="/SaaSAdmin/Plans/Delete" asp-route-id="@plan.Id" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
-</section>
+</div>

@@ -4,92 +4,90 @@
     ViewData["Title"] = "Edition utilisateur tenant";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>@Model.UserEmail</h1>
-        <p class="muted-copy">Edition des roles et du rattachement pour @Model.TenantName.</p>
+        <h1 class="page-header-title">@Model.UserEmail</h1>
+        <div class="page-header-sub">Edition des roles et du rattachement pour @Model.TenantName.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId">Retour utilisateurs</a>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId"><i class="bi bi-arrow-left me-1"></i>Retour utilisateurs</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
 @if (!ViewContext.ModelState.IsValid)
 {
-    <div class="app-alert warning" asp-validation-summary="All"></div>
+    <div class="alert alert-warning" asp-validation-summary="All"></div>
 }
 
-<section class="content-grid dashboard-grid">
-    <form method="post" class="panel-card stack-form compact-form">
-        <div class="panel-header compact">
-            <div>
-                <span class="eyebrow">Compte rattache</span>
-                <h2>Mettre a jour l'utilisateur</h2>
-            </div>
-        </div>
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="section-header"><i class="bi bi-person-gear"></i><span>Mettre a jour l'utilisateur</span></div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="small text-muted">E-mail</div>
+                            <div class="fw-semibold">@Model.UserEmail</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Tenant</div>
+                            <div class="fw-semibold">@Model.TenantName</div>
+                        </div>
+                    </div>
 
-        <div class="detail-list">
-            <div>
-                <dt>E-mail</dt>
-                <dd>@Model.UserEmail</dd>
-            </div>
-            <div>
-                <dt>Tenant</dt>
-                <dd>@Model.TenantName</dd>
-            </div>
-        </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.FirstName" class="form-label"></label>
+                            <input asp-for="Input.FirstName" class="form-control" />
+                            <span asp-validation-for="Input.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.LastName" class="form-label"></label>
+                            <input asp-for="Input.LastName" class="form-control" />
+                            <span asp-validation-for="Input.LastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <span class="form-label">Roles</span>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var role in Model.AssignableRoles)
+                                {
+                                    <label class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="Input.SelectedRoles" value="@role" checked="@Model.Input.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
+                                        <span class="form-check-label">@role</span>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="Input.SelectedRoles" class="text-danger small"></span>
+                        </div>
+                    </div>
 
-        <div class="form-grid">
-            <div>
-                <label asp-for="Input.FirstName" class="form-label"></label>
-                <input asp-for="Input.FirstName" class="form-control" />
-                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-            </div>
-            <div>
-                <label asp-for="Input.LastName" class="form-label"></label>
-                <input asp-for="Input.LastName" class="form-control" />
-                <span asp-validation-for="Input.LastName" class="text-danger"></span>
-            </div>
-            <div class="full-span">
-                <span class="form-label">Roles</span>
-                <div class="role-grid">
-                    @foreach (var role in Model.AssignableRoles)
-                    {
-                        <label class="role-chip">
-                            <input type="checkbox" name="Input.SelectedRoles" value="@role" checked="@Model.Input.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
-                            <span>@role</span>
-                        </label>
-                    }
-                </div>
-                <span asp-validation-for="Input.SelectedRoles" class="text-danger"></span>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId">Annuler</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.TenantId">Annuler</a>
-        </div>
-    </form>
-
-    <article class="panel-card stack-form compact-form">
-        <div class="panel-header compact">
-            <div>
-                <span class="eyebrow">Detachage</span>
-                <h2>Retirer du tenant</h2>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="section-header"><i class="bi bi-x-circle"></i><span>Retirer du tenant</span></div>
+            <div class="card-body">
+                <p class="text-muted">Le compte reste dans la plateforme, mais il ne sera plus rattache a ce tenant et perdra ses roles tenant.</p>
+                <form method="post" asp-page-handler="Detach" class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Detacher du tenant</button>
+                </form>
             </div>
         </div>
-        <p class="muted-copy">Le compte reste dans la plateforme, mais il ne sera plus rattache a ce tenant et perdra ses roles tenant.</p>
-        <form method="post" asp-page-handler="Detach" class="form-actions">
-            <button type="submit" class="btn btn-danger-soft">Detacher du tenant</button>
-        </form>
-    </article>
-</section>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

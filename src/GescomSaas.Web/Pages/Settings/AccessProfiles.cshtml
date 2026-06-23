@@ -1,0 +1,254 @@
+@page
+@model GescomSaas.Web.Pages.Settings.AccessProfilesModel
+@{
+    ViewData["Title"] = "Profils et droits";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Profils et droits granulaires</h1>
+        <div class="page-header-sub">Cree des profils de droits par tenant, definis un profil par defaut et affecte les utilisateurs sans casser les roles metier deja en place.</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <form method="post" asp-page-handler="LoadStandardProfiles" class="d-inline">
+            <button type="submit" class="btn btn-secondary"><i class="bi bi-download me-1"></i>Charger les profils standards LigCom</button>
+        </form>
+        <a class="btn btn-secondary" asp-page="/Settings/Index"><i class="bi bi-arrow-left me-1"></i>Retour parametres</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
+}
+
+@if (!ViewContext.ModelState.IsValid)
+{
+    <div class="alert alert-warning" asp-validation-summary="All"><i class="bi bi-exclamation-triangle-fill me-2"></i></div>
+}
+
+@if (Model.Snapshot is null)
+{
+    <div class="card">
+        <div class="card-body">
+            <p class="text-muted mb-0">Tenant introuvable.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="section-header">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Profils disponibles</span>
+                    <form method="post" asp-page-handler="CreateProfile" class="d-inline ms-auto">
+                        <button type="submit" class="btn btn-secondary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nouveau profil</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    @if (Model.Snapshot.Profiles.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-inbox empty-icon"></i>
+                            <p class="mb-0">Aucun profil granulaire n'est encore defini. Cree d'abord un profil, puis affecte-le aux utilisateurs du tenant.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var profile in Model.Snapshot.Profiles)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                            <div>
+                                                <div class="fw-semibold">@profile.Name</div>
+                                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                                    @if (profile.IsDefault)
+                                                    {
+                                                        <span class="badge" style="background:var(--gc-pill-amber-bg, #fef3c7); color:var(--gc-pill-amber-fg, #b45309)">Par defaut</span>
+                                                    }
+                                                    <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@profile.AssignedUserCount affectation(s)</span>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(profile.Description))
+                                                {
+                                                    <div class="small text-muted mt-1">@profile.Description</div>
+                                                }
+                                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                                    @foreach (var permissionKey in profile.PermissionKeys.Take(4))
+                                                    {
+                                                        <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@Model.PermissionLabels.GetValueOrDefault(permissionKey, permissionKey)</span>
+                                                    }
+                                                    @if (profile.PermissionKeys.Count > 4)
+                                                    {
+                                                        <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">+@(profile.PermissionKeys.Count - 4) autres</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <form method="post" asp-page-handler="EditProfile" class="d-inline">
+                                                    <input type="hidden" name="profileId" value="@profile.Id" />
+                                                    <button type="submit" class="btn btn-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Modifier</button>
+                                                </form>
+                                                <form method="post" asp-page-handler="DeleteProfile" class="d-inline">
+                                                    <input type="hidden" name="profileId" value="@profile.Id" />
+                                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i>Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <form method="post" asp-page-handler="SaveProfile">
+                <div class="card h-100">
+                    <div class="section-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>@(Model.Profile.ProfileId.HasValue ? "Modifier un profil" : "Creer un profil")</span>
+                    </div>
+                    <div class="card-body">
+                        <input asp-for="Profile.ProfileId" type="hidden" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Profile.Name" class="form-label"></label>
+                                <input asp-for="Profile.Name" class="form-control" />
+                                <span asp-validation-for="Profile.Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input asp-for="Profile.IsDefault" class="form-check-input" />
+                                    <label asp-for="Profile.IsDefault" class="form-check-label"></label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Profile.Description" class="form-label"></label>
+                                <textarea asp-for="Profile.Description" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="Profile.Description" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <span class="form-label fw-semibold">Droits granulaires</span>
+                                <span asp-validation-for="Profile.SelectedPermissionKeys" class="text-danger small d-block mb-2"></span>
+                                @foreach (var group in Model.Snapshot.PermissionGroups)
+                                {
+                                    <div class="card mb-2" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                        <div class="card-body">
+                                            <h6 class="mb-3"><i class="bi bi-tag me-1"></i>@group.Name</h6>
+                                            <div class="row g-2">
+                                                @foreach (var permission in group.Permissions)
+                                                {
+                                                    <div class="col-md-6">
+                                                        <label class="form-check d-flex gap-2 align-items-start">
+                                                            <input class="form-check-input mt-1"
+                                                                   type="checkbox"
+                                                                   name="Profile.SelectedPermissionKeys"
+                                                                   value="@permission.Key"
+                                                                   checked="@Model.Profile.SelectedPermissionKeys.Contains(permission.Key, StringComparer.OrdinalIgnoreCase)" />
+                                                            <span>
+                                                                <strong>@permission.Label</strong>
+                                                                <small class="d-block text-muted">@permission.Description</small>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer le profil</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="section-header">
+            <i class="bi bi-people"></i>
+            <span>Utilisateurs et profils actifs</span>
+        </div>
+        <div class="card-body">
+            @if (Model.Snapshot.Users.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-inbox empty-icon"></i>
+                    <p class="mb-0">Aucun utilisateur rattache a ce tenant pour l'instant.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var user in Model.Snapshot.Users)
+                    {
+                        <form method="post" asp-page-handler="SaveAssignments" class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                            <div class="card-body">
+                                <input type="hidden" name="userId" value="@user.UserId" />
+                                <div class="mb-2">
+                                    <div class="fw-semibold">@user.DisplayName</div>
+                                    <div class="small text-muted">@user.Email</div>
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@role</span>
+                                        }
+                                        @foreach (var profile in Model.DefaultProfiles)
+                                        {
+                                            <span class="badge" style="background:var(--gc-pill-amber-bg, #fef3c7); color:var(--gc-pill-amber-fg, #b45309)">@profile.Name (defaut)</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div>
+                                    @if (Model.AssignableProfiles.Count == 0)
+                                    {
+                                        <p class="text-muted mb-0">Aucun profil supplementaire affectable. Cree d'abord un profil non par defaut.</p>
+                                    }
+                                    else
+                                    {
+                                        <div class="row g-2">
+                                            @foreach (var profile in Model.AssignableProfiles)
+                                            {
+                                                <div class="col-md-6">
+                                                    <label class="form-check d-flex gap-2 align-items-start">
+                                                        <input class="form-check-input mt-1"
+                                                               type="checkbox"
+                                                               name="profileIds"
+                                                               value="@profile.Id"
+                                                               checked="@user.AssignedProfileIds.Contains(profile.Id)" />
+                                                        <span>
+                                                            <strong>@profile.Name</strong>
+                                                            <small class="d-block text-muted">@profile.PermissionKeys.Count droit(s)</small>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Enregistrer les affectations</button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

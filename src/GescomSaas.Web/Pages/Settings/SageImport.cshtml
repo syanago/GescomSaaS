@@ -4,832 +4,958 @@
     ViewData["Title"] = "Import Sage SQL";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Parametres</span>
-        <h1>Transfert Sage Gescom SQL vers LigCom</h1>
-        <p class="muted-copy">Configure un profil complet pour importer tout ou partie des donnees Sage SQL vers ton tenant LigCom, avec filtres, mapping et strategie de reprise.</p>
+        <h1 class="page-header-title">Transfert Sage Gescom SQL vers LigCom</h1>
+        <div class="page-header-sub">Configure un profil complet pour importer tout ou partie des donnees Sage SQL vers ton tenant LigCom, avec filtres, mapping, simulation et historique de campagne.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Settings/Index">Retour</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Settings/Index"><i class="bi bi-arrow-left me-1"></i>Retour aux parametres</a>
     </div>
-</section>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-collection"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Profils</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.SavedProfiles.Count, 0)</div>
+                <div class="form-text mb-0">bibliotheque reutilisable par tenant</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Campagnes</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.RecentRuns.Count, 0)</div>
+                <div class="form-text mb-0">historique recent des simulations et imports</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-list-ul"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Modules</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.SelectedModules.Count, 0)</div>
+                <div class="form-text mb-0">perimetre actif pour ce profil</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><strong>Import Sage</strong> &mdash; @Model.StatusMessage</div>
 }
 
-<section class="content-grid dashboard-grid">
-    <form method="post" enctype="multipart/form-data" class="panel-card stack-form compact-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <input asp-for="SelectedSavedProfileId" type="hidden" />
+<div class="row g-3">
+    <div class="col-lg-8">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <input asp-for="SelectedSavedProfileId" type="hidden" />
 
-        <fieldset class="subpanel">
-            <legend>Source Sage SQL</legend>
-            <div class="form-grid">
-                <div class="full-span form-switch-line">
-                    <input asp-for="Input.SageImportEnabled" class="form-check-input" />
-                    <label asp-for="Input.SageImportEnabled" class="form-label inline-label"></label>
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-database"></i>
+                    <span>Source Sage SQL</span>
                 </div>
-                <div>
-                    <label asp-for="Input.SageSqlServerName" class="form-label"></label>
-                    <input asp-for="Input.SageSqlServerName" class="form-control" placeholder="SERVEUR\\INSTANCE" />
-                    <span asp-validation-for="Input.SageSqlServerName" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.SageSqlDatabaseName" class="form-label"></label>
-                    <input asp-for="Input.SageSqlDatabaseName" class="form-control" placeholder="BIJOU" />
-                    <span asp-validation-for="Input.SageSqlDatabaseName" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.SageCompanyCode" class="form-label"></label>
-                    <input asp-for="Input.SageCompanyCode" class="form-control" placeholder="DOSSIER, code societe ou raison sociale" />
-                </div>
-                <div>
-                    <label asp-for="Input.SageSqlAuthenticationMode" class="form-label"></label>
-                    <select asp-for="Input.SageSqlAuthenticationMode" asp-items="Model.AuthenticationModes" class="form-select" data-sage-auth-mode="true"></select>
-                </div>
-                <div data-sage-auth-sql="true">
-                    <label asp-for="Input.SageSqlUserName" class="form-label"></label>
-                    <input asp-for="Input.SageSqlUserName" class="form-control" />
-                    <span asp-validation-for="Input.SageSqlUserName" class="text-danger"></span>
-                </div>
-                <div data-sage-auth-sql="true">
-                    <label asp-for="Input.SageSqlPassword" class="form-label"></label>
-                    <input asp-for="Input.SageSqlPassword" class="form-control" />
-                </div>
-            </div>
-            <div class="table-meta">Le mot de passe est conserve dans la configuration tenant pour preparer le futur moteur de transfert. On pourra ensuite le sortir vers un coffre de secrets si tu le souhaites.</div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Perimetre du transfert</legend>
-            <div class="check-grid">
-                <label class="check-card"><input asp-for="Input.Scope.ImportCustomers" /> <span>Clients</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportSuppliers" /> <span>Fournisseurs</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportProducts" /> <span>Articles</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportProductCategories" /> <span>Familles</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportTaxCodes" /> <span>Taxes</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportPaymentTerms" /> <span>Conditions de paiement</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportPriceLists" /> <span>Listes de prix</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportWarehouses" /> <span>Depots</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportOpeningStock" /> <span>Stock initial</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportSalesDocuments" /> <span>Documents de vente</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportPurchaseDocuments" /> <span>Documents d'achat</span></label>
-                <label class="check-card"><input asp-for="Input.Scope.ImportOpenBalances" /> <span>Encours et soldes ouverts</span></label>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Strategie de reprise</legend>
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Input.SageImportMode" class="form-label"></label>
-                    <select asp-for="Input.SageImportMode" asp-items="Model.ImportModes" class="form-select"></select>
-                </div>
-                <div>
-                    <label asp-for="Input.Mapping.ExistingRecordPolicy" class="form-label"></label>
-                    <select asp-for="Input.Mapping.ExistingRecordPolicy" asp-items="Model.ExistingRecordPolicies" class="form-select"></select>
-                </div>
-                <div>
-                    <label asp-for="Input.Mapping.MissingReferencePolicy" class="form-label"></label>
-                    <select asp-for="Input.Mapping.MissingReferencePolicy" asp-items="Model.MissingReferencePolicies" class="form-select"></select>
-                </div>
-                <div>
-                    <label asp-for="Input.Mapping.DocumentNumberPolicy" class="form-label"></label>
-                    <select asp-for="Input.Mapping.DocumentNumberPolicy" asp-items="Model.DocumentNumberPolicies" class="form-select"></select>
-                </div>
-            </div>
-            <div class="check-grid compact-check-grid">
-                <label class="check-card"><input asp-for="Input.Execution.DryRunOnly" /> <span>Simulation sans ecriture</span></label>
-                <label class="check-card"><input asp-for="Input.Execution.UseStagingArea" /> <span>Zone tampon avant integration</span></label>
-                <label class="check-card"><input asp-for="Input.Execution.StopOnFirstError" /> <span>Arret au premier ecart</span></label>
-                <label class="check-card"><input asp-for="Input.Execution.RecalculateTotalsInLigCom" /> <span>Recalculer les totaux dans LigCom</span></label>
-                <label class="check-card"><input asp-for="Input.Execution.PreserveSageDocumentDates" /> <span>Conserver les dates Sage</span></label>
-                <label class="check-card"><input asp-for="Input.Execution.CreateActivityJournal" /> <span>Generer un journal de transfert</span></label>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Filtres partiels</legend>
-            <div class="form-grid">
-                <div><label asp-for="Input.Filters.DateFrom" class="form-label"></label><input asp-for="Input.Filters.DateFrom" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.DateTo" class="form-label"></label><input asp-for="Input.Filters.DateTo" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.CustomerCodeFrom" class="form-label"></label><input asp-for="Input.Filters.CustomerCodeFrom" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.CustomerCodeTo" class="form-label"></label><input asp-for="Input.Filters.CustomerCodeTo" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.SupplierCodeFrom" class="form-label"></label><input asp-for="Input.Filters.SupplierCodeFrom" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.SupplierCodeTo" class="form-label"></label><input asp-for="Input.Filters.SupplierCodeTo" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.ProductCodeFrom" class="form-label"></label><input asp-for="Input.Filters.ProductCodeFrom" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.ProductCodeTo" class="form-label"></label><input asp-for="Input.Filters.ProductCodeTo" class="form-control" /></div>
-                <div><label asp-for="Input.Filters.IncludedFamilies" class="form-label"></label><input asp-for="Input.Filters.IncludedFamilies" class="form-control" placeholder="MATERIEL;CONSOMMABLES" /></div>
-                <div><label asp-for="Input.Filters.IncludedWarehouses" class="form-label"></label><input asp-for="Input.Filters.IncludedWarehouses" class="form-control" placeholder="PRINCIPAL;MAG-02" /></div>
-                <div class="full-span"><label asp-for="Input.Filters.IncludedDocumentTypes" class="form-label"></label><input asp-for="Input.Filters.IncludedDocumentTypes" class="form-control" placeholder="DEV;CMD;BL;FAC;AVOIR" /></div>
-            </div>
-            <div class="subpanel-title import-subtitle">Types de documents LigCom a reprendre</div>
-            <div class="check-grid">
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.SalesQuote" /> <span>Devis client</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.SalesOrder" /> <span>Commande client</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.DeliveryNote" /> <span>Bon de livraison</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.SalesInvoice" /> <span>Facture client</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.SalesCreditNote" /> <span>Avoir client</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.PurchaseRequest" /> <span>Demande d'achat</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.PurchaseOrder" /> <span>Commande fournisseur</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.GoodsReceipt" /> <span>Reception</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.PurchaseInvoice" /> <span>Facture fournisseur</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.DocumentTypes.SupplierCreditNote" /> <span>Avoir fournisseur</span></label>
-            </div>
-            <div class="check-grid compact-check-grid">
-                <label class="check-card"><input asp-for="Input.Filters.ExcludeClosedDocuments" /> <span>Ignorer les pieces cloturees</span></label>
-                <label class="check-card"><input asp-for="Input.Filters.ImportOnlyActiveRecords" /> <span>Fiches actives uniquement</span></label>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Regles de mapping LigCom</legend>
-            <div class="form-grid">
-                <div><label asp-for="Input.Mapping.CustomerPrefix" class="form-label"></label><input asp-for="Input.Mapping.CustomerPrefix" class="form-control" placeholder="SGC-" /></div>
-                <div><label asp-for="Input.Mapping.SupplierPrefix" class="form-label"></label><input asp-for="Input.Mapping.SupplierPrefix" class="form-control" placeholder="SGF-" /></div>
-                <div><label asp-for="Input.Mapping.ProductPrefix" class="form-label"></label><input asp-for="Input.Mapping.ProductPrefix" class="form-control" placeholder="SAG-" /></div>
-                <div><label asp-for="Input.Mapping.WarehouseFallbackCode" class="form-label"></label><input asp-for="Input.Mapping.WarehouseFallbackCode" class="form-control" placeholder="PRINCIPAL" /></div>
-                <div><label asp-for="Input.Mapping.DefaultSalesTaxCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultSalesTaxCode" class="form-control" placeholder="TVA20" /></div>
-                <div><label asp-for="Input.Mapping.DefaultPurchaseTaxCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultPurchaseTaxCode" class="form-control" placeholder="TVA20" /></div>
-                <div class="full-span"><label asp-for="Input.Mapping.DefaultPaymentTermCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultPaymentTermCode" class="form-control" placeholder="30JFM" /></div>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Correspondance technique Sage</legend>
-            <div class="table-meta">Choisis une table Sage et utilise les suggestions de colonnes detectees pour chaque champ LigCom. Le mode avance reste disponible pour les cas particuliers.</div>
-            <datalist id="sage-table-options">
-                @foreach (var table in Model.AvailableSchemaTables)
-                {
-                    <option value="@table.TableName"></option>
-                }
-            </datalist>
-            <div class="mapping-grid">
-                <div class="mapping-card">
-                    <label class="form-label">Tiers</label>
-                    <input asp-for="Input.SchemaMapping.Partners.TableName" class="form-control" placeholder="F_COMPTET" list="sage-table-options" data-sage-table-input="partners" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Partners.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-partners" data-sage-field-input="partners" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-4">
+                                <input asp-for="Input.SageImportEnabled" class="form-check-input" />
+                                <label asp-for="Input.SageImportEnabled" class="form-check-label"></label>
                             </div>
-                        }
-                        <datalist id="sage-columns-partners"></datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.SageSqlServerName" class="form-label"></label>
+                            <input asp-for="Input.SageSqlServerName" class="form-control" placeholder="SERVEUR\\INSTANCE" />
+                            <span asp-validation-for="Input.SageSqlServerName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.SageSqlDatabaseName" class="form-label"></label>
+                            <input asp-for="Input.SageSqlDatabaseName" class="form-control" placeholder="BIJOU" />
+                            <span asp-validation-for="Input.SageSqlDatabaseName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.SageCompanyCode" class="form-label"></label>
+                            <input asp-for="Input.SageCompanyCode" class="form-control" placeholder="DOSSIER, code societe ou raison sociale" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.SageSqlAuthenticationMode" class="form-label"></label>
+                            <select asp-for="Input.SageSqlAuthenticationMode" asp-items="Model.AuthenticationModes" class="form-select" data-sage-auth-mode="true"></select>
+                        </div>
+                        <div class="col-md-6" data-sage-auth-sql="true">
+                            <label asp-for="Input.SageSqlUserName" class="form-label"></label>
+                            <input asp-for="Input.SageSqlUserName" class="form-control" />
+                            <span asp-validation-for="Input.SageSqlUserName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6" data-sage-auth-sql="true">
+                            <label asp-for="Input.SageSqlPassword" class="form-label"></label>
+                            <input asp-for="Input.SageSqlPassword" class="form-control" />
+                        </div>
                     </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.Partners.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="partners"></textarea>
-                    </details>
+                    <div class="form-text mt-2">Le mot de passe est conserve dans la configuration tenant pour preparer le futur moteur de transfert. On pourra ensuite le sortir vers un coffre de secrets si tu le souhaites.</div>
                 </div>
-                <div class="mapping-card">
-                    <label class="form-label">Familles</label>
-                    <input asp-for="Input.SchemaMapping.ProductCategories.TableName" class="form-control" placeholder="F_FAMILLE" list="sage-table-options" data-sage-table-input="categories" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.ProductCategories.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-categories" data-sage-field-input="categories" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-categories"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.ProductCategories.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="categories"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Taxes</label>
-                    <input asp-for="Input.SchemaMapping.TaxCodes.TableName" class="form-control" placeholder="F_TAXE" list="sage-table-options" data-sage-table-input="taxes" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.TaxCodes.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-taxes" data-sage-field-input="taxes" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-taxes"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.TaxCodes.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="taxes"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Conditions de paiement</label>
-                    <input asp-for="Input.SchemaMapping.PaymentTerms.TableName" class="form-control" placeholder="F_REGLEMENT" list="sage-table-options" data-sage-table-input="paymentterms" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.PaymentTerms.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-paymentterms" data-sage-field-input="paymentterms" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-paymentterms"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.PaymentTerms.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="paymentterms"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Depots</label>
-                    <input asp-for="Input.SchemaMapping.Warehouses.TableName" class="form-control" placeholder="F_DEPOT" list="sage-table-options" data-sage-table-input="warehouses" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Warehouses.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-warehouses" data-sage-field-input="warehouses" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-warehouses"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.Warehouses.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="warehouses"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Articles</label>
-                    <input asp-for="Input.SchemaMapping.Products.TableName" class="form-control" placeholder="F_ARTICLE" list="sage-table-options" data-sage-table-input="products" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Products.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-products" data-sage-field-input="products" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-products"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.Products.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="products"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Tarifs</label>
-                    <input asp-for="Input.SchemaMapping.PriceLists.TableName" class="form-control" placeholder="F_TARIF" list="sage-table-options" data-sage-table-input="pricelists" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.PriceLists.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-pricelists" data-sage-field-input="pricelists" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-pricelists"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.PriceLists.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="pricelists"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Stock</label>
-                    <input asp-for="Input.SchemaMapping.Stock.TableName" class="form-control" placeholder="F_STOCK" list="sage-table-options" data-sage-table-input="stock" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Stock.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-stock" data-sage-field-input="stock" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-stock"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.Stock.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="stock"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Entetes documents</label>
-                    <input asp-for="Input.SchemaMapping.DocumentHeaders.TableName" class="form-control" placeholder="F_DOCENTETE" list="sage-table-options" data-sage-table-input="documentheaders" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.DocumentHeaders.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-documentheaders" data-sage-field-input="documentheaders" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-documentheaders"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.DocumentHeaders.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="documentheaders"></textarea>
-                    </details>
-                </div>
-                <div class="mapping-card">
-                    <label class="form-label">Lignes documents</label>
-                    <input asp-for="Input.SchemaMapping.DocumentLines.TableName" class="form-control" placeholder="F_DOCLIGNE" list="sage-table-options" data-sage-table-input="documentlines" />
-                    <div class="mapping-field-picker">
-                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.DocumentLines.FieldMap))
-                        {
-                            <div class="mapping-field-row">
-                                <label class="form-label">@field</label>
-                                <input class="form-control" list="sage-columns-documentlines" data-sage-field-input="documentlines" data-target-field="@field" placeholder="Choisir une colonne Sage" />
-                            </div>
-                        }
-                        <datalist id="sage-columns-documentlines"></datalist>
-                    </div>
-                    <details class="mapping-advanced">
-                        <summary>Mode avance</summary>
-                        <textarea asp-for="Input.SchemaMapping.DocumentLines.FieldMap" class="form-control mapping-textarea" data-sage-raw-map="documentlines"></textarea>
-                    </details>
-                </div>
-            </div>
-            <div class="table-meta">Format attendu : une ligne par champ, sous la forme `ChampLigCom=ColonneSage`. Ces correspondances priment sur la detection automatique.</div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Profil JSON reutilisable</legend>
-            <div class="table-meta">Utilise ce bloc pour exporter toute la configuration Sage actuelle ou charger un profil JSON venant d'un autre tenant, dossier ou environnement.</div>
-            <div class="form-grid">
-                <div class="full-span">
-                    <label asp-for="TransferProfileFile" class="form-label">Fichier du profil</label>
-                    <input asp-for="TransferProfileFile" class="form-control" accept=".json,application/json" />
-                </div>
-            </div>
-            <label class="form-label" asp-for="TransferProfileJson">Contenu du profil</label>
-            <textarea asp-for="TransferProfileJson" class="form-control mapping-textarea" rows="14" placeholder="{ ... profil Sage LigCom ... }"></textarea>
-            <div class="form-actions">
-                <button type="submit" asp-page-handler="GenerateProfileJson" class="btn btn-outline-light">Generer le profil JSON</button>
-                <button type="submit" asp-page-handler="DownloadProfileJson" class="btn btn-outline-light">Telecharger le profil JSON</button>
-                <button type="submit" asp-page-handler="ImportProfileFile" class="btn btn-outline-light">Importer depuis un fichier JSON</button>
-                <button type="submit" asp-page-handler="ImportProfileJson" class="btn btn-outline-light">Charger le profil JSON</button>
-            </div>
-        </fieldset>
-
-        <fieldset class="subpanel">
-            <legend>Bibliotheque des profils</legend>
-            <div class="table-meta">Enregistre la configuration courante comme profil versionne, marque un profil par defaut pour le tenant, puis recharge la version voulue quand tu en as besoin.</div>
-            <div class="form-grid">
-                <div>
-                    <label asp-for="SavedProfileName" class="form-label">Nom du profil</label>
-                    <input asp-for="SavedProfileName" class="form-control" placeholder="Sage Production - Canada" />
-                </div>
-                <div>
-                    <label asp-for="SavedProfileDescription" class="form-label">Description</label>
-                    <input asp-for="SavedProfileDescription" class="form-control" placeholder="Dossier principal avec mapping documents et stock" />
-                </div>
-                <div class="full-span">
-                    <label asp-for="SavedProfileVersionNotes" class="form-label">Notes de version</label>
-                    <input asp-for="SavedProfileVersionNotes" class="form-control" placeholder="Ajustement du mapping TVA et depots" />
-                </div>
-                <div class="full-span form-switch-line">
-                    <input asp-for="SaveAsDefaultProfile" class="form-check-input" />
-                    <label asp-for="SaveAsDefaultProfile" class="form-label inline-label">Definir comme profil par defaut du tenant</label>
-                </div>
-            </div>
-            <div class="form-actions">
-                <button type="submit" asp-page-handler="SaveStoredProfile" class="btn btn-outline-light">Enregistrer une nouvelle version</button>
             </div>
 
-            @if (Model.SavedProfiles.Count > 0)
-            {
-                <div class="summary-grid">
-                    @foreach (var profile in Model.SavedProfiles)
-                    {
-                        <article class="summary-card preview-module-card">
-                            <span class="signal-label">@(profile.IsArchived ? "Profil archive" : profile.IsDefault ? "Profil par defaut" : "Profil")</span>
-                            <strong>@profile.Name</strong>
-                            <span class="table-meta">@profile.Description</span>
-                            <span class="table-meta">Cree le @profile.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                            @if (profile.UpdatedOnUtc.HasValue)
-                            {
-                                <span class="table-meta">Maj le @profile.UpdatedOnUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                            }
-                            <div class="form-actions">
-                                <button type="submit" asp-page-handler="LoadStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Charger la derniere version</button>
-                                <button type="submit" asp-page-handler="DuplicateStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Dupliquer</button>
-                                <button type="submit" asp-page-handler="CompareStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Comparer a l'ecran</button>
-                                @if (profile.Versions.Count >= 2)
-                                {
-                                    <button type="submit" asp-page-handler="CompareStoredProfileVersions" asp-route-profileId="@profile.Id" asp-route-leftVersionId="@profile.Versions[0].Id" asp-route-rightVersionId="@profile.Versions[1].Id" class="btn btn-outline-light">Comparer les 2 dernieres versions</button>
-                                }
-                                @if (profile.IsArchived)
-                                {
-                                    <button type="submit" asp-page-handler="RestoreStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Restaurer</button>
-                                    <button type="submit" asp-page-handler="DeleteStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Supprimer</button>
-                                }
-                                else
-                                {
-                                    <button type="submit" asp-page-handler="ArchiveStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-outline-light">Archiver</button>
-                                }
-                            </div>
-                            @foreach (var version in profile.Versions)
-                            {
-                                var previousVersion = profile.Versions.FirstOrDefault(v => v.VersionNumber == version.VersionNumber - 1);
-                                <div class="preview-row">
-                                    <span class="preview-cell"><strong>v@version.VersionNumber</strong></span>
-                                    <span class="preview-cell">@version.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                                    <span class="preview-cell">@(string.IsNullOrWhiteSpace(version.Notes) ? "Sans note" : version.Notes)</span>
-                                    <div class="preview-actions">
-                                        <button type="submit" asp-page-handler="LoadStoredProfile" asp-route-profileId="@profile.Id" asp-route-versionId="@version.Id" class="btn btn-outline-light btn-sm">Charger</button>
-                                        <button type="submit" asp-page-handler="CompareStoredProfile" asp-route-profileId="@profile.Id" asp-route-versionId="@version.Id" class="btn btn-outline-light btn-sm">Comparer</button>
-                                        @if (previousVersion is not null)
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-list-check"></i>
+                    <span>Perimetre du transfert</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportCustomers" class="form-check-input" /> <span class="form-check-label">Clients</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportSuppliers" class="form-check-input" /> <span class="form-check-label">Fournisseurs</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportProducts" class="form-check-input" /> <span class="form-check-label">Articles</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportProductCategories" class="form-check-input" /> <span class="form-check-label">Familles</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportTaxCodes" class="form-check-input" /> <span class="form-check-label">Taxes</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportPaymentTerms" class="form-check-input" /> <span class="form-check-label">Conditions de paiement</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportPriceLists" class="form-check-input" /> <span class="form-check-label">Listes de prix</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportWarehouses" class="form-check-input" /> <span class="form-check-label">Depots</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportOpeningStock" class="form-check-input" /> <span class="form-check-label">Stock initial</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportSalesDocuments" class="form-check-input" /> <span class="form-check-label">Documents de vente</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportPurchaseDocuments" class="form-check-input" /> <span class="form-check-label">Documents d'achat</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Scope.ImportOpenBalances" class="form-check-input" /> <span class="form-check-label">Encours et soldes ouverts</span></label></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-shuffle"></i>
+                    <span>Strategie de reprise</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.SageImportMode" class="form-label"></label>
+                            <select asp-for="Input.SageImportMode" asp-items="Model.ImportModes" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Mapping.ExistingRecordPolicy" class="form-label"></label>
+                            <select asp-for="Input.Mapping.ExistingRecordPolicy" asp-items="Model.ExistingRecordPolicies" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Mapping.MissingReferencePolicy" class="form-label"></label>
+                            <select asp-for="Input.Mapping.MissingReferencePolicy" asp-items="Model.MissingReferencePolicies" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Mapping.DocumentNumberPolicy" class="form-label"></label>
+                            <select asp-for="Input.Mapping.DocumentNumberPolicy" asp-items="Model.DocumentNumberPolicies" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.DryRunOnly" class="form-check-input" /> <span class="form-check-label">Simulation sans ecriture</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.UseStagingArea" class="form-check-input" /> <span class="form-check-label">Zone tampon avant integration</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.StopOnFirstError" class="form-check-input" /> <span class="form-check-label">Arret au premier ecart</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.RecalculateTotalsInLigCom" class="form-check-input" /> <span class="form-check-label">Recalculer les totaux dans LigCom</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.PreserveSageDocumentDates" class="form-check-input" /> <span class="form-check-label">Conserver les dates Sage</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Execution.CreateActivityJournal" class="form-check-input" /> <span class="form-check-label">Generer un journal de transfert</span></label></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-funnel"></i>
+                    <span>Filtres partiels</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label asp-for="Input.Filters.DateFrom" class="form-label"></label><input asp-for="Input.Filters.DateFrom" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.DateTo" class="form-label"></label><input asp-for="Input.Filters.DateTo" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.CustomerCodeFrom" class="form-label"></label><input asp-for="Input.Filters.CustomerCodeFrom" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.CustomerCodeTo" class="form-label"></label><input asp-for="Input.Filters.CustomerCodeTo" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.SupplierCodeFrom" class="form-label"></label><input asp-for="Input.Filters.SupplierCodeFrom" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.SupplierCodeTo" class="form-label"></label><input asp-for="Input.Filters.SupplierCodeTo" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.ProductCodeFrom" class="form-label"></label><input asp-for="Input.Filters.ProductCodeFrom" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.ProductCodeTo" class="form-label"></label><input asp-for="Input.Filters.ProductCodeTo" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.IncludedFamilies" class="form-label"></label><input asp-for="Input.Filters.IncludedFamilies" class="form-control" placeholder="MATERIEL;CONSOMMABLES" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Filters.IncludedWarehouses" class="form-label"></label><input asp-for="Input.Filters.IncludedWarehouses" class="form-control" placeholder="PRINCIPAL;MAG-02" /></div>
+                        <div class="col-12"><label asp-for="Input.Filters.IncludedDocumentTypes" class="form-label"></label><input asp-for="Input.Filters.IncludedDocumentTypes" class="form-control" placeholder="DEV;CMD;BL;FAC;AVOIR" /></div>
+                    </div>
+
+                    <h6 class="mt-3 mb-2"><i class="bi bi-files me-1"></i>Types de documents LigCom a reprendre</h6>
+                    <div class="row g-2">
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.SalesQuote" class="form-check-input" /> <span class="form-check-label">Devis client</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.SalesOrder" class="form-check-input" /> <span class="form-check-label">Commande client</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.DeliveryNote" class="form-check-input" /> <span class="form-check-label">Bon de livraison</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.SalesInvoice" class="form-check-input" /> <span class="form-check-label">Facture client</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.SalesCreditNote" class="form-check-input" /> <span class="form-check-label">Avoir client</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.PurchaseRequest" class="form-check-input" /> <span class="form-check-label">Demande d'achat</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.PurchaseOrder" class="form-check-input" /> <span class="form-check-label">Commande fournisseur</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.GoodsReceipt" class="form-check-input" /> <span class="form-check-label">Reception</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.PurchaseInvoice" class="form-check-input" /> <span class="form-check-label">Facture fournisseur</span></label></div>
+                        <div class="col-md-4"><label class="form-check"><input asp-for="Input.Filters.DocumentTypes.SupplierCreditNote" class="form-check-input" /> <span class="form-check-label">Avoir fournisseur</span></label></div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Filters.ExcludeClosedDocuments" class="form-check-input" /> <span class="form-check-label">Ignorer les pieces cloturees</span></label></div>
+                        <div class="col-md-6"><label class="form-check"><input asp-for="Input.Filters.ImportOnlyActiveRecords" class="form-check-input" /> <span class="form-check-label">Fiches actives uniquement</span></label></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>Regles de mapping LigCom</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label asp-for="Input.Mapping.CustomerPrefix" class="form-label"></label><input asp-for="Input.Mapping.CustomerPrefix" class="form-control" placeholder="SGC-" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Mapping.SupplierPrefix" class="form-label"></label><input asp-for="Input.Mapping.SupplierPrefix" class="form-control" placeholder="SGF-" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Mapping.ProductPrefix" class="form-label"></label><input asp-for="Input.Mapping.ProductPrefix" class="form-control" placeholder="SAG-" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Mapping.WarehouseFallbackCode" class="form-label"></label><input asp-for="Input.Mapping.WarehouseFallbackCode" class="form-control" placeholder="PRINCIPAL" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Mapping.DefaultSalesTaxCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultSalesTaxCode" class="form-control" placeholder="TVA20" /></div>
+                        <div class="col-md-6"><label asp-for="Input.Mapping.DefaultPurchaseTaxCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultPurchaseTaxCode" class="form-control" placeholder="TVA20" /></div>
+                        <div class="col-12"><label asp-for="Input.Mapping.DefaultPaymentTermCode" class="form-label"></label><input asp-for="Input.Mapping.DefaultPaymentTermCode" class="form-control" placeholder="30JFM" /></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-table"></i>
+                    <span>Correspondance technique Sage</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-text mb-2">Choisis une table Sage et utilise les suggestions de colonnes detectees pour chaque champ LigCom. Le mode avance reste disponible pour les cas particuliers.</div>
+                    <datalist id="sage-table-options">
+                        @foreach (var table in Model.AvailableSchemaTables)
+                        {
+                            <option value="@table.TableName"></option>
+                        }
+                    </datalist>
+                    <div class="row g-3">
+                        @* Tiers *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Tiers</label>
+                                    <input asp-for="Input.SchemaMapping.Partners.TableName" class="form-control" placeholder="F_COMPTET" list="sage-table-options" data-sage-table-input="partners" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Partners.FieldMap))
                                         {
-                                            <button type="submit" asp-page-handler="CompareStoredProfileVersions" asp-route-profileId="@profile.Id" asp-route-leftVersionId="@version.Id" asp-route-rightVersionId="@previousVersion.Id" class="btn btn-outline-light btn-sm">Comparer a la precedente</button>
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-partners" data-sage-field-input="partners" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
                                         }
+                                        <datalist id="sage-columns-partners"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.Partners.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="partners"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Familles *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Familles</label>
+                                    <input asp-for="Input.SchemaMapping.ProductCategories.TableName" class="form-control" placeholder="F_FAMILLE" list="sage-table-options" data-sage-table-input="categories" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.ProductCategories.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-categories" data-sage-field-input="categories" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-categories"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.ProductCategories.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="categories"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Taxes *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Taxes</label>
+                                    <input asp-for="Input.SchemaMapping.TaxCodes.TableName" class="form-control" placeholder="F_TAXE" list="sage-table-options" data-sage-table-input="taxes" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.TaxCodes.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-taxes" data-sage-field-input="taxes" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-taxes"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.TaxCodes.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="taxes"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Conditions de paiement *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Conditions de paiement</label>
+                                    <input asp-for="Input.SchemaMapping.PaymentTerms.TableName" class="form-control" placeholder="F_REGLEMENT" list="sage-table-options" data-sage-table-input="paymentterms" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.PaymentTerms.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-paymentterms" data-sage-field-input="paymentterms" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-paymentterms"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.PaymentTerms.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="paymentterms"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Depots *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Depots</label>
+                                    <input asp-for="Input.SchemaMapping.Warehouses.TableName" class="form-control" placeholder="F_DEPOT" list="sage-table-options" data-sage-table-input="warehouses" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Warehouses.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-warehouses" data-sage-field-input="warehouses" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-warehouses"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.Warehouses.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="warehouses"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Articles *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Articles</label>
+                                    <input asp-for="Input.SchemaMapping.Products.TableName" class="form-control" placeholder="F_ARTICLE" list="sage-table-options" data-sage-table-input="products" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Products.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-products" data-sage-field-input="products" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-products"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.Products.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="products"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Tarifs *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Tarifs</label>
+                                    <input asp-for="Input.SchemaMapping.PriceLists.TableName" class="form-control" placeholder="F_TARIF" list="sage-table-options" data-sage-table-input="pricelists" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.PriceLists.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-pricelists" data-sage-field-input="pricelists" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-pricelists"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.PriceLists.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="pricelists"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Stock *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Stock</label>
+                                    <input asp-for="Input.SchemaMapping.Stock.TableName" class="form-control" placeholder="F_STOCK" list="sage-table-options" data-sage-table-input="stock" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.Stock.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-stock" data-sage-field-input="stock" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-stock"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.Stock.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="stock"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Entetes documents *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Entetes documents</label>
+                                    <input asp-for="Input.SchemaMapping.DocumentHeaders.TableName" class="form-control" placeholder="F_DOCENTETE" list="sage-table-options" data-sage-table-input="documentheaders" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.DocumentHeaders.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-documentheaders" data-sage-field-input="documentheaders" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-documentheaders"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.DocumentHeaders.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="documentheaders"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        @* Lignes documents *@
+                        <div class="col-md-6">
+                            <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Lignes documents</label>
+                                    <input asp-for="Input.SchemaMapping.DocumentLines.TableName" class="form-control" placeholder="F_DOCLIGNE" list="sage-table-options" data-sage-table-input="documentlines" />
+                                    <div class="mt-2">
+                                        @foreach (var field in Model.GetMappingTargets(Model.Input.SchemaMapping.DocumentLines.FieldMap))
+                                        {
+                                            <div class="row g-2 align-items-center mb-1">
+                                                <label class="col-sm-4 col-form-label form-label small mb-0">@field</label>
+                                                <div class="col-sm-8">
+                                                    <input class="form-control form-control-sm" list="sage-columns-documentlines" data-sage-field-input="documentlines" data-target-field="@field" placeholder="Choisir une colonne Sage" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <datalist id="sage-columns-documentlines"></datalist>
+                                    </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-muted">Mode avance</summary>
+                                        <textarea asp-for="Input.SchemaMapping.DocumentLines.FieldMap" class="form-control mt-2" rows="6" data-sage-raw-map="documentlines"></textarea>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-text mt-3">Format attendu : une ligne par champ, sous la forme `ChampLigCom=ColonneSage`. Ces correspondances priment sur la detection automatique.</div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-file-earmark-code"></i>
+                    <span>Profil JSON reutilisable</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-text mb-2">Utilise ce bloc pour exporter toute la configuration Sage actuelle ou charger un profil JSON venant d'un autre tenant, dossier ou environnement.</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="TransferProfileFile" class="form-label">Fichier du profil</label>
+                            <input asp-for="TransferProfileFile" class="form-control" accept=".json,application/json" />
+                        </div>
+                    </div>
+                    <label class="form-label mt-3" asp-for="TransferProfileJson">Contenu du profil</label>
+                    <textarea asp-for="TransferProfileJson" class="form-control" rows="14" placeholder="{ ... profil Sage LigCom ... }"></textarea>
+                    <div class="d-flex justify-content-end gap-2 mt-3 flex-wrap">
+                        <button type="submit" asp-page-handler="GenerateProfileJson" class="btn btn-secondary"><i class="bi bi-file-earmark-text me-1"></i>Generer le profil JSON</button>
+                        <button type="submit" asp-page-handler="DownloadProfileJson" class="btn btn-secondary"><i class="bi bi-download me-1"></i>Telecharger le profil JSON</button>
+                        <button type="submit" asp-page-handler="ImportProfileFile" class="btn btn-secondary"><i class="bi bi-upload me-1"></i>Importer depuis un fichier JSON</button>
+                        <button type="submit" asp-page-handler="ImportProfileJson" class="btn btn-secondary"><i class="bi bi-arrow-down-circle me-1"></i>Charger le profil JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="section-header">
+                    <i class="bi bi-collection"></i>
+                    <span>Bibliotheque des profils</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-text mb-2">Enregistre la configuration courante comme profil versionne, marque un profil par defaut pour le tenant, puis recharge la version voulue quand tu en as besoin.</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="SavedProfileName" class="form-label">Nom du profil</label>
+                            <input asp-for="SavedProfileName" class="form-control" placeholder="Sage Production - Canada" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SavedProfileDescription" class="form-label">Description</label>
+                            <input asp-for="SavedProfileDescription" class="form-control" placeholder="Dossier principal avec mapping documents et stock" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="SavedProfileVersionNotes" class="form-label">Notes de version</label>
+                            <input asp-for="SavedProfileVersionNotes" class="form-control" placeholder="Ajustement du mapping TVA et depots" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-4">
+                                <input asp-for="SaveAsDefaultProfile" class="form-check-input" />
+                                <label asp-for="SaveAsDefaultProfile" class="form-check-label">Definir comme profil par defaut du tenant</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="submit" asp-page-handler="SaveStoredProfile" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer une nouvelle version</button>
+                    </div>
+
+                    @if (Model.SavedProfiles.Count > 0)
+                    {
+                        <div class="row g-3 mt-2">
+                            @foreach (var profile in Model.SavedProfiles)
+                            {
+                                <div class="col-md-6">
+                                    <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                        <div class="card-body">
+                                            <span class="badge mb-2" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@(profile.IsArchived ? "Profil archive" : profile.IsDefault ? "Profil par defaut" : "Profil")</span>
+                                            <div class="fw-semibold">@profile.Name</div>
+                                            <div class="small text-muted">@profile.Description</div>
+                                            <div class="small text-muted">Cree le @profile.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                            @if (profile.UpdatedOnUtc.HasValue)
+                                            {
+                                                <div class="small text-muted">Maj le @profile.UpdatedOnUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                            }
+                                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                                <button type="submit" asp-page-handler="LoadStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-secondary btn-sm"><i class="bi bi-download me-1"></i>Charger la derniere version</button>
+                                                <button type="submit" asp-page-handler="DuplicateStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-secondary btn-sm"><i class="bi bi-files me-1"></i>Dupliquer</button>
+                                                <button type="submit" asp-page-handler="CompareStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left-right me-1"></i>Comparer a l'ecran</button>
+                                                @if (profile.Versions.Count >= 2)
+                                                {
+                                                    <button type="submit" asp-page-handler="CompareStoredProfileVersions" asp-route-profileId="@profile.Id" asp-route-leftVersionId="@profile.Versions[0].Id" asp-route-rightVersionId="@profile.Versions[1].Id" class="btn btn-secondary btn-sm">Comparer les 2 dernieres versions</button>
+                                                }
+                                                @if (profile.IsArchived)
+                                                {
+                                                    <button type="submit" asp-page-handler="RestoreStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Restaurer</button>
+                                                    <button type="submit" asp-page-handler="DeleteStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i>Supprimer</button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="submit" asp-page-handler="ArchiveStoredProfile" asp-route-profileId="@profile.Id" class="btn btn-secondary btn-sm"><i class="bi bi-archive me-1"></i>Archiver</button>
+                                                }
+                                            </div>
+                                            <div class="mt-3">
+                                                @foreach (var version in profile.Versions)
+                                                {
+                                                    var previousVersion = profile.Versions.FirstOrDefault(v => v.VersionNumber == version.VersionNumber - 1);
+                                                    <div class="d-flex flex-wrap gap-2 align-items-center small text-muted border-top py-2">
+                                                        <span><strong>v@version.VersionNumber</strong></span>
+                                                        <span>@version.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                                        <span>@(string.IsNullOrWhiteSpace(version.Notes) ? "Sans note" : version.Notes)</span>
+                                                        <div class="d-flex flex-wrap gap-1 ms-auto">
+                                                            <button type="submit" asp-page-handler="LoadStoredProfile" asp-route-profileId="@profile.Id" asp-route-versionId="@version.Id" class="btn btn-secondary btn-sm">Charger</button>
+                                                            <button type="submit" asp-page-handler="CompareStoredProfile" asp-route-profileId="@profile.Id" asp-route-versionId="@version.Id" class="btn btn-secondary btn-sm">Comparer</button>
+                                                            @if (previousVersion is not null)
+                                                            {
+                                                                <button type="submit" asp-page-handler="CompareStoredProfileVersions" asp-route-profileId="@profile.Id" asp-route-leftVersionId="@version.Id" asp-route-rightVersionId="@previousVersion.Id" class="btn btn-secondary btn-sm">Comparer a la precedente</button>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             }
-                        </article>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-text mt-2">Aucun profil versionne n'est encore enregistre pour ce tenant.</div>
                     }
                 </div>
-            }
-            else
-            {
-                <div class="table-meta">Aucun profil versionne n'est encore enregistre pour ce tenant.</div>
-            }
-        </fieldset>
-
-        <div class="form-actions">
-            <button type="submit" asp-page-handler="TestConnection" class="btn btn-outline-light">Tester la connexion</button>
-            <button type="submit" asp-page-handler="AnalyzeSchema" class="btn btn-outline-light">Analyser le schema Sage</button>
-            <button type="submit" asp-page-handler="ApplySuggestedMapping" class="btn btn-outline-light">Appliquer le mapping suggere</button>
-            <button type="submit" asp-page-handler="PreviewData" class="btn btn-outline-light">Previsualiser les donnees source</button>
-            <button type="submit" asp-page-handler="SimulateImport" class="btn btn-outline-light">Simuler le transfert</button>
-            <button type="submit" asp-page-handler="RunImport" class="btn btn-primary-soft">Lancer l'import reel</button>
-            <button type="submit" class="btn btn-primary-soft">Enregistrer le profil</button>
-            <a class="btn btn-outline-light" asp-page="/Settings/Index">Annuler</a>
-        </div>
-    </form>
-
-    <article class="panel-card stack-form">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Synthese</span>
-                <h2>Profil de transfert</h2>
             </div>
-        </div>
 
-        <section class="subpanel">
-            <div class="subpanel-title">Connexion</div>
-            <div class="signal-list">
-                <div class="signal-item stacked-signal-item">
-                    <span class="signal-label">Statut</span>
-                    <strong>@(Model.Input.SageImportEnabled ? "Profil actif" : "Profil en attente")</strong>
-                </div>
-                <div class="signal-item stacked-signal-item">
-                    <span class="signal-label">Source</span>
-                    <strong>@(string.IsNullOrWhiteSpace(Model.Input.SageSqlServerName) ? "Serveur a renseigner" : Model.Input.SageSqlServerName)</strong>
-                    <span class="table-meta">@Model.Input.SageSqlDatabaseName</span>
-                </div>
-                <div class="signal-item stacked-signal-item">
-                    <span class="signal-label">Connexion type</span>
-                    <strong>@Model.Input.SageSqlAuthenticationMode</strong>
-                    <span class="table-meta">@Model.Input.SuggestedConnectionString()</span>
-                </div>
+            <div class="d-flex justify-content-end gap-2 mt-3 flex-wrap">
+                <a class="btn btn-secondary" asp-page="/Settings/Index">Annuler</a>
+                <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary"><i class="bi bi-plug me-1"></i>Tester la connexion</button>
+                <button type="submit" asp-page-handler="AnalyzeSchema" class="btn btn-secondary"><i class="bi bi-search me-1"></i>Analyser le schema Sage</button>
+                <button type="submit" asp-page-handler="ApplySuggestedMapping" class="btn btn-secondary"><i class="bi bi-magic me-1"></i>Appliquer le mapping suggere</button>
+                <button type="submit" asp-page-handler="PreviewData" class="btn btn-secondary"><i class="bi bi-eye me-1"></i>Previsualiser les donnees source</button>
+                <button type="submit" asp-page-handler="SimulateImport" class="btn btn-secondary"><i class="bi bi-play-circle me-1"></i>Simuler le transfert</button>
+                <button type="submit" asp-page-handler="RunImport" class="btn btn-primary"><i class="bi bi-cloud-arrow-up me-1"></i>Lancer l'import reel</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer le profil</button>
             </div>
-        </section>
+        </form>
+    </div>
 
-        @if (Model.ConnectionReport is not null)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Diagnostic de connexion</div>
-                <div class="signal-list">
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Resultat</span>
-                        <strong>@(Model.ConnectionReport.Success ? "Succes" : "Echec")</strong>
-                        <span class="table-meta">@Model.ConnectionReport.Message</span>
+    <aside class="col-lg-4">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-clipboard-data"></i>
+                <span>Profil de transfert</span>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bi bi-plug me-1"></i>Connexion</h6>
+                <div class="mb-3">
+                    <div class="small text-muted">Statut</div>
+                    <div class="fw-semibold">@(Model.Input.SageImportEnabled ? "Profil actif" : "Profil en attente")</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Source</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Input.SageSqlServerName) ? "Serveur a renseigner" : Model.Input.SageSqlServerName)</div>
+                    <div class="small text-muted">@Model.Input.SageSqlDatabaseName</div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted">Connexion type</div>
+                    <div class="fw-semibold">@Model.Input.SageSqlAuthenticationMode</div>
+                    <div class="small text-muted">@Model.Input.SuggestedConnectionString()</div>
+                </div>
+
+                @if (Model.ConnectionReport is not null)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-check2-circle me-1"></i>Diagnostic de connexion</h6>
+                    <div class="mb-3">
+                        <div class="small text-muted">Resultat</div>
+                        <div class="fw-semibold">@(Model.ConnectionReport.Success ? "Succes" : "Echec")</div>
+                        <div class="small text-muted">@Model.ConnectionReport.Message</div>
                     </div>
                     @if (Model.ConnectionReport.Success)
                     {
-                        <div class="signal-item stacked-signal-item">
-                            <span class="signal-label">Serveur / base</span>
-                            <strong>@Model.ConnectionReport.ServerName</strong>
-                            <span class="table-meta">@Model.ConnectionReport.DatabaseName</span>
+                        <div class="mb-3">
+                            <div class="small text-muted">Serveur / base</div>
+                            <div class="fw-semibold">@Model.ConnectionReport.ServerName</div>
+                            <div class="small text-muted">@Model.ConnectionReport.DatabaseName</div>
                         </div>
-                        <div class="signal-item stacked-signal-item">
-                            <span class="signal-label">Session SQL</span>
-                            <strong>@Model.ConnectionReport.LoginName</strong>
-                            <span class="table-meta">Version @Model.ConnectionReport.SqlVersion</span>
+                        <div class="mb-3">
+                            <div class="small text-muted">Session SQL</div>
+                            <div class="fw-semibold">@Model.ConnectionReport.LoginName</div>
+                            <div class="small text-muted">Version @Model.ConnectionReport.SqlVersion</div>
                         </div>
-                        <div class="signal-item stacked-signal-item">
-                            <span class="signal-label">Tables detectees</span>
-                            <strong>@Model.ConnectionReport.TableCount</strong>
-                            <span class="table-meta">@string.Join(", ", Model.ConnectionReport.SampleTables)</span>
+                        <div class="mb-3">
+                            <div class="small text-muted">Tables detectees</div>
+                            <div class="fw-semibold">@Model.ConnectionReport.TableCount</div>
+                            <div class="small text-muted">@string.Join(", ", Model.ConnectionReport.SampleTables)</div>
                         </div>
                     }
-                </div>
-            </section>
-        }
-
-        @if (Model.ComparisonReport is not null)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Comparaison visuelle des profils</div>
-                <div class="signal-list comparison-summary-list">
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Gauche</span>
-                        <strong>@Model.ComparisonReport.LeftLabel</strong>
-                    </div>
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Droite</span>
-                        <strong>@Model.ComparisonReport.RightLabel</strong>
-                    </div>
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Ecarts</span>
-                        <strong>@Model.ComparisonReport.DifferenceCount</strong>
-                        <span class="table-meta">Seules les differences sont affichees.</span>
-                    </div>
-                </div>
-
-                @if (Model.ComparisonReport.DifferenceCount == 0)
-                {
-                    <p class="muted-copy">Aucune difference detectee entre les deux configurations.</p>
                 }
-                else
-                {
-                    <div class="comparison-section-list">
-                        @foreach (var comparisonSection in Model.ComparisonReport.Sections)
-                        {
-                            <article class="comparison-card">
-                                <div class="comparison-card-header">
-                                    <strong>@comparisonSection.SectionLabel</strong>
-                                    <span class="table-meta">@comparisonSection.Items.Count difference(s)</span>
-                                </div>
-                                <div class="comparison-table-shell">
-                                    <table class="table table-darkless align-middle comparison-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Champ</th>
-                                                <th>@Model.ComparisonReport.LeftLabel</th>
-                                                <th>@Model.ComparisonReport.RightLabel</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        @foreach (var item in comparisonSection.Items)
-                                        {
-                                            <tr>
-                                                <td><strong>@item.FieldLabel</strong></td>
-                                                <td>@item.LeftValue</td>
-                                                <td>@item.RightValue</td>
-                                            </tr>
-                                        }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </article>
-                        }
-                    </div>
-                }
-            </section>
-        }
 
-        @if (Model.SchemaAnalysisReport is not null)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Analyse du schema</div>
-                <div class="signal-list">
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Lecture</span>
-                        <strong>@(Model.SchemaAnalysisReport.Success ? "Schema lu" : "Analyse indisponible")</strong>
-                        <span class="table-meta">@Model.SchemaAnalysisReport.Message</span>
+                @if (Model.ComparisonReport is not null)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-arrow-left-right me-1"></i>Comparaison visuelle des profils</h6>
+                    <div class="mb-3">
+                        <div class="small text-muted">Gauche</div>
+                        <div class="fw-semibold">@Model.ComparisonReport.LeftLabel</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted">Droite</div>
+                        <div class="fw-semibold">@Model.ComparisonReport.RightLabel</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted">Ecarts</div>
+                        <div class="fw-semibold">@Model.ComparisonReport.DifferenceCount</div>
+                        <div class="small text-muted">Seules les differences sont affichees.</div>
+                    </div>
+
+                    @if (Model.ComparisonReport.DifferenceCount == 0)
+                    {
+                        <p class="text-muted">Aucune difference detectee entre les deux configurations.</p>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var comparisonSection in Model.ComparisonReport.Sections)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                            <strong>@comparisonSection.SectionLabel</strong>
+                                            <span class="small text-muted">@comparisonSection.Items.Count difference(s)</span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Champ</th>
+                                                        <th>@Model.ComparisonReport.LeftLabel</th>
+                                                        <th>@Model.ComparisonReport.RightLabel</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach (var item in comparisonSection.Items)
+                                                {
+                                                    <tr>
+                                                        <td><strong>@item.FieldLabel</strong></td>
+                                                        <td>@item.LeftValue</td>
+                                                        <td>@item.RightValue</td>
+                                                    </tr>
+                                                }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (Model.SchemaAnalysisReport is not null)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-search me-1"></i>Analyse du schema</h6>
+                    <div class="mb-3">
+                        <div class="small text-muted">Lecture</div>
+                        <div class="fw-semibold">@(Model.SchemaAnalysisReport.Success ? "Schema lu" : "Analyse indisponible")</div>
+                        <div class="small text-muted">@Model.SchemaAnalysisReport.Message</div>
                     </div>
                     @if (Model.SchemaAnalysisReport.Success)
                     {
-                        <div class="signal-item stacked-signal-item">
-                            <span class="signal-label">Tables utilisateur</span>
-                            <strong>@Model.SchemaAnalysisReport.TableCount</strong>
-                            <span class="table-meta">@Model.SchemaAnalysisReport.InferenceNote</span>
+                        <div class="mb-3">
+                            <div class="small text-muted">Tables utilisateur</div>
+                            <div class="fw-semibold">@Model.SchemaAnalysisReport.TableCount</div>
+                            <div class="small text-muted">@Model.SchemaAnalysisReport.InferenceNote</div>
                         </div>
-                    }
-                </div>
-            </section>
 
-            @if (Model.SchemaAnalysisReport.Success)
-            {
-                <section class="subpanel">
-                    <div class="subpanel-title">Tables majeures detectees</div>
-                    <div class="summary-grid">
-                        @foreach (var table in Model.SchemaAnalysisReport.KeyTables)
-                        {
-                            <article class="summary-card">
-                                <strong>@table.TableName</strong>
-                                <span class="table-meta">@table.ColumnCount colonne(s)</span>
-                                <span class="table-meta">@string.Join(", ", table.SampleColumns)</span>
-                            </article>
-                        }
-                    </div>
-                </section>
-
-                <section class="subpanel">
-                    <div class="subpanel-title">Mapping technique propose</div>
-                    <div class="summary-grid">
-                        @foreach (var suggestion in Model.SchemaAnalysisReport.Suggestions)
-                        {
-                            <article class="summary-card">
-                                <span class="signal-label">@suggestion.LigComTarget</span>
-                                <strong>@suggestion.SourceTable</strong>
-                                <span class="table-meta">Confiance @suggestion.ConfidenceLabel</span>
-                                <span class="table-meta">@suggestion.MappingSummary</span>
-                                @if (suggestion.SuggestedColumns.Count > 0)
-                                {
-                                    <span class="table-meta">Colonnes reperes : @string.Join(", ", suggestion.SuggestedColumns)</span>
-                                }
-                            </article>
-                        }
-                    </div>
-                </section>
-            }
-        }
-
-        @if (Model.ExecutionReport is not null)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Rapport d'execution</div>
-                <div class="signal-list">
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Mode</span>
-                        <strong>@(Model.ExecutionReport.DryRun ? "Simulation" : "Import reel")</strong>
-                        <span class="table-meta">@(Model.ExecutionReport.Success ? "Execution terminee" : "Execution avec ecarts")</span>
-                    </div>
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Source</span>
-                        <strong>@Model.ExecutionReport.SourceServer</strong>
-                        <span class="table-meta">@Model.ExecutionReport.SourceDatabase</span>
-                    </div>
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Resultat global</span>
-                        <strong>@Model.ExecutionReport.TotalImported importe(s)</strong>
-                        <span class="table-meta">@Model.ExecutionReport.TotalUpdated mis a jour, @Model.ExecutionReport.TotalSkipped ignore(s)</span>
-                    </div>
-                </div>
-            </section>
-
-            @if (Model.ExecutionReport.Warnings.Count > 0)
-            {
-                <section class="subpanel">
-                    <div class="subpanel-title">Avertissements</div>
-                    <ul class="summary-list">
-                        @foreach (var warning in Model.ExecutionReport.Warnings)
-                        {
-                            <li>@warning</li>
-                        }
-                    </ul>
-                </section>
-            }
-
-            @if (Model.ExecutionReport.Modules.Count > 0)
-            {
-                <section class="subpanel">
-                    <div class="subpanel-title">Modules traites</div>
-                    <div class="summary-grid">
-                        @foreach (var module in Model.ExecutionReport.Modules)
-                        {
-                            <article class="summary-card">
-                                <span class="signal-label">@module.ModuleName</span>
-                                <strong>@module.Status</strong>
-                                <span class="table-meta">Table source : @module.SourceTable</span>
-                                <span class="table-meta">@module.Summary</span>
-                                <span class="table-meta">@module.Imported importe(s), @module.Updated mis a jour, @module.Skipped ignore(s)</span>
-                                @if (module.Notes.Count > 0)
-                                {
-                                    <span class="table-meta">@string.Join(" | ", module.Notes)</span>
-                                }
-                            </article>
-                        }
-                    </div>
-                </section>
-            }
-        }
-
-        @if (Model.PreviewReport is not null)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Previsualisation source</div>
-                <div class="signal-list">
-                    <div class="signal-item stacked-signal-item">
-                        <span class="signal-label">Resultat</span>
-                        <strong>@(Model.PreviewReport.Success ? "Echantillons disponibles" : "Previsualisation indisponible")</strong>
-                        <span class="table-meta">@Model.PreviewReport.Message</span>
-                    </div>
-                </div>
-            </section>
-
-            @if (Model.PreviewReport.Success && Model.PreviewReport.Modules.Count > 0)
-            {
-                <section class="subpanel">
-                    <div class="subpanel-title">Echantillons par module</div>
-                    <div class="summary-grid">
-                        @foreach (var module in Model.PreviewReport.Modules)
-                        {
-                            <article class="summary-card preview-module-card">
-                                <span class="signal-label">@module.ModuleName</span>
-                                <strong>@module.SourceTable</strong>
-                                <span class="table-meta">@module.SourceRowCount ligne(s) source</span>
-                                <span class="table-meta">Colonnes : @string.Join(", ", module.SampleColumns)</span>
-                                @foreach (var row in module.Rows)
-                                {
-                                    <div class="preview-row">
-                                        @foreach (var cell in row.Cells)
-                                        {
-                                            <span class="preview-cell"><strong>@cell.Label</strong> : @cell.Value</span>
-                                        }
+                        <h6 class="mt-3 mb-2">Tables majeures detectees</h6>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var table in Model.SchemaAnalysisReport.KeyTables)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="fw-semibold">@table.TableName</div>
+                                        <div class="small text-muted">@table.ColumnCount colonne(s)</div>
+                                        <div class="small text-muted">@string.Join(", ", table.SampleColumns)</div>
                                     </div>
-                                }
-                            </article>
-                        }
-                    </div>
-                </section>
-            }
-        }
-
-        @if (Model.RecentRuns.Count > 0)
-        {
-            <section class="subpanel">
-                <div class="subpanel-title">Historique des campagnes</div>
-                <div class="summary-grid">
-                    @foreach (var run in Model.RecentRuns)
-                    {
-                        <article class="summary-card preview-module-card">
-                            <span class="signal-label">@(run.IsDryRun ? "Simulation" : "Import reel")</span>
-                            <strong>@run.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong>
-                            <span class="table-meta">@run.SourceServer / @run.SourceDatabase</span>
-                            <span class="table-meta">Mode @run.ImportModeLabel | @(run.IsSuccessful ? "Succes" : "Avec ecarts")</span>
-                            <span class="table-meta">@run.TotalImported importe(s), @run.TotalUpdated mis a jour, @run.TotalSkipped ignore(s)</span>
-                            @if (!string.IsNullOrWhiteSpace(run.WarningSummary))
-                            {
-                                <span class="table-meta">@run.WarningSummary</span>
-                            }
-                            @foreach (var module in run.Modules)
-                            {
-                                <div class="preview-row">
-                                    <span class="preview-cell"><strong>@module.ModuleName</strong> : @module.Status</span>
-                                    <span class="preview-cell">@module.SourceTable</span>
-                                    <span class="preview-cell">@module.Imported importe(s), @module.Updated mis a jour, @module.Skipped ignore(s)</span>
-                                    <span class="preview-cell">@module.Summary</span>
                                 </div>
                             }
-                        </article>
+                        </div>
+
+                        <h6 class="mt-3 mb-2">Mapping technique propose</h6>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var suggestion in Model.SchemaAnalysisReport.Suggestions)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="small text-muted">@suggestion.LigComTarget</div>
+                                        <div class="fw-semibold">@suggestion.SourceTable</div>
+                                        <div class="small text-muted">Confiance @suggestion.ConfidenceLabel</div>
+                                        <div class="small text-muted">@suggestion.MappingSummary</div>
+                                        @if (suggestion.SuggestedColumns.Count > 0)
+                                        {
+                                            <div class="small text-muted">Colonnes reperes : @string.Join(", ", suggestion.SuggestedColumns)</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (Model.ExecutionReport is not null)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-clipboard-check me-1"></i>Rapport d'execution</h6>
+                    <div class="mb-3">
+                        <div class="small text-muted">Mode</div>
+                        <div class="fw-semibold">@(Model.ExecutionReport.DryRun ? "Simulation" : "Import reel")</div>
+                        <div class="small text-muted">@(Model.ExecutionReport.Success ? "Execution terminee" : "Execution avec ecarts")</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted">Source</div>
+                        <div class="fw-semibold">@Model.ExecutionReport.SourceServer</div>
+                        <div class="small text-muted">@Model.ExecutionReport.SourceDatabase</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted">Resultat global</div>
+                        <div class="fw-semibold">@Model.ExecutionReport.TotalImported importe(s)</div>
+                        <div class="small text-muted">@Model.ExecutionReport.TotalUpdated mis a jour, @Model.ExecutionReport.TotalSkipped ignore(s)</div>
+                    </div>
+
+                    @if (Model.ExecutionReport.Warnings.Count > 0)
+                    {
+                        <h6 class="mt-3 mb-2">Avertissements</h6>
+                        <ul>
+                            @foreach (var warning in Model.ExecutionReport.Warnings)
+                            {
+                                <li>@warning</li>
+                            }
+                        </ul>
+                    }
+
+                    @if (Model.ExecutionReport.Modules.Count > 0)
+                    {
+                        <h6 class="mt-3 mb-2">Modules traites</h6>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var module in Model.ExecutionReport.Modules)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="small text-muted">@module.ModuleName</div>
+                                        <div class="fw-semibold">@module.Status</div>
+                                        <div class="small text-muted">Table source : @module.SourceTable</div>
+                                        <div class="small text-muted">@module.Summary</div>
+                                        <div class="small text-muted">@module.Imported importe(s), @module.Updated mis a jour, @module.Skipped ignore(s)</div>
+                                        @if (module.Notes.Count > 0)
+                                        {
+                                            <ul class="small mb-0 mt-2">
+                                                @foreach (var note in module.Notes)
+                                                {
+                                                    <li>@note</li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (Model.PreviewReport is not null)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-eye me-1"></i>Previsualisation source</h6>
+                    <div class="mb-3">
+                        <div class="small text-muted">Resultat</div>
+                        <div class="fw-semibold">@(Model.PreviewReport.Success ? "Echantillons disponibles" : "Previsualisation indisponible")</div>
+                        <div class="small text-muted">@Model.PreviewReport.Message</div>
+                    </div>
+
+                    @if (Model.PreviewReport.Success && Model.PreviewReport.Modules.Count > 0)
+                    {
+                        <h6 class="mt-3 mb-2">Echantillons par module</h6>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var module in Model.PreviewReport.Modules)
+                            {
+                                <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                    <div class="card-body">
+                                        <div class="small text-muted">@module.ModuleName</div>
+                                        <div class="fw-semibold">@module.SourceTable</div>
+                                        <div class="small text-muted">@module.SourceRowCount ligne(s) source</div>
+                                        <div class="small text-muted">Colonnes : @string.Join(", ", module.SampleColumns)</div>
+                                        @foreach (var row in module.Rows)
+                                        {
+                                            <div class="border-top mt-2 pt-2 small">
+                                                @foreach (var cell in row.Cells)
+                                                {
+                                                    <span class="me-2"><strong>@cell.Label</strong> : @cell.Value</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (Model.RecentRuns.Count > 0)
+                {
+                    <h6 class="mt-3 mb-2"><i class="bi bi-clock-history me-1"></i>Historique des campagnes</h6>
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var run in Model.RecentRuns)
+                        {
+                            <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                                <div class="card-body">
+                                    <div class="small text-muted">@(run.IsDryRun ? "Simulation" : "Import reel")</div>
+                                    <div class="fw-semibold">@run.CreatedOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    <div class="small text-muted">@run.SourceServer / @run.SourceDatabase</div>
+                                    <div class="small text-muted">Mode @run.ImportModeLabel | @(run.IsSuccessful ? "Succes" : "Avec ecarts")</div>
+                                    <div class="small text-muted">@run.TotalImported importe(s), @run.TotalUpdated mis a jour, @run.TotalSkipped ignore(s)</div>
+                                    @if (!string.IsNullOrWhiteSpace(run.WarningSummary))
+                                    {
+                                        <div class="small text-muted">@run.WarningSummary</div>
+                                    }
+                                    @foreach (var module in run.Modules)
+                                    {
+                                        <div class="border-top mt-2 pt-2 small">
+                                            <span class="me-2"><strong>@module.ModuleName</strong> : @module.Status</span>
+                                            <span class="me-2">@module.SourceTable</span>
+                                            <span class="me-2">@module.Imported importe(s), @module.Updated mis a jour, @module.Skipped ignore(s)</span>
+                                            <span>@module.Summary</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <h6 class="mt-3 mb-2"><i class="bi bi-list-ul me-1"></i>Modules selectionnes</h6>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    @foreach (var item in Model.SelectedModules)
+                    {
+                        <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@item</span>
+                    }
+                    @if (Model.SelectedModules.Count == 0)
+                    {
+                        <span class="small text-muted">Aucun module encore cible.</span>
                     }
                 </div>
-            </section>
-        }
 
-        <section class="subpanel">
-            <div class="subpanel-title">Modules selectionnes</div>
-            <div class="pill-list">
-                @foreach (var item in Model.SelectedModules)
-                {
-                    <span class="quota-pill">@item</span>
-                }
-                @if (Model.SelectedModules.Count == 0)
-                {
-                    <span class="table-meta">Aucun module encore cible.</span>
-                }
+                <h6 class="mt-3 mb-2"><i class="bi bi-funnel me-1"></i>Filtres actifs</h6>
+                <ul class="mb-3">
+                    @foreach (var item in Model.ActiveFilters)
+                    {
+                        <li>@item</li>
+                    }
+                    @if (Model.ActiveFilters.Count == 0)
+                    {
+                        <li>Aucun filtre restrictif. Le profil est pret pour un transfert integral du perimetre choisi.</li>
+                    }
+                </ul>
+
+                <h6 class="mt-3 mb-2"><i class="bi bi-play-circle me-1"></i>Execution prevue</h6>
+                <ul class="mb-3">
+                    @foreach (var item in Model.ExecutionHighlights)
+                    {
+                        <li>@item</li>
+                    }
+                </ul>
+
+                <h6 class="mt-3 mb-2"><i class="bi bi-list-ol me-1"></i>Ordre conseille</h6>
+                <ol class="mb-0">
+                    <li>Connexion, simulation et controle des droits SQL Sage.</li>
+                    <li>Referentiels : taxes, conditions de paiement, familles, depots.</li>
+                    <li>Fiches principales : clients, fournisseurs, articles, tarifs.</li>
+                    <li>Stocks et soldes ouverts selon le perimetre retenu.</li>
+                    <li>Pieces commerciales et rapprochements.</li>
+                </ol>
             </div>
-        </section>
-
-        <section class="subpanel">
-            <div class="subpanel-title">Filtres actifs</div>
-            <ul class="summary-list">
-                @foreach (var item in Model.ActiveFilters)
-                {
-                    <li>@item</li>
-                }
-                @if (Model.ActiveFilters.Count == 0)
-                {
-                    <li>Aucun filtre restrictif. Le profil est pret pour un transfert integral du perimetre choisi.</li>
-                }
-            </ul>
-        </section>
-
-        <section class="subpanel">
-            <div class="subpanel-title">Execution prevue</div>
-            <ul class="summary-list">
-                @foreach (var item in Model.ExecutionHighlights)
-                {
-                    <li>@item</li>
-                }
-            </ul>
-        </section>
-
-        <section class="subpanel">
-            <div class="subpanel-title">Ordre conseille</div>
-            <ol class="summary-list ordered-summary-list">
-                <li>Connexion, simulation et controle des droits SQL Sage.</li>
-                <li>Referentiels : taxes, conditions de paiement, familles, depots.</li>
-                <li>Fiches principales : clients, fournisseurs, articles, tarifs.</li>
-                <li>Stocks et soldes ouverts selon le perimetre retenu.</li>
-                <li>Pieces commerciales et rapprochements.</li>
-            </ol>
-        </section>
-    </article>
-</section>
+        </div>
+    </aside>
+</div>
 
 <script id="sage-schema-json" type="application/json">@Html.Raw(Model.AvailableSchemaJson)</script>
 

@@ -4,17 +4,26 @@
     ViewData["Title"] = "Nouveau plan";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Nouveau plan SaaS</h1>
+        <h1 class="page-header-title">Nouveau plan SaaS</h1>
+        <div class="page-header-sub">Definissez les limites et les tarifs d'un nouveau plan d'abonnement.</div>
     </div>
-</section>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Plans/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<form method="post" class="panel-card stack-form compact-form">
-    <partial name="_PlanForm" model="Model.Input" />
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+<div class="card">
+    <div class="section-header"><i class="bi bi-tag"></i><span>Informations du plan</span></div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <partial name="_PlanForm" model="Model.Input" />
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>

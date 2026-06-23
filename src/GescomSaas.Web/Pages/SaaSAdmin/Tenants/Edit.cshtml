@@ -4,144 +4,138 @@
     ViewData["Title"] = "Administration tenant";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>@Model.Input.CompanyName</h1>
-        <p class="muted-copy">Administrez l'abonnement, les quotas et la facturation du tenant.</p>
+        <h1 class="page-header-title">@Model.Input.CompanyName</h1>
+        <div class="page-header-sub">Administrez l'abonnement, les quotas et la facturation du tenant.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-primary-soft" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.Id">Utilisateurs</a>
-        <form method="post" asp-page-handler="GenerateInvoice" class="inline-form">
-            <button type="submit" class="btn btn-primary-soft">Generer facture</button>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" asp-page="/SaaSAdmin/Tenants/Users" asp-route-id="@Model.Id"><i class="bi bi-people me-1"></i>Utilisateurs</a>
+        <form method="post" asp-page-handler="GenerateInvoice" class="d-inline">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-receipt me-1"></i>Generer facture</button>
         </form>
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Index">Retour</a>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
-<section class="content-grid dashboard-grid">
-    <form method="post" class="panel-card stack-form compact-form">
-        <div class="form-grid">
-            <div><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger"></span></div>
-            <div><label asp-for="Input.Slug" class="form-label"></label><input asp-for="Input.Slug" class="form-control" /><span asp-validation-for="Input.Slug" class="text-danger"></span></div>
-            <div><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger"></span></div>
-            <div><label asp-for="Input.SubscriptionPlanId" class="form-label">Plan</label><select asp-for="Input.SubscriptionPlanId" asp-items="Model.Plans" class="form-select"></select><span asp-validation-for="Input.SubscriptionPlanId" class="text-danger"></span></div>
-            <div><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
-            <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-            <div><label asp-for="Input.SubscriptionStatus" class="form-label">Statut</label><select asp-for="Input.SubscriptionStatus" asp-items="Html.GetEnumSelectList<GescomSaas.Domain.Enums.SubscriptionStatus>()" class="form-select"></select></div>
-            <div class="inline-checks">
-                <div class="form-check"><input asp-for="Input.IsActive" class="form-check-input" /><label asp-for="Input.IsActive" class="form-check-label"></label></div>
-                <div class="form-check"><input asp-for="Input.AutoRenew" class="form-check-input" /><label asp-for="Input.AutoRenew" class="form-check-label">Renouvellement automatique</label></div>
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="section-header"><i class="bi bi-building"></i><span>Informations du tenant</span></div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.Slug" class="form-label"></label><input asp-for="Input.Slug" class="form-control" /><span asp-validation-for="Input.Slug" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.SubscriptionPlanId" class="form-label">Plan</label><select asp-for="Input.SubscriptionPlanId" asp-items="Model.Plans" class="form-select"></select><span asp-validation-for="Input.SubscriptionPlanId" class="text-danger small"></span></div>
+                        <div class="col-md-6"><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.SubscriptionStatus" class="form-label">Statut</label><select asp-for="Input.SubscriptionStatus" asp-items="Html.GetEnumSelectList<GescomSaas.Domain.Enums.SubscriptionStatus>()" class="form-select"></select></div>
+                        <div class="col-md-6">
+                            <div class="form-check"><input asp-for="Input.IsActive" class="form-check-input" /><label asp-for="Input.IsActive" class="form-check-label"></label></div>
+                            <div class="form-check"><input asp-for="Input.AutoRenew" class="form-check-input" /><label asp-for="Input.AutoRenew" class="form-check-label">Renouvellement automatique</label></div>
+                        </div>
+                        <div class="col-md-6"><label asp-for="Input.StartsOn" class="form-label">Debut</label><input asp-for="Input.StartsOn" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.EndsOn" class="form-label">Fin</label><input asp-for="Input.EndsOn" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.NextBillingDate" class="form-label">Prochaine facturation</label><input asp-for="Input.NextBillingDate" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MonthlyPriceOverride" class="form-label">Prix mensuel override</label><input asp-for="Input.MonthlyPriceOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxUsersOverride" class="form-label">Override utilisateurs</label><input asp-for="Input.MaxUsersOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxCustomersOverride" class="form-label">Override clients</label><input asp-for="Input.MaxCustomersOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxSuppliersOverride" class="form-label">Override fournisseurs</label><input asp-for="Input.MaxSuppliersOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxProductsOverride" class="form-label">Override articles</label><input asp-for="Input.MaxProductsOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxWarehousesOverride" class="form-label">Override depots</label><input asp-for="Input.MaxWarehousesOverride" class="form-control" /></div>
+                        <div class="col-md-6"><label asp-for="Input.MaxMonthlyDocumentsOverride" class="form-label">Override documents/mois</label><input asp-for="Input.MaxMonthlyDocumentsOverride" class="form-control" /></div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Index">Annuler</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer</button>
+                    </div>
+                </form>
             </div>
-            <div><label asp-for="Input.StartsOn" class="form-label">Debut</label><input asp-for="Input.StartsOn" class="form-control" /></div>
-            <div><label asp-for="Input.EndsOn" class="form-label">Fin</label><input asp-for="Input.EndsOn" class="form-control" /></div>
-            <div><label asp-for="Input.NextBillingDate" class="form-label">Prochaine facturation</label><input asp-for="Input.NextBillingDate" class="form-control" /></div>
-            <div><label asp-for="Input.MonthlyPriceOverride" class="form-label">Prix mensuel override</label><input asp-for="Input.MonthlyPriceOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxUsersOverride" class="form-label">Override utilisateurs</label><input asp-for="Input.MaxUsersOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxCustomersOverride" class="form-label">Override clients</label><input asp-for="Input.MaxCustomersOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxSuppliersOverride" class="form-label">Override fournisseurs</label><input asp-for="Input.MaxSuppliersOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxProductsOverride" class="form-label">Override articles</label><input asp-for="Input.MaxProductsOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxWarehousesOverride" class="form-label">Override depots</label><input asp-for="Input.MaxWarehousesOverride" class="form-control" /></div>
-            <div><label asp-for="Input.MaxMonthlyDocumentsOverride" class="form-label">Override documents/mois</label><input asp-for="Input.MaxMonthlyDocumentsOverride" class="form-control" /></div>
         </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-            <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Index">Annuler</a>
-        </div>
-    </form>
-
-    <div class="module-stack">
-        <article class="panel-card">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Quotas</span>
-                    <h2>Consommation actuelle</h2>
-                </div>
-            </div>
-            @if (Model.Summary is null)
-            {
-                <p class="muted-copy">Synthese indisponible.</p>
-            }
-            else
-            {
-                <div class="signal-list">
-                    @foreach (var quota in Model.Summary.Quotas)
-                    {
-                        <div class="signal-item">
-                            <div>
-                                <strong>@quota.Label</strong>
-                            </div>
-                            <div class="signal-meta">
-                                <span>@quota.Used / @quota.Limit</span>
-                                <span>@(quota.IsExceeded ? "Depasse" : "OK")</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </article>
-
-        <article class="panel-card">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Utilisateurs</span>
-                    <h2>Comptes rattaches</h2>
-                </div>
-            </div>
-            @if (Model.Users.Count == 0)
-            {
-                <p class="muted-copy">Aucun utilisateur rattache.</p>
-            }
-            else
-            {
-                <div class="signal-list">
-                    @foreach (var user in Model.Users)
-                    {
-                        <div class="signal-item">
-                            <div>
-                                <a asp-page="/SaaSAdmin/Tenants/UserEdit" asp-route-tenantId="@Model.Id" asp-route-userId="@user.UserId"><strong>@(string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName)</strong></a>
-                                <div class="table-meta">@user.Email</div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </article>
-
-        <article class="panel-card">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Facturation</span>
-                    <h2>Dernieres factures</h2>
-                </div>
-            </div>
-            @if (Model.Invoices.Count == 0)
-            {
-                <p class="muted-copy">Aucune facture plateforme.</p>
-            }
-            else
-            {
-                <div class="signal-list">
-                    @foreach (var invoice in Model.Invoices)
-                    {
-                        <div class="signal-item">
-                            <div>
-                                <a asp-page="/SaaSAdmin/Invoices/Details" asp-route-id="@invoice.Id"><strong>@invoice.InvoiceNumber</strong></a>
-                                <div class="table-meta">@invoice.IssueDate.ToString("dd/MM/yyyy")</div>
-                            </div>
-                            <div class="signal-meta">
-                                <span>@invoice.Status</span>
-                                <span>@DisplayFormatter.Money(invoice.TotalIncludingTax, invoice.CurrencyCode)</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </article>
     </div>
-</section>
+
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="section-header"><i class="bi bi-bar-chart"></i><span>Consommation actuelle</span></div>
+            <div class="card-body">
+                @if (Model.Summary is null)
+                {
+                    <p class="text-muted mb-0">Synthese indisponible.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var quota in Model.Summary.Quotas)
+                        {
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                                <div class="fw-semibold">@quota.Label</div>
+                                <div class="d-flex gap-2 small">
+                                    <span>@quota.Used / @quota.Limit</span>
+                                    <span class="@(quota.IsExceeded ? "text-danger" : "text-success")">@(quota.IsExceeded ? "Depasse" : "OK")</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="section-header"><i class="bi bi-people"></i><span>Comptes rattaches</span></div>
+            <div class="card-body">
+                @if (Model.Users.Count == 0)
+                {
+                    <p class="text-muted mb-0">Aucun utilisateur rattache.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var user in Model.Users)
+                        {
+                            <div class="border-bottom pb-2">
+                                <a asp-page="/SaaSAdmin/Tenants/UserEdit" asp-route-tenantId="@Model.Id" asp-route-userId="@user.UserId" class="text-decoration-none"><span class="fw-semibold">@(string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName)</span></a>
+                                <div class="small text-muted">@user.Email</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-header"><i class="bi bi-receipt"></i><span>Dernieres factures</span></div>
+            <div class="card-body">
+                @if (Model.Invoices.Count == 0)
+                {
+                    <p class="text-muted mb-0">Aucune facture plateforme.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var invoice in Model.Invoices)
+                        {
+                            <div class="d-flex justify-content-between align-items-start border-bottom pb-2">
+                                <div>
+                                    <a asp-page="/SaaSAdmin/Invoices/Details" asp-route-id="@invoice.Id" class="text-decoration-none"><span class="fw-semibold">@invoice.InvoiceNumber</span></a>
+                                    <div class="small text-muted">@invoice.IssueDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <div class="text-end small">
+                                    <div>@invoice.Status</div>
+                                    <div class="money">@DisplayFormatter.Money(invoice.TotalIncludingTax, invoice.CurrencyCode)</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

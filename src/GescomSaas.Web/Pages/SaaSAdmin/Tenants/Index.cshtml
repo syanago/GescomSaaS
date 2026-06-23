@@ -4,83 +4,91 @@
     ViewData["Title"] = "Tenants SaaS";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Tenants SaaS</h1>
-        <p class="muted-copy">Supervisez les comptes clients, leur abonnement et leurs quotas effectifs.</p>
+        <h1 class="page-header-title">Tenants SaaS</h1>
+        <div class="page-header-sub">Supervisez les comptes clients, leur abonnement et leurs quotas effectifs.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Index">Cockpit</a>
-        <a class="btn btn-primary-soft" asp-page="/SaaSAdmin/Tenants/Create">Nouveau tenant</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Index"><i class="bi bi-speedometer2 me-1"></i>Cockpit</a>
+        <a class="btn btn-primary" asp-page="/SaaSAdmin/Tenants/Create"><i class="bi bi-plus-lg me-1"></i>Nouveau tenant</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Tenant</th>
-                    <th>Plan</th>
-                    <th>Statut</th>
-                    <th>Utilisateurs</th>
-                    <th>Articles</th>
-                    <th>Docs/mois</th>
-                    <th class="text-end">MRR</th>
-                    <th>Alertes</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Tenants.Count == 0)
-            {
-                <tr><td colspan="9" class="empty-cell">Aucun tenant configure.</td></tr>
-            }
-            else
-            {
-                @foreach (var tenant in Model.Tenants)
-                {
-                    <tr>
-                        <td>
-                            <strong>@tenant.CompanyName</strong>
-                            <div class="table-meta">@tenant.PrimaryContactEmail</div>
-                            <div class="table-meta">@tenant.Slug</div>
-                        </td>
-                        <td>@tenant.PlanName</td>
-                        <td>
-                            <span class="badge rounded-pill status-pill">@tenant.SubscriptionStatus</span>
-                        </td>
-                        <td>@tenant.UserCount</td>
-                        <td>@tenant.ProductCount</td>
-                        <td>@tenant.MonthlyDocumentCount</td>
-                        <td class="text-end">@DisplayFormatter.Money(tenant.RecurringCharge)</td>
-                        <td>
-                            @if (tenant.QuotaAlertCount > 0)
-                            {
-                                <span class="badge rounded-pill overdue-pill">@tenant.QuotaAlertCount</span>
-                            }
-                            else
-                            {
-                                <span class="badge rounded-pill status-pill">OK</span>
-                            }
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@tenant.TenantId">Editer</a>
-                            <form method="post" asp-page-handler="GenerateInvoice" class="inline-form">
-                                <input type="hidden" name="tenantId" value="@tenant.TenantId" />
-                                <button type="submit" class="btn btn-sm btn-outline-light">Facturer</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<div class="card">
+    <div class="section-header"><i class="bi bi-building"></i><span>Tenants</span></div>
+    <div class="card-body">
+        @if (Model.Tenants.Count == 0)
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox empty-icon"></i>
+                <h6>Aucun tenant</h6>
+                <p class="mb-0">Aucun tenant configure.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Plan</th>
+                            <th>Statut</th>
+                            <th>Utilisateurs</th>
+                            <th>Articles</th>
+                            <th>Docs/mois</th>
+                            <th class="text-end">MRR</th>
+                            <th>Alertes</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var tenant in Model.Tenants)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@tenant.CompanyName</div>
+                                <div class="small text-muted">@tenant.PrimaryContactEmail</div>
+                                <div class="small text-muted">@tenant.Slug</div>
+                            </td>
+                            <td>@tenant.PlanName</td>
+                            <td>
+                                <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">@tenant.SubscriptionStatus</span>
+                            </td>
+                            <td>@tenant.UserCount</td>
+                            <td>@tenant.ProductCount</td>
+                            <td>@tenant.MonthlyDocumentCount</td>
+                            <td class="text-end money">@DisplayFormatter.Money(tenant.RecurringCharge)</td>
+                            <td>
+                                @if (tenant.QuotaAlertCount > 0)
+                                {
+                                    <span class="badge" style="background:#fee2e2; color:#b91c1c">@tenant.QuotaAlertCount</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg); color:var(--gc-pill-green-fg)">OK</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a class="btn btn-sm btn-secondary" asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@tenant.TenantId" title="Editer"><i class="bi bi-pencil"></i></a>
+                                    <form method="post" asp-page-handler="GenerateInvoice" class="d-inline">
+                                        <input type="hidden" name="tenantId" value="@tenant.TenantId" />
+                                        <button type="submit" class="btn btn-sm btn-secondary" title="Facturer"><i class="bi bi-receipt"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
-</section>
+</div>

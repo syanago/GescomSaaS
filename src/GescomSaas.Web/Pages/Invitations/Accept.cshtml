@@ -4,118 +4,135 @@
     ViewData["Title"] = "Accepter une invitation";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Invitation</span>
-        <h1>Rejoindre un tenant</h1>
-        <p class="muted-copy">Validez votre invitation pour acceder a l'espace Gescom SaaS.</p>
+        <h1 class="page-header-title">Rejoindre un tenant</h1>
+        <div class="page-header-sub">Valide ton invitation pour acceder a l'espace LigCom</div>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
 {
-    <div class="app-alert warning">@Model.ErrorMessage</div>
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.ErrorMessage
+    </div>
 }
 
 @if (Model.Invitation is null)
 {
-    <section class="panel-card">
-        <p class="muted-copy">Impossible de charger cette invitation.</p>
-    </section>
+    <div class="card">
+        <div class="empty-state">
+            <i class="bi bi-x-circle empty-icon" style="color:#dc2626"></i>
+            <h6>Invitation introuvable</h6>
+            <p class="mb-0">Impossible de charger cette invitation. Demande un nouveau lien a ton administrateur.</p>
+        </div>
+    </div>
 }
 else
 {
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card">
-            <div class="panel-header compact">
-                <div>
-                    <span class="eyebrow">Contexte</span>
-                    <h2>Invitation @Model.Invitation.TenantName</h2>
+    <div class="row g-3">
+        @* Contexte invitation *@
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="section-header">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Invitation @Model.Invitation.TenantName</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="small text-muted">E-mail</div>
+                            <div class="fw-semibold">@Model.Invitation.Email</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted">Statut</div>
+                            <div><span class="badge" style="background:var(--gc-brand-100);color:var(--gc-brand-hover)">@Model.Invitation.Status</span></div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted">Expiration</div>
+                            <div class="fw-semibold">@Model.Invitation.ExpiresOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted mb-1">Roles</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var role in Model.Invitation.Roles)
+                                {
+                                    <span class="badge" style="background:var(--gc-brand-100);color:var(--gc-brand-hover)">@role</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="detail-list">
-                <div>
-                    <dt>E-mail</dt>
-                    <dd>@Model.Invitation.Email</dd>
+        @* Formulaire activation *@
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="section-header">
+                    <i class="bi bi-person-check"></i>
+                    <span>Accepter l'invitation</span>
                 </div>
-                <div>
-                    <dt>Statut</dt>
-                    <dd>@Model.Invitation.Status</dd>
-                </div>
-                <div>
-                    <dt>Expiration</dt>
-                    <dd>@Model.Invitation.ExpiresOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-                </div>
-                <div>
-                    <dt>Roles</dt>
-                    <dd>
-                        <div class="tag-list">
-                            @foreach (var role in Model.Invitation.Roles)
+                <div class="card-body">
+                    <form method="post">
+                        @if (!ViewContext.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger" asp-validation-summary="All"></div>
+                        }
+                        <input asp-for="Token" type="hidden" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Input.FirstName" class="form-label"></label>
+                                <input asp-for="Input.FirstName" class="form-control" />
+                                <span asp-validation-for="Input.FirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Input.LastName" class="form-label"></label>
+                                <input asp-for="Input.LastName" class="form-control" />
+                                <span asp-validation-for="Input.LastName" class="text-danger small"></span>
+                            </div>
+                            @if (Model.Invitation.RequiresPassword)
                             {
-                                <span class="tag-pill">@role</span>
+                                <div class="col-md-6">
+                                    <label asp-for="Input.Password" class="form-label"></label>
+                                    <input asp-for="Input.Password" class="form-control" />
+                                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="Input.ConfirmPassword" class="form-control" />
+                                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                                </div>
                             }
                         </div>
-                    </dd>
+
+                        @if (Model.Invitation.Status == GescomSaas.Domain.Enums.UserInvitationStatus.Pending)
+                        {
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i>Accepter l'invitation
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mb-0 mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Cette invitation n'est plus valide ou a deja ete acceptee.
+                            </div>
+                        }
+                    </form>
                 </div>
             </div>
-        </article>
-
-        <form method="post" class="panel-card stack-form compact-form">
-            <div class="panel-header compact">
-                <div>
-                    <span class="eyebrow">Activation</span>
-                    <h2>Accepter l'invitation</h2>
-                </div>
-            </div>
-
-            @if (!ViewContext.ModelState.IsValid)
-            {
-                <div class="app-alert warning" asp-validation-summary="All"></div>
-            }
-
-            <input asp-for="Token" type="hidden" />
-
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Input.FirstName" class="form-label"></label>
-                    <input asp-for="Input.FirstName" class="form-control" />
-                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Input.LastName" class="form-label"></label>
-                    <input asp-for="Input.LastName" class="form-control" />
-                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
-                </div>
-
-                @if (Model.Invitation.RequiresPassword)
-                {
-                    <div>
-                        <label asp-for="Input.Password" class="form-label"></label>
-                        <input asp-for="Input.Password" class="form-control" />
-                        <span asp-validation-for="Input.Password" class="text-danger"></span>
-                    </div>
-                    <div>
-                        <label asp-for="Input.ConfirmPassword" class="form-label"></label>
-                        <input asp-for="Input.ConfirmPassword" class="form-control" />
-                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-                    </div>
-                }
-            </div>
-
-            @if (Model.Invitation.Status == GescomSaas.Domain.Enums.UserInvitationStatus.Pending)
-            {
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary-soft">Accepter l'invitation</button>
-                </div>
-            }
-        </form>
-    </section>
+        </div>
+    </div>
 }
 
 @section Scripts {

@@ -4,252 +4,246 @@
     ViewData["Title"] = "Utilisateurs tenant";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Utilisateurs de @Model.Snapshot?.TenantName</h1>
-        <p class="muted-copy">Invitations, rattachements et roles du tenant.</p>
+        <h1 class="page-header-title">Utilisateurs de @Model.Snapshot?.TenantName</h1>
+        <div class="page-header-sub">Invitations, rattachements et roles du tenant.</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@Model.Id">Retour tenant</a>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Edit" asp-route-id="@Model.Id"><i class="bi bi-arrow-left me-1"></i>Retour tenant</a>
     </div>
-</section>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
 }
 
 @if (!ViewContext.ModelState.IsValid)
 {
-    <div class="app-alert warning" asp-validation-summary="All"></div>
+    <div class="alert alert-warning" asp-validation-summary="All"></div>
 }
 
 @if (Model.Snapshot is null)
 {
-    <section class="panel-card">
-        <p class="muted-copy">Tenant introuvable.</p>
-    </section>
+    <div class="card">
+        <div class="card-body">
+            <p class="text-muted mb-0">Tenant introuvable.</p>
+        </div>
+    </div>
 }
 else
 {
-    <section class="panel-card quota-panel">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Quota utilisateurs</span>
-                <h2>Capacite du tenant</h2>
-            </div>
+    <div class="card mb-3">
+        <div class="section-header"><i class="bi bi-people"></i><span>Capacite du tenant</span></div>
+        <div class="card-body">
+            @if (Model.UserQuota is not null)
+            {
+                <div class="stat-card">
+                    <div class="stat-card-icon @(Model.IsUserQuotaSaturated ? "stat-icon-blue" : "stat-icon-blue")"><i class="bi bi-people"></i></div>
+                    <div class="stat-card-body">
+                        <div class="stat-card-label">@Model.UserQuota.Label</div>
+                        <div class="stat-card-value">@Model.UserQuota.Used / @Model.UserQuota.Limit</div>
+                        <div class="form-text mb-0">
+                            @if (Model.IsUserQuotaSaturated)
+                            {
+                                <text>Capacite atteinte. Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.</text>
+                            }
+                            else
+                            {
+                                <text>@Model.RemainingUserSlots restant(s)</text>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
-
-        @if (Model.UserQuota is not null)
-        {
-            <div class="quota-grid quota-grid-single">
-                <article class="quota-card @(Model.IsUserQuotaSaturated ? "quota-card-warning" : string.Empty)">
-                    <span>@Model.UserQuota.Label</span>
-                    <strong>@Model.UserQuota.Used / @Model.UserQuota.Limit</strong>
-                        <small>
-                        @if (Model.IsUserQuotaSaturated)
-                        {
-                            <text>Capacite atteinte. Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.</text>
-                        }
-                        else
-                        {
-                            <text>@Model.RemainingUserSlots restant(s)</text>
-                        }
-                    </small>
-                </article>
-            </div>
-        }
-    </section>
+    </div>
 
     @if (Model.IsUserQuotaSaturated)
     {
-        <section class="app-alert warning dashboard-alert">
+        <div class="alert alert-warning mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <strong>Quota utilisateurs atteint :</strong>
             <span>les actions `Creer invitation` et `Rattacher utilisateur` sont desactivees tant que le tenant reste a @Model.UserQuota!.Used / @Model.UserQuota!.Limit. Passe ce tenant sur un plan superieur dans SaaS Admin > Tenants, ou demande a l'administrateur plateforme de mettre a niveau l'abonnement.</span>
-        </section>
+        </div>
     }
 
-    <section class="content-grid dashboard-grid">
-        <form method="post" asp-page-handler="Invite" class="panel-card stack-form compact-form">
-            <div class="panel-header compact">
-                <div>
-                    <span class="eyebrow">Invitation</span>
-                    <h2>Inviter un nouvel utilisateur</h2>
-                </div>
-            </div>
-
-            <div class="form-grid">
-                <div>
-                    <label asp-for="Invitation.Email" class="form-label"></label>
-                    <input asp-for="Invitation.Email" class="form-control" />
-                    <span asp-validation-for="Invitation.Email" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Invitation.Notes" class="form-label"></label>
-                    <input asp-for="Invitation.Notes" class="form-control" />
-                    <span asp-validation-for="Invitation.Notes" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Invitation.FirstName" class="form-label"></label>
-                    <input asp-for="Invitation.FirstName" class="form-control" />
-                    <span asp-validation-for="Invitation.FirstName" class="text-danger"></span>
-                </div>
-                <div>
-                    <label asp-for="Invitation.LastName" class="form-label"></label>
-                    <input asp-for="Invitation.LastName" class="form-control" />
-                    <span asp-validation-for="Invitation.LastName" class="text-danger"></span>
-                </div>
-                <div class="full-span">
-                    <span class="form-label">Roles a attribuer</span>
-                    <div class="role-grid">
-                        @foreach (var role in Model.AssignableRoles)
-                        {
-                            <label class="role-chip">
-                                <input type="checkbox" name="Invitation.SelectedRoles" value="@role" checked="@Model.Invitation.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
-                                <span>@role</span>
-                            </label>
-                        }
-                    </div>
-                    <span asp-validation-for="Invitation.SelectedRoles" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary-soft" disabled="@Model.IsUserQuotaSaturated">Creer invitation</button>
-            </div>
-        </form>
-
-        <form method="post" asp-page-handler="Attach" class="panel-card stack-form compact-form">
-            <div class="panel-header compact">
-                <div>
-                    <span class="eyebrow">Rattachement</span>
-                    <h2>Rattacher un compte existant</h2>
-                </div>
-            </div>
-
-            @if (Model.Snapshot.AvailableUsers.Count == 0)
-            {
-                <p class="muted-copy">Aucun compte libre detecte. Cree une invitation ou ajoute un compte sans tenant.</p>
-            }
-            else
-            {
-                <div class="form-grid">
-                    <div class="full-span">
-                        <label asp-for="Attachment.UserId" class="form-label"></label>
-                        <select asp-for="Attachment.UserId" class="form-select">
-                            <option value="">Selectionner un utilisateur</option>
-                            @foreach (var user in Model.Snapshot.AvailableUsers)
-                            {
-                                <option value="@user.UserId">@user.DisplayName (@user.Email)</option>
-                            }
-                        </select>
-                        <span asp-validation-for="Attachment.UserId" class="text-danger"></span>
-                    </div>
-                    <div class="full-span">
-                        <span class="form-label">Roles a attribuer</span>
-                        <div class="role-grid">
-                            @foreach (var role in Model.AssignableRoles)
-                            {
-                                <label class="role-chip">
-                                    <input type="checkbox" name="Attachment.SelectedRoles" value="@role" checked="@Model.Attachment.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
-                                    <span>@role</span>
-                                </label>
-                            }
-                        </div>
-                        <span asp-validation-for="Attachment.SelectedRoles" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary-soft" disabled="@Model.IsUserQuotaSaturated">Rattacher utilisateur</button>
-                </div>
-            }
-        </form>
-    </section>
-
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Comptes actifs</span>
-                    <h2>Utilisateurs rattaches</h2>
-                </div>
-            </div>
-
-            @if (Model.Snapshot.Users.Count == 0)
-            {
-                <p class="muted-copy">Aucun utilisateur rattache a ce tenant.</p>
-            }
-            else
-            {
-                <div class="signal-list">
-                    @foreach (var user in Model.Snapshot.Users)
-                    {
-                        <div class="signal-item stacked-signal-item">
-                            <div>
-                                <a asp-page="/SaaSAdmin/Tenants/UserEdit" asp-route-tenantId="@Model.Id" asp-route-userId="@user.UserId"><strong>@user.DisplayName</strong></a>
-                                <div class="table-meta">@user.Email</div>
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-envelope-plus"></i><span>Inviter un nouvel utilisateur</span></div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Invite">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Invitation.Email" class="form-label"></label>
+                                <input asp-for="Invitation.Email" class="form-control" />
+                                <span asp-validation-for="Invitation.Email" class="text-danger small"></span>
                             </div>
-                            <div class="tag-list">
-                                @foreach (var role in user.Roles)
-                                {
-                                    <span class="tag-pill">@role</span>
-                                }
+                            <div class="col-md-6">
+                                <label asp-for="Invitation.Notes" class="form-label"></label>
+                                <input asp-for="Invitation.Notes" class="form-control" />
+                                <span asp-validation-for="Invitation.Notes" class="text-danger small"></span>
                             </div>
-                        </div>
-                    }
-                </div>
-            }
-        </article>
-
-        <article class="panel-card">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Invitations</span>
-                    <h2>Invitations en cours</h2>
-                </div>
-            </div>
-
-            @if (Model.Snapshot.Invitations.Count == 0)
-            {
-                <p class="muted-copy">Aucune invitation en attente.</p>
-            }
-            else
-            {
-                <div class="signal-list">
-                    @foreach (var invitation in Model.Snapshot.Invitations)
-                    {
-                        <div class="signal-item stacked-signal-item">
-                            <div>
-                                <strong>@invitation.DisplayName</strong>
-                                <div class="table-meta">@invitation.Email</div>
-                                <div class="table-meta">Expire le @invitation.ExpiresOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
-                                <a href="@invitation.InviteUrl" target="_blank" rel="noreferrer" class="quick-inline-link">Ouvrir le lien d'invitation</a>
-                                @if (invitation.CanAttachImmediately)
-                                {
-                                    <div class="table-meta">Un compte libre avec ce meme e-mail peut etre rattache immediatement.</div>
-                                }
+                            <div class="col-md-6">
+                                <label asp-for="Invitation.FirstName" class="form-label"></label>
+                                <input asp-for="Invitation.FirstName" class="form-control" />
+                                <span asp-validation-for="Invitation.FirstName" class="text-danger small"></span>
                             </div>
-                            <div class="invitation-actions">
-                                <div class="tag-list">
-                                    <span class="tag-pill @(invitation.Status == GescomSaas.Domain.Enums.UserInvitationStatus.Expired ? "tag-pill-warning" : string.Empty)">@invitation.Status</span>
-                                    @foreach (var role in invitation.Roles)
+                            <div class="col-md-6">
+                                <label asp-for="Invitation.LastName" class="form-label"></label>
+                                <input asp-for="Invitation.LastName" class="form-control" />
+                                <span asp-validation-for="Invitation.LastName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <span class="form-label">Roles a attribuer</span>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var role in Model.AssignableRoles)
                                     {
-                                        <span class="tag-pill">@role</span>
+                                        <label class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="Invitation.SelectedRoles" value="@role" checked="@Model.Invitation.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
+                                            <span class="form-check-label">@role</span>
+                                        </label>
                                     }
                                 </div>
-                                <form method="post" asp-page-handler="CancelInvitation" class="inline-form">
-                                    <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
-                                    <button type="submit" class="btn btn-outline-light btn-sm">Annuler</button>
-                                </form>
+                                <span asp-validation-for="Invitation.SelectedRoles" class="text-danger small"></span>
                             </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary" disabled="@Model.IsUserQuotaSaturated"><i class="bi bi-envelope-plus me-1"></i>Creer invitation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-link-45deg"></i><span>Rattacher un compte existant</span></div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Attach">
+                        @if (Model.Snapshot.AvailableUsers.Count == 0)
+                        {
+                            <p class="text-muted mb-0">Aucun compte libre detecte. Cree une invitation ou ajoute un compte sans tenant.</p>
+                        }
+                        else
+                        {
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="Attachment.UserId" class="form-label"></label>
+                                    <select asp-for="Attachment.UserId" class="form-select">
+                                        <option value="">Selectionner un utilisateur</option>
+                                        @foreach (var user in Model.Snapshot.AvailableUsers)
+                                        {
+                                            <option value="@user.UserId">@user.DisplayName (@user.Email)</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="Attachment.UserId" class="text-danger small"></span>
+                                </div>
+                                <div class="col-12">
+                                    <span class="form-label">Roles a attribuer</span>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var role in Model.AssignableRoles)
+                                        {
+                                            <label class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="Attachment.SelectedRoles" value="@role" checked="@Model.Attachment.SelectedRoles.Contains(role, StringComparer.OrdinalIgnoreCase)" />
+                                                <span class="form-check-label">@role</span>
+                                            </label>
+                                        }
+                                    </div>
+                                    <span asp-validation-for="Attachment.SelectedRoles" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button type="submit" class="btn btn-primary" disabled="@Model.IsUserQuotaSaturated"><i class="bi bi-link-45deg me-1"></i>Rattacher utilisateur</button>
+                            </div>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-person-check"></i><span>Utilisateurs rattaches</span></div>
+                <div class="card-body">
+                    @if (Model.Snapshot.Users.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Aucun utilisateur rattache a ce tenant.</p>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var user in Model.Snapshot.Users)
+                            {
+                                <div class="border-bottom pb-2">
+                                    <a asp-page="/SaaSAdmin/Tenants/UserEdit" asp-route-tenantId="@Model.Id" asp-route-userId="@user.UserId" class="text-decoration-none"><span class="fw-semibold">@user.DisplayName</span></a>
+                                    <div class="small text-muted">@user.Email</div>
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@role</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
-            }
-        </article>
-    </section>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header"><i class="bi bi-envelope"></i><span>Invitations en cours</span></div>
+                <div class="card-body">
+                    @if (Model.Snapshot.Invitations.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Aucune invitation en attente.</p>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var invitation in Model.Snapshot.Invitations)
+                            {
+                                <div class="border-bottom pb-2">
+                                    <div class="fw-semibold">@invitation.DisplayName</div>
+                                    <div class="small text-muted">@invitation.Email</div>
+                                    <div class="small text-muted">Expire le @invitation.ExpiresOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    <a href="@invitation.InviteUrl" target="_blank" rel="noreferrer" class="small text-decoration-none">Ouvrir le lien d'invitation</a>
+                                    @if (invitation.CanAttachImmediately)
+                                    {
+                                        <div class="small text-muted">Un compte libre avec ce meme e-mail peut etre rattache immediatement.</div>
+                                    }
+                                    <div class="d-flex flex-wrap gap-1 mt-1 align-items-center">
+                                        @if (invitation.Status == GescomSaas.Domain.Enums.UserInvitationStatus.Expired)
+                                        {
+                                            <span class="badge" style="background:#fef3c7; color:#92400e">@invitation.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@invitation.Status</span>
+                                        }
+                                        @foreach (var role in invitation.Roles)
+                                        {
+                                            <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@role</span>
+                                        }
+                                        <form method="post" asp-page-handler="CancelInvitation" class="d-inline ms-auto">
+                                            <input type="hidden" name="invitationId" value="@invitation.InvitationId" />
+                                            <button type="submit" class="btn btn-sm btn-secondary">Annuler</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @section Scripts {

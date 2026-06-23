@@ -2,26 +2,59 @@
 @model GescomSaas.Web.Pages.SaaSAdmin.Plans.DeleteModel
 @{
     ViewData["Title"] = "Suppression plan";
+    var canDelete = !Model.IsUsed;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Supprimer @Model.Plan?.Code</h1>
-        <p class="muted-copy">Action irreversible si le plan n'est rattache a aucun tenant.</p>
+        <h1 class="page-header-title">Supprimer @Model.Plan?.Code</h1>
+        <div class="page-header-sub">Suppression d'un plan d'abonnement.</div>
     </div>
-</section>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Plans/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<section class="panel-card">
-    @if (Model.IsUsed)
-    {
-        <div class="app-alert warning">Ce plan est deja utilise par au moins un abonnement.</div>
-    }
-    else
-    {
-        <form method="post" class="form-actions">
-            <button type="submit" class="btn btn-danger-soft">Confirmer la suppression</button>
-            <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+@if (!canDelete)
+{
+    <div class="alert alert-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Suppression bloquee</strong> &mdash; Ce plan est deja utilise par au moins un abonnement.</div>
+}
+else
+{
+    <div class="alert alert-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Attention</strong> &mdash; le plan sera supprime de facon irreversible.</div>
+}
+
+<div class="card">
+    <div class="section-header"><i class="bi bi-trash"></i><span>Recapitulatif</span></div>
+    <div class="card-body">
+        @if (Model.Plan is not null)
+        {
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="small text-muted">Code</div>
+                    <div class="fw-semibold">@Model.Plan.Code</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Libelle</div>
+                    <div class="fw-semibold">@Model.Plan.Label</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Edition</div>
+                    <div class="fw-semibold">@Model.Plan.Edition</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Prix mensuel</div>
+                    <div class="fw-semibold money">@DisplayFormatter.Money(Model.Plan.MonthlyPrice)</div>
+                </div>
+            </div>
+        }
+
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <a class="btn btn-secondary" asp-page="/SaaSAdmin/Plans/Index">Annuler</a>
+            @if (canDelete)
+            {
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Confirmer la suppression</button>
+            }
         </form>
-    }
-</section>
+    </div>
+</div>

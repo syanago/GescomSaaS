@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using GescomSaas.Application.Models;
 using GescomSaas.Domain.Entities.SaaS;
 using GescomSaas.Domain.Enums;
 
@@ -84,6 +85,39 @@ public class CompanyInputModel
     [Display(Name = "Decimales quantites")]
     public int QuantityDecimalPlaces { get; set; } = 3;
 
+    [Display(Name = "Modes de reglement actifs")]
+    public List<PaymentMethod> EnabledPaymentMethods { get; set; } = [];
+
+    [Display(Name = "Saisie assistee des tiers")]
+    public PartnerLookupMode PartnerLookupMode { get; set; } = GescomSaas.Domain.Enums.PartnerLookupMode.Code;
+
+    [Display(Name = "Affectation par defaut des reglements clients")]
+    public PaymentAllocationMode IncomingPaymentAllocationMode { get; set; } = PaymentAllocationMode.Manual;
+
+    [Range(0, 365)]
+    [Display(Name = "Delai relance preventive")]
+    public int ReminderFriendlyDelayDays { get; set; }
+
+    [Range(0, 365)]
+    [Display(Name = "Delai relance formelle")]
+    public int ReminderFormalDelayDays { get; set; } = 7;
+
+    [Range(0, 365)]
+    [Display(Name = "Delai dernier avis")]
+    public int ReminderFinalNoticeDelayDays { get; set; } = 14;
+
+    [Display(Name = "Bloquer les commandes si plafond depasse")]
+    public bool BlockSalesOrdersOnCreditLimit { get; set; }
+
+    [Display(Name = "Bloquer les commandes si impayes")]
+    public bool BlockSalesOrdersOnOverdue { get; set; }
+
+    [Display(Name = "Bloquer les livraisons si plafond depasse")]
+    public bool BlockDeliveriesOnCreditLimit { get; set; }
+
+    [Display(Name = "Bloquer les livraisons si impayes")]
+    public bool BlockDeliveriesOnOverdue { get; set; }
+
     [Display(Name = "Autoriser le stock negatif")]
     public bool AllowNegativeStock { get; set; }
 
@@ -116,6 +150,16 @@ public class CompanyInputModel
             QuantityDecimalSeparator = ToSelectorValue(tenant.QuantityDecimalSeparator),
             QuantityGroupSeparator = ToSelectorValue(tenant.QuantityGroupSeparator),
             QuantityDecimalPlaces = tenant.QuantityDecimalPlaces,
+            EnabledPaymentMethods = PaymentMethodCatalog.DeserializeSelection(tenant.PaymentMethodsJson).ToList(),
+            PartnerLookupMode = tenant.PartnerLookupMode,
+            IncomingPaymentAllocationMode = tenant.IncomingPaymentAllocationMode,
+            ReminderFriendlyDelayDays = tenant.ReminderFriendlyDelayDays,
+            ReminderFormalDelayDays = tenant.ReminderFormalDelayDays,
+            ReminderFinalNoticeDelayDays = tenant.ReminderFinalNoticeDelayDays,
+            BlockSalesOrdersOnCreditLimit = tenant.BlockSalesOrdersOnCreditLimit,
+            BlockSalesOrdersOnOverdue = tenant.BlockSalesOrdersOnOverdue,
+            BlockDeliveriesOnCreditLimit = tenant.BlockDeliveriesOnCreditLimit,
+            BlockDeliveriesOnOverdue = tenant.BlockDeliveriesOnOverdue,
             AllowNegativeStock = tenant.AllowNegativeStock,
             DefaultStockValuationMethod = tenant.DefaultStockValuationMethod,
             VisualTheme = tenant.VisualTheme
@@ -143,6 +187,16 @@ public class CompanyInputModel
         tenant.QuantityDecimalSeparator = NormalizeSeparator(QuantityDecimalSeparator);
         tenant.QuantityGroupSeparator = NormalizeSeparator(QuantityGroupSeparator);
         tenant.QuantityDecimalPlaces = QuantityDecimalPlaces;
+        tenant.PaymentMethodsJson = PaymentMethodCatalog.SerializeSelection(EnabledPaymentMethods);
+        tenant.PartnerLookupMode = PartnerLookupMode;
+        tenant.IncomingPaymentAllocationMode = IncomingPaymentAllocationMode;
+        tenant.ReminderFriendlyDelayDays = ReminderFriendlyDelayDays;
+        tenant.ReminderFormalDelayDays = ReminderFormalDelayDays;
+        tenant.ReminderFinalNoticeDelayDays = ReminderFinalNoticeDelayDays;
+        tenant.BlockSalesOrdersOnCreditLimit = BlockSalesOrdersOnCreditLimit;
+        tenant.BlockSalesOrdersOnOverdue = BlockSalesOrdersOnOverdue;
+        tenant.BlockDeliveriesOnCreditLimit = BlockDeliveriesOnCreditLimit;
+        tenant.BlockDeliveriesOnOverdue = BlockDeliveriesOnOverdue;
         tenant.AllowNegativeStock = AllowNegativeStock;
         tenant.DefaultStockValuationMethod = DefaultStockValuationMethod;
         tenant.VisualTheme = VisualTheme;

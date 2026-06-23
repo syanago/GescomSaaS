@@ -1,26 +1,29 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Infrastructure.Configuration;
 using GescomSaas.Infrastructure.Persistence;
-using GescomSaas.Web.Pages;
 using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Data;
 using System.Text;
 using System.Text.Json;
 
 namespace GescomSaas.Web.Pages.Settings;
 
-[Authorize(Roles = "TenantOwner,PlatformAdmin")]
 public class SageImportModel(
     ISageImportService sageImportService,
     ApplicationDbContext dbContext,
-    GescomSaas.Application.Contracts.ICurrentTenantAccessor currentTenantAccessor) : CommercialPageModel(dbContext, currentTenantAccessor)
+    GescomSaas.Application.Contracts.ICurrentTenantAccessor currentTenantAccessor,
+    GescomSaas.Application.Contracts.IUserPermissionService userPermissionService,
+    IOptions<LigComRuntimeOptions> runtimeOptions) : SettingsPageModel(dbContext, currentTenantAccessor, userPermissionService, runtimeOptions)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SettingsSageImportManage];
+
     private static readonly JsonSerializerOptions ComparisonJsonOptions = new(JsonSerializerDefaults.Web);
 
     [BindProperty]

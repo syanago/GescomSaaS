@@ -4,40 +4,48 @@
     ViewData["Title"] = "Nouveau tenant";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Plateforme</span>
-        <h1>Nouveau tenant</h1>
-        <p class="muted-copy">Creez un nouveau compte client SaaS avec son abonnement initial.</p>
+        <h1 class="page-header-title">Nouveau tenant</h1>
+        <div class="page-header-sub">Creez un nouveau compte client SaaS avec son abonnement initial.</div>
     </div>
-</section>
+    <div>
+        <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
 
-<form method="post" class="panel-card stack-form compact-form">
-    <div class="form-grid">
-        <div><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger"></span></div>
-        <div><label asp-for="Input.Slug" class="form-label"></label><input asp-for="Input.Slug" class="form-control" /><span asp-validation-for="Input.Slug" class="text-danger"></span></div>
-        <div><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger"></span></div>
-        <div><label asp-for="Input.SubscriptionPlanId" class="form-label">Plan</label><select asp-for="Input.SubscriptionPlanId" asp-items="Model.Plans" class="form-select"></select><span asp-validation-for="Input.SubscriptionPlanId" class="text-danger"></span></div>
-        <div><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
-        <div><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
-        <div><label asp-for="Input.SubscriptionStatus" class="form-label">Statut</label><select asp-for="Input.SubscriptionStatus" asp-items="Html.GetEnumSelectList<GescomSaas.Domain.Enums.SubscriptionStatus>()" class="form-select"></select></div>
-        <div class="inline-checks">
-            <div class="form-check"><input asp-for="Input.IsActive" class="form-check-input" /><label asp-for="Input.IsActive" class="form-check-label"></label></div>
-            <div class="form-check"><input asp-for="Input.AutoRenew" class="form-check-input" /><label asp-for="Input.AutoRenew" class="form-check-label">Renouvellement automatique</label></div>
-        </div>
-        <div><label asp-for="Input.StartsOn" class="form-label">Debut</label><input asp-for="Input.StartsOn" class="form-control" /></div>
-        <div><label asp-for="Input.EndsOn" class="form-label">Fin</label><input asp-for="Input.EndsOn" class="form-control" /></div>
-        <div><label asp-for="Input.NextBillingDate" class="form-label">Prochaine facturation</label><input asp-for="Input.NextBillingDate" class="form-control" /></div>
-        <div><label asp-for="Input.MonthlyPriceOverride" class="form-label">Prix mensuel override</label><input asp-for="Input.MonthlyPriceOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxUsersOverride" class="form-label">Override utilisateurs</label><input asp-for="Input.MaxUsersOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxCustomersOverride" class="form-label">Override clients</label><input asp-for="Input.MaxCustomersOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxSuppliersOverride" class="form-label">Override fournisseurs</label><input asp-for="Input.MaxSuppliersOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxProductsOverride" class="form-label">Override articles</label><input asp-for="Input.MaxProductsOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxWarehousesOverride" class="form-label">Override depots</label><input asp-for="Input.MaxWarehousesOverride" class="form-control" /></div>
-        <div><label asp-for="Input.MaxMonthlyDocumentsOverride" class="form-label">Override documents/mois</label><input asp-for="Input.MaxMonthlyDocumentsOverride" class="form-control" /></div>
+<div class="card">
+    <div class="section-header"><i class="bi bi-building"></i><span>Informations du tenant</span></div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Input.CompanyName" class="form-label"></label><input asp-for="Input.CompanyName" class="form-control" /><span asp-validation-for="Input.CompanyName" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.Slug" class="form-label"></label><input asp-for="Input.Slug" class="form-control" /><span asp-validation-for="Input.Slug" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.PrimaryContactEmail" class="form-label"></label><input asp-for="Input.PrimaryContactEmail" class="form-control" /><span asp-validation-for="Input.PrimaryContactEmail" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.SubscriptionPlanId" class="form-label">Plan</label><select asp-for="Input.SubscriptionPlanId" asp-items="Model.Plans" class="form-select"></select><span asp-validation-for="Input.SubscriptionPlanId" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Input.CountryCode" class="form-label"></label><input asp-for="Input.CountryCode" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.CurrencyCode" class="form-label"></label><input asp-for="Input.CurrencyCode" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.SubscriptionStatus" class="form-label">Statut</label><select asp-for="Input.SubscriptionStatus" asp-items="Html.GetEnumSelectList<GescomSaas.Domain.Enums.SubscriptionStatus>()" class="form-select"></select></div>
+                <div class="col-md-6">
+                    <div class="form-check"><input asp-for="Input.IsActive" class="form-check-input" /><label asp-for="Input.IsActive" class="form-check-label"></label></div>
+                    <div class="form-check"><input asp-for="Input.AutoRenew" class="form-check-input" /><label asp-for="Input.AutoRenew" class="form-check-label">Renouvellement automatique</label></div>
+                </div>
+                <div class="col-md-6"><label asp-for="Input.StartsOn" class="form-label">Debut</label><input asp-for="Input.StartsOn" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.EndsOn" class="form-label">Fin</label><input asp-for="Input.EndsOn" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.NextBillingDate" class="form-label">Prochaine facturation</label><input asp-for="Input.NextBillingDate" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MonthlyPriceOverride" class="form-label">Prix mensuel override</label><input asp-for="Input.MonthlyPriceOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxUsersOverride" class="form-label">Override utilisateurs</label><input asp-for="Input.MaxUsersOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxCustomersOverride" class="form-label">Override clients</label><input asp-for="Input.MaxCustomersOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxSuppliersOverride" class="form-label">Override fournisseurs</label><input asp-for="Input.MaxSuppliersOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxProductsOverride" class="form-label">Override articles</label><input asp-for="Input.MaxProductsOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxWarehousesOverride" class="form-label">Override depots</label><input asp-for="Input.MaxWarehousesOverride" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Input.MaxMonthlyDocumentsOverride" class="form-label">Override documents/mois</label><input asp-for="Input.MaxMonthlyDocumentsOverride" class="form-control" /></div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/SaaSAdmin/Tenants/Index">Annuler</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+            </div>
+        </form>
     </div>
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary-soft">Enregistrer</button>
-        <a class="btn btn-outline-light" asp-page="/SaaSAdmin/Tenants/Index">Annuler</a>
-    </div>
-</form>
+</div>
