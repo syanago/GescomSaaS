@@ -26,6 +26,16 @@ public class Tenant : AuditableEntity
     public string QuantityDecimalSeparator { get; set; } = ",";
     public string QuantityGroupSeparator { get; set; } = " ";
     public int QuantityDecimalPlaces { get; set; } = 3;
+    public string PaymentMethodsJson { get; set; } = "[]";
+    public PartnerLookupMode PartnerLookupMode { get; set; } = PartnerLookupMode.Code;
+    public PaymentAllocationMode IncomingPaymentAllocationMode { get; set; } = PaymentAllocationMode.Manual;
+    public int ReminderFriendlyDelayDays { get; set; }
+    public int ReminderFormalDelayDays { get; set; } = 7;
+    public int ReminderFinalNoticeDelayDays { get; set; } = 14;
+    public bool BlockSalesOrdersOnCreditLimit { get; set; }
+    public bool BlockSalesOrdersOnOverdue { get; set; }
+    public bool BlockDeliveriesOnCreditLimit { get; set; }
+    public bool BlockDeliveriesOnOverdue { get; set; }
     public bool AllowNegativeStock { get; set; }
     public StockValuationMethod DefaultStockValuationMethod { get; set; } = StockValuationMethod.Cmup;
     public ApplicationTheme VisualTheme { get; set; } = ApplicationTheme.LigComMidnight;
@@ -43,4 +53,5 @@ public class Tenant : AuditableEntity
     public bool IsActive { get; set; } = true;
 
     public ICollection<TenantSubscription> Subscriptions { get; set; } = new List<TenantSubscription>();
+    public ICollection<TenantAccessProfile> AccessProfiles { get; set; } = new List<TenantAccessProfile>();
 }

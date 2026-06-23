@@ -11,6 +11,7 @@ public class CommercialDocumentLine : AuditableEntity
     public Product? Product { get; set; }
 
     public string Description { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPriceExcludingTax { get; set; }
     public decimal DiscountRate { get; set; }

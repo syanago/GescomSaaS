@@ -11,4 +11,6 @@ public class PaymentAllocation : AuditableEntity
     public CommercialDocument? CommercialDocument { get; set; }
 
     public decimal AllocatedAmount { get; set; }
+    public DateTime AllocatedOnUtc { get; set; } = DateTime.UtcNow;
+    public string? Notes { get; set; }
 }

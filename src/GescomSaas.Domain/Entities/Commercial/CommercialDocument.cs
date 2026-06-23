@@ -24,6 +24,11 @@ public class CommercialDocument : TenantEntity
     public decimal TotalExcludingTax { get; set; }
     public decimal TotalTax { get; set; }
     public decimal TotalIncludingTax { get; set; }
+    public CommercialPaymentStatus PaymentStatus { get; set; } = CommercialPaymentStatus.Unpaid;
+    public decimal PaidAmount { get; set; }
+    public decimal BalanceAmount { get; set; }
+    public bool InDispute { get; set; }
+    public DateOnly? PromiseToPayDate { get; set; }
 
     public ICollection<CommercialDocumentLine> Lines { get; set; } = new List<CommercialDocumentLine>();
     public ICollection<CommercialDocument> DerivedDocuments { get; set; } = new List<CommercialDocument>();

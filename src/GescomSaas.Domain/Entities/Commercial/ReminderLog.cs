@@ -11,5 +11,8 @@ public class ReminderLog : TenantEntity
     public ReminderLevel ReminderLevel { get; set; } = ReminderLevel.Friendly;
     public DateTime SentOnUtc { get; set; } = DateTime.UtcNow;
     public string Channel { get; set; } = "Manual";
+    public bool IsAutomatic { get; set; }
+    public bool IsGrouped { get; set; }
+    public DateOnly? NextActionDate { get; set; }
     public string? Notes { get; set; }
 }
