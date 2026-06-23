@@ -1,4 +1,182 @@
 (() => {
+    const navToggle = document.querySelector("[data-nav-toggle]");
+    const mainNav = document.querySelector("[data-main-nav]");
+    const navBackdrop = document.querySelector("[data-nav-backdrop]");
+    const dropdowns = Array.from(document.querySelectorAll("[data-nav-dropdown]"));
+
+    if (!mainNav) {
+        return;
+    }
+
+    const closeMobileNav = () => {
+        mainNav.classList.remove("is-open");
+        navToggle?.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("nav-open");
+
+        if (navBackdrop) {
+            navBackdrop.hidden = true;
+        }
+    };
+
+    const syncBackdrop = () => {
+        const isDesktop = window.innerWidth > 992;
+        const isOpen = mainNav.classList.contains("is-open");
+
+        if (isDesktop) {
+            document.body.classList.remove("nav-open");
+            if (navBackdrop) {
+                navBackdrop.hidden = true;
+            }
+            return;
+        }
+
+        document.body.classList.toggle("nav-open", isOpen);
+        if (navBackdrop) {
+            navBackdrop.hidden = !isOpen;
+        }
+    };
+
+    const closeDropdowns = (exceptDropdown) => {
+        for (const dropdown of dropdowns) {
+            if (exceptDropdown && dropdown === exceptDropdown) {
+                continue;
+            }
+
+            dropdown.classList.remove("is-open");
+            const toggle = dropdown.querySelector("[data-nav-dropdown-toggle]");
+            if (toggle) {
+                toggle.setAttribute("aria-expanded", "false");
+            }
+        }
+    };
+
+    navToggle?.addEventListener("click", () => {
+        const isOpen = mainNav.classList.toggle("is-open");
+        navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        syncBackdrop();
+
+        if (!isOpen) {
+            closeDropdowns();
+        }
+    });
+
+    for (const dropdown of dropdowns) {
+        const toggle = dropdown.querySelector("[data-nav-dropdown-toggle]");
+        if (!toggle) {
+            continue;
+        }
+
+        toggle.addEventListener("click", () => {
+            const isOpen = dropdown.classList.contains("is-open");
+            closeDropdowns(dropdown);
+            dropdown.classList.toggle("is-open", !isOpen);
+            toggle.setAttribute("aria-expanded", !isOpen ? "true" : "false");
+        });
+    }
+
+    mainNav.querySelectorAll("a[href]").forEach((link) => {
+        link.addEventListener("click", () => {
+            closeDropdowns();
+            closeMobileNav();
+        });
+    });
+
+    navBackdrop?.addEventListener("click", () => {
+        closeDropdowns();
+        closeMobileNav();
+    });
+
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        if (!target.closest("[data-nav-dropdown]") && !target.closest("[data-nav-toggle]")) {
+            closeDropdowns();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+            return;
+        }
+
+        closeDropdowns();
+        closeMobileNav();
+    });
+
+    window.addEventListener("resize", () => {
+        if (window.innerWidth > 992) {
+            closeDropdowns();
+            closeMobileNav();
+            return;
+        }
+
+        syncBackdrop();
+    });
+
+    syncBackdrop();
+})();
+
+(() => {
+    const indicator = document.querySelector("[data-connectivity-indicator]");
+    if (!indicator) {
+        return;
+    }
+
+    const label = indicator.querySelector(".connectivity-label");
+    const runtimeMode = (indicator.dataset.runtimeMode || document.body?.dataset.runtimeMode || "Central").toLowerCase();
+    const databaseProvider = (indicator.dataset.databaseProvider || document.body?.dataset.databaseProvider || "").toLowerCase();
+    const runtimeReady = (indicator.dataset.runtimeReady || document.body?.dataset.runtimeReady || "false").toLowerCase() === "true";
+    const runtimeDisplayMode = (indicator.dataset.runtimeDisplayMode || document.body?.dataset.runtimeDisplayMode || runtimeMode).toLowerCase();
+
+    const updateConnectivity = () => {
+        const online = navigator.onLine;
+        indicator.classList.remove("is-online", "is-offline", "is-local");
+
+        let text;
+        if (runtimeDisplayMode === "localnodepending" || (runtimeMode === "localnode" && !runtimeReady)) {
+            indicator.classList.add("is-local");
+            text = databaseProvider === "sqlite"
+                ? "Preparation du noeud local SQLite"
+                : "Preparation du noeud local";
+        } else if (runtimeMode === "localnode") {
+            indicator.classList.add("is-local");
+            if (online) {
+                indicator.classList.add("is-online");
+                text = databaseProvider === "sqlite"
+                    ? "Noeud local SQLite - En ligne"
+                    : "Noeud local - En ligne";
+            } else {
+                indicator.classList.add("is-offline");
+                text = databaseProvider === "sqlite"
+                    ? "Noeud local SQLite - Hors connexion"
+                    : "Noeud local - Hors connexion";
+            }
+        } else {
+            if (online) {
+                indicator.classList.add("is-online");
+                text = "Serveur web - En ligne";
+            } else {
+                indicator.classList.add("is-offline");
+                text = "Serveur web - Reseau indisponible";
+            }
+        }
+
+        if (label) {
+            label.textContent = text;
+        } else {
+            indicator.textContent = text;
+        }
+    };
+
+    window.addEventListener("online", updateConnectivity);
+    window.addEventListener("offline", updateConnectivity);
+    updateConnectivity();
+})();
+
+(() => {
     const root = document.body;
     if (!root) {
         return;
@@ -366,6 +544,112 @@
                 }
             });
         }
+    }
+})();
+
+(() => {
+    const forms = Array.from(document.querySelectorAll("[data-partner-assist]"));
+    if (forms.length === 0) {
+        return;
+    }
+
+    const normalize = (value) => (value || "").trim().toLowerCase();
+
+    for (const container of forms) {
+        const lookupInput = container.querySelector("[data-partner-lookup-input]");
+        const datalist = container.querySelector("[data-partner-options]");
+        const createButton = container.querySelector("[data-partner-create-button]");
+        const status = container.querySelector("[data-partner-create-status]");
+        const createPanel = container.parentElement?.parentElement?.querySelector("[data-partner-create-panel]")
+            || container.closest("form")?.querySelector("[data-partner-create-panel]");
+        const createToggle = createPanel?.querySelector("[data-partner-create-toggle]");
+        const newCodeInput = createPanel?.querySelector("[data-partner-new-code]");
+        const newNameInput = createPanel?.querySelector("[data-partner-new-name]");
+        const lookupMode = container.dataset.partnerLookupMode || "Code";
+        const entityLabel = container.dataset.partnerEntityLabel || "tiers";
+
+        if (!lookupInput || !datalist || !createButton || !status || !createPanel || !createToggle) {
+            continue;
+        }
+
+        const optionValues = new Set(Array.from(datalist.querySelectorAll("option"))
+            .map((option) => normalize(option.getAttribute("value") || "")));
+
+        const openCreatePanel = (prefillFromLookup) => {
+            createToggle.checked = true;
+            createPanel.hidden = false;
+
+            const lookupValue = (lookupInput.value || "").trim();
+            if (!prefillFromLookup || lookupValue.length === 0) {
+                return;
+            }
+
+            if (lookupMode === "Code") {
+                if (newCodeInput && !newCodeInput.value.trim()) {
+                    newCodeInput.value = lookupValue;
+                }
+            } else if (newNameInput && !newNameInput.value.trim()) {
+                newNameInput.value = lookupValue;
+            }
+        };
+
+        const syncState = () => {
+            const lookupValue = (lookupInput.value || "").trim();
+            const hasLookup = lookupValue.length > 0;
+            const hasExactMatch = hasLookup && optionValues.has(normalize(lookupValue));
+            const shouldSuggestCreate = hasLookup && !hasExactMatch;
+            const manualOpen = createToggle.checked;
+
+            createPanel.hidden = !(manualOpen || shouldSuggestCreate);
+
+            if (shouldSuggestCreate) {
+                if (!createToggle.checked) {
+                    createToggle.checked = true;
+                }
+
+                if (status) {
+                    status.textContent = `Aucun ${entityLabel} correspondant trouve. Tu peux le creer tout de suite.`;
+                }
+
+                if (lookupMode === "Code") {
+                    if (newCodeInput && !newCodeInput.value.trim()) {
+                        newCodeInput.value = lookupValue;
+                    }
+                } else if (newNameInput && !newNameInput.value.trim()) {
+                    newNameInput.value = lookupValue;
+                }
+            } else if (hasExactMatch) {
+                if (!manualOpen) {
+                    createPanel.hidden = true;
+                }
+
+                status.textContent = `${entityLabel.charAt(0).toUpperCase()}${entityLabel.slice(1)} existant detecte.`;
+            } else {
+                if (!manualOpen) {
+                    createPanel.hidden = true;
+                }
+
+                status.textContent = `Selectionne un ${entityLabel} existant ou cree-le a la volee.`;
+            }
+        };
+
+        createButton.addEventListener("click", () => {
+            openCreatePanel(true);
+            syncState();
+            if (lookupMode === "Code" && newCodeInput) {
+                newCodeInput.focus();
+            } else if (newNameInput) {
+                newNameInput.focus();
+            }
+        });
+
+        createToggle.addEventListener("change", () => {
+            syncState();
+        });
+
+        lookupInput.addEventListener("input", syncState);
+        lookupInput.addEventListener("change", syncState);
+        syncState();
     }
 })();
 

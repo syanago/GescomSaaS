@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LigCom — Sanity test</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:#fff; color:#101828; padding:40px; }
+  h1 { color:#079455; font-size:32px; margin:0 0 16px; }
+  .ok { background:#ECFDF3; color:#067647; border:1px solid #D1FADF; padding:12px 16px; border-radius:8px; margin-bottom:16px; }
+  .info { background:#EFF8FF; color:#175CD3; border:1px solid #D1E9FF; padding:12px 16px; border-radius:8px; margin-bottom:16px; }
+  code { background:#F2F4F7; padding:2px 6px; border-radius:4px; font-family:Consolas,monospace; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px; }
+  .tile { background:#F9FAFB; border:1px solid #EAECF0; border-radius:10px; padding:20px; }
+  .tile h3 { margin:0 0 8px; color:#079455; font-size:16px; }
+  .tile p { margin:0; color:#475467; font-size:14px; }
+</style>
+</head>
+<body>
+
+<h1>✓ LigCom — Test de rendu</h1>
+
+<div class="ok">
+  <strong>Si tu vois ce message en VERT</strong>, ton navigateur fonctionne correctement.
+</div>
+
+<div class="info">
+  <strong>Si la page de design system reste noire/blanche</strong>, le problème vient :
+  <ul style="margin:8px 0 0">
+    <li>du <strong>cache Chrome</strong> → vide via <code>Ctrl+Maj+Suppr</code> "Images et fichiers en cache" sur la dernière heure</li>
+    <li>d'un <strong>service worker fantôme</strong> → DevTools F12 → Application → Service Workers → Unregister</li>
+    <li>d'une <strong>extension</strong> (Brave Shields, uBlock, AdGuard) → mode Incognito <code>Ctrl+Maj+N</code> pour tester sans extensions</li>
+  </ul>
+</div>
+
+<h2 style="color:#101828; margin-top:32px">Test réseau des assets locaux</h2>
+<p>Si ces 3 cases s'affichent <strong>en couleur</strong> (avec bordure verte), c'est que les assets locaux Bootstrap fonctionnent.</p>
+
+<div id="results">
+  <p style="color:#667085">Chargement…</p>
+</div>
+
+<script>
+  const tests = [
+    { name: 'Bootstrap CSS', url: 'lib/bootstrap/dist/css/bootstrap.min.css' },
+    { name: 'Bootstrap JS',  url: 'lib/bootstrap/dist/js/bootstrap.bundle.min.js' },
+    { name: 'Lucide JS',     url: 'lib/lucide/lucide.min.js' }
+  ];
+  const root = document.getElementById('results');
+  Promise.all(tests.map(t =>
+    fetch(t.url, { method: 'HEAD' })
+      .then(r => ({ ...t, status: r.status, ok: r.ok, size: r.headers.get('content-length') }))
+      .catch(e => ({ ...t, status: 0, ok: false, error: e.message }))
+  )).then(results => {
+    root.innerHTML = '<div class="grid">' + results.map(r => `
+      <div class="tile" style="border-color:${r.ok ? '#D1FADF' : '#FEE4E2'};background:${r.ok ? '#ECFDF3' : '#FEF3F2'}">
+        <h3 style="color:${r.ok ? '#067647' : '#B42318'}">${r.ok ? '✓' : '✗'} ${r.name}</h3>
+        <p>${r.ok ? 'HTTP ' + r.status + ' OK' : 'ERREUR ' + (r.status || r.error || 'réseau')}</p>
+        <p style="font-size:12px;margin-top:6px"><code>${r.url}</code></p>
+      </div>`).join('') + '</div>';
+
+    const allOk = results.every(r => r.ok);
+    root.insertAdjacentHTML('beforeend', `
+      <p style="margin-top:24px; padding:14px; background:${allOk ? '#ECFDF3' : '#FEF3F2'}; border:1px solid ${allOk ? '#D1FADF' : '#FEE4E2'}; border-radius:8px; color:${allOk ? '#067647' : '#B42318'}">
+        <strong>${allOk ? 'Tous les assets locaux sont accessibles.' : 'Au moins un asset n\'est pas accessible.'}</strong>
+        ${allOk ? '→ Le problème de page noire n\'est PAS un problème de fichier. Vide le cache (Ctrl+Maj+Suppr) ou ouvre en navigation privée.' : '→ C\'est ce qui cause la page noire. Le serveur ne sert pas correctement les assets.'}
+      </p>`);
+  });
+</script>
+
+</body>
+</html>

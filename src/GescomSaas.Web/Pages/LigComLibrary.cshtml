@@ -1,0 +1,961 @@
+@page
+@model GescomSaas.Web.Pages.LigComLibraryModel
+@{
+    ViewData["Title"] = "Bibliothèque de composants LigCom";
+    Layout = "_LayoutLigCom";
+}
+
+@section Scripts {
+    <script src="~/js/ligcom-library.js" asp-append-version="true"></script>
+    <script>lucide.createIcons();</script>
+}
+
+<div class="lc-page-header">
+    <div>
+        <h1 class="lc-page-title">Bibliothèque de composants</h1>
+        <p class="lc-page-sub">Référence visuelle complète du design system LigCom — Untitled UI strict, densité élevée, multi-devise FCFA / EUR / USD.</p>
+    </div>
+</div>
+
+<div class="lc-lib">
+
+    @* =========================== STICKY TOC =========================== *@
+    <aside class="lc-lib__nav">
+        <a class="lc-lib__nav-item is-active" href="#sec-buttons">Boutons</a>
+        <a class="lc-lib__nav-item" href="#sec-inputs">Inputs</a>
+        <a class="lc-lib__nav-item" href="#sec-affixes">Préfixe / suffixe</a>
+        <a class="lc-lib__nav-item" href="#sec-autocomplete">Autocomplete</a>
+        <a class="lc-lib__nav-item" href="#sec-currency">Devise</a>
+        <a class="lc-lib__nav-item" href="#sec-toggles">Checkbox / radio / switch</a>
+        <a class="lc-lib__nav-item" href="#sec-badges">Badges</a>
+        <a class="lc-lib__nav-item" href="#sec-cards">Cards</a>
+        <a class="lc-lib__nav-item" href="#sec-pageheader">Page header</a>
+        <a class="lc-lib__nav-item" href="#sec-stats">Stat cards</a>
+        <a class="lc-lib__nav-item" href="#sec-tabs">Tabs</a>
+        <a class="lc-lib__nav-item" href="#sec-breadcrumbs">Breadcrumbs</a>
+        <a class="lc-lib__nav-item" href="#sec-avatars">Avatars</a>
+        <a class="lc-lib__nav-item" href="#sec-modals">Modals</a>
+        <a class="lc-lib__nav-item" href="#sec-drawers">Drawers</a>
+        <a class="lc-lib__nav-item" href="#sec-toasts">Toasts</a>
+        <a class="lc-lib__nav-item" href="#sec-empty">Empty states</a>
+        <a class="lc-lib__nav-item" href="#sec-skeleton">Skeleton</a>
+    </aside>
+
+    <div>
+
+    @* ========================================================================
+       BOUTONS
+       ======================================================================== *@
+    <section id="sec-buttons" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Boutons</h2>
+        <p class="lc-lib__section-sub">5 variantes × 3 tailles × 6 états · classes .btn-primary / -secondary / -tertiary / -link / -danger.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-label">Variantes (md)</div>
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-primary"><i data-lucide="save" style="width:14px;height:14px"></i>Primary</button>
+                <button class="btn btn-secondary"><i data-lucide="download" style="width:14px;height:14px"></i>Secondary</button>
+                <button class="btn btn-tertiary"><i data-lucide="settings" style="width:14px;height:14px"></i>Tertiary (ghost)</button>
+                <button class="btn btn-link">Link · en savoir plus</button>
+                <button class="btn btn-danger"><i data-lucide="trash-2" style="width:14px;height:14px"></i>Destructive</button>
+            </div>
+
+            <div class="lc-lib__demo-label">Tailles (primary)</div>
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-primary">Medium</button>
+                <button class="btn btn-primary btn-lg">Large</button>
+            </div>
+
+            <div class="lc-lib__demo-label">États</div>
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-primary">Default</button>
+                <button class="btn btn-primary" style="background:var(--color-primary-700);border-color:var(--color-primary-700)">Hover (forcé)</button>
+                <button class="btn btn-primary" style="box-shadow:var(--focus-ring)">Focus</button>
+                <button class="btn btn-primary btn--loading">Loading…</button>
+                <button class="btn btn-primary" disabled>Disabled</button>
+                <button class="btn btn-primary" data-online-only disabled data-tip="Indisponible hors ligne — sera possible une fois reconnecté">Offline-only</button>
+            </div>
+
+            <div class="lc-lib__demo-label">Icon variants</div>
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-primary"><i data-lucide="plus" style="width:14px;height:14px"></i>Icon leading</button>
+                <button class="btn btn-secondary">Icon trailing<i data-lucide="arrow-right" style="width:14px;height:14px"></i></button>
+                <button class="btn btn-secondary btn--icon-only" aria-label="Plus"><i data-lucide="more-horizontal" style="width:16px;height:16px"></i></button>
+                <button class="btn btn-secondary btn--icon-only btn-sm" aria-label="Modifier"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
+                <button class="btn btn-secondary btn--icon-only btn-lg" aria-label="Imprimer"><i data-lucide="printer" style="width:18px;height:18px"></i></button>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       INPUTS
+       ======================================================================== *@
+    <section id="sec-inputs" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Inputs</h2>
+        <p class="lc-lib__section-sub">Avec label · hint · états error · variantes spécialisées.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-text">Nom du client</label>
+                    <input id="inp-text" class="form-control" type="text" placeholder="Ex. SARL Komlan & Fils" />
+                    <div class="form-text">Saisis le nom complet de la société.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-error">Email</label>
+                    <input id="inp-error" class="form-control is-invalid" type="email" value="contact@@invalid" />
+                    <div class="invalid-feedback">Adresse email invalide.</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-num">Quantité</label>
+                    <div class="lc-num-input">
+                        <button type="button" class="lc-num-input__btn" data-num-step="down">−</button>
+                        <input id="inp-num" type="number" value="12" step="1" />
+                        <button type="button" class="lc-num-input__btn" data-num-step="up">+</button>
+                    </div>
+                    <div class="form-text">Spinners customs (cache les natifs Chrome/Firefox).</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-pwd">Mot de passe</label>
+                    <div class="lc-pwd">
+                        <input id="inp-pwd" class="form-control" type="password" value="MotDePasseDuRoi42" autocomplete="current-password" />
+                        <button type="button" class="lc-pwd__toggle" data-pwd-toggle="inp-pwd" aria-label="Afficher le mot de passe">
+                            <i data-lucide="eye" data-pwd-icon="open" style="width:16px;height:16px"></i>
+                            <i data-lucide="eye-off" data-pwd-icon="closed" style="width:16px;height:16px;display:none"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-search">Recherche</label>
+                    <div style="position:relative">
+                        <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-tertiary);pointer-events:none"></i>
+                        <input id="inp-search" class="form-control" type="search" placeholder="Rechercher…" style="padding-left:34px" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-date">Date de facturation</label>
+                    <input id="inp-date" class="form-control" type="date" value="2026-04-27" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-select">Mode de paiement</label>
+                    <select id="inp-select" class="form-select">
+                        <option>Virement bancaire</option>
+                        <option>Mobile Money (MTN, Moov)</option>
+                        <option>Espèces</option>
+                        <option>Chèque</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="inp-textarea">Notes</label>
+                    <textarea id="inp-textarea" class="form-control" rows="3" placeholder="Conditions particulières…"></textarea>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Pièces jointes</label>
+                    <div class="lc-file-drop">
+                        <div class="lc-file-drop__icon"><i data-lucide="upload-cloud" style="width:18px;height:18px"></i></div>
+                        <div class="lc-file-drop__title"><strong>Cliquer pour téléverser</strong> ou glisser un fichier</div>
+                        <div class="lc-file-drop__hint">PDF, JPG, PNG · max 10 Mo</div>
+                        <input type="file" hidden multiple accept=".pdf,.jpg,.png" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       PRÉFIXE / SUFFIXE
+       ======================================================================== *@
+    <section id="sec-affixes" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Préfixe / suffixe</h2>
+        <p class="lc-lib__section-sub">Indispensables pour la saisie monétaire et les pourcentages.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Montant TTC (FCFA)</label>
+                    <div class="lc-input-group">
+                        <input type="text" value="1 250 000" inputmode="numeric" />
+                        <div class="lc-input-group__addon">FCFA</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Montant TTC (EUR)</label>
+                    <div class="lc-input-group">
+                        <input type="text" value="1 905,93" inputmode="decimal" />
+                        <div class="lc-input-group__addon">€</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Montant TTC (USD)</label>
+                    <div class="lc-input-group">
+                        <div class="lc-input-group__addon lc-input-group__addon--prefix">$</div>
+                        <input type="text" value="2 048,12" inputmode="decimal" />
+                        <div class="lc-input-group__addon">USD</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Taux TVA</label>
+                    <div class="lc-input-group">
+                        <input type="text" value="18,00" inputmode="decimal" />
+                        <div class="lc-input-group__addon">%</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Remise</label>
+                    <div class="lc-input-group">
+                        <input type="text" value="5,00" inputmode="decimal" />
+                        <div class="lc-input-group__addon">%</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Erreur de saisie</label>
+                    <div class="lc-input-group is-invalid">
+                        <input type="text" value="abc" />
+                        <div class="lc-input-group__addon">FCFA</div>
+                    </div>
+                    <div class="invalid-feedback">Saisis un nombre entier.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       AUTOCOMPLETE
+       ======================================================================== *@
+    <section id="sec-autocomplete" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Autocomplete (article / client)</h2>
+        <p class="lc-lib__section-sub">Critique pour la saisie. Code mono + libellé. Navigation clavier ↑↓ Enter Esc.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Client</label>
+                    <div class="lc-ac" data-ac-source="ac-clients">
+                        <input type="text" class="form-control" placeholder="Code ou nom du client (3 lettres min.)" autocomplete="off" />
+                        <div class="lc-ac__menu"></div>
+                    </div>
+                    <div class="form-text">Bordure brand au focus, dropdown liste tous les résultats.</div>
+                    <script id="ac-clients" type="application/json">
+                        [
+                            {"code":"CLI-001","label":"SARL Komlan & Fils","meta":"Lomé"},
+                            {"code":"CLI-002","label":"EBC Logistique SA","meta":"Cotonou"},
+                            {"code":"CLI-003","label":"Pharmacie Centrale Lomé","meta":"Lomé"},
+                            {"code":"CLI-004","label":"Mairie de Cotonou","meta":"Cotonou"},
+                            {"code":"CLI-005","label":"Boutique Akwaba","meta":"Abidjan"},
+                            {"code":"CLI-006","label":"SOTRAL Transport","meta":"Lomé"},
+                            {"code":"CLI-007","label":"BTP Sahel SARL","meta":"Ouagadougou"},
+                            {"code":"CLI-008","label":"Hôtel Le Galion","meta":"Dakar"}
+                        ]
+                    </script>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Article</label>
+                    <div class="lc-ac" data-ac-source="ac-articles">
+                        <input type="text" class="form-control" placeholder="SKU ou libellé article" autocomplete="off" />
+                        <div class="lc-ac__menu"></div>
+                    </div>
+                    <script id="ac-articles" type="application/json">
+                        [
+                            {"code":"ART-0125","label":"Ciment CPA 45 sac 50 kg","meta":"4 200 FCFA"},
+                            {"code":"ART-0126","label":"Tôle bac galvanisée 0,3 mm","meta":"15 500 FCFA"},
+                            {"code":"ART-0127","label":"Riz parfumé 25 kg","meta":"22 000 FCFA"},
+                            {"code":"ART-0128","label":"Huile palme 5 L","meta":"5 800 FCFA"},
+                            {"code":"ART-0129","label":"Câble électrique 2,5 mm² (m)","meta":"480 FCFA"}
+                        ]
+                    </script>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       SÉLECTEUR DE DEVISE
+       ======================================================================== *@
+    <section id="sec-currency" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Sélecteur de devise</h2>
+        <p class="lc-lib__section-sub">Drapeau visuel + code ISO + nom complet.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-dropdown" data-dropdown style="display:inline-block">
+                <button type="button" class="btn btn-secondary" data-dropdown-toggle>
+                    <span class="lc-currency-flag lc-currency-flag--xof">CI</span>
+                    <strong style="margin-left:4px">XOF</strong>
+                    <span style="color:var(--text-tertiary);margin-left:4px">FCFA — Franc CFA UEMOA</span>
+                    <i data-lucide="chevron-down" style="width:14px;height:14px;margin-left:4px"></i>
+                </button>
+                <div class="lc-dropdown__menu" style="min-width:280px">
+                    <button class="lc-dropdown__item">
+                        <span class="lc-currency-flag lc-currency-flag--xof">CI</span>
+                        <div style="flex:1">
+                            <div style="font-weight:600;color:var(--text-primary)">XOF — Franc CFA UEMOA</div>
+                            <div style="font:var(--font-text-xs);color:var(--text-tertiary)">Bénin · Burkina · Côte d'Ivoire · Mali · Niger · Sénégal · Togo</div>
+                        </div>
+                        <span class="lc-badge lc-badge--primary">Actif</span>
+                    </button>
+                    <button class="lc-dropdown__item">
+                        <span class="lc-currency-flag lc-currency-flag--xof" style="background:linear-gradient(135deg,#FFCD00,#003082)">CM</span>
+                        <div style="flex:1">
+                            <div style="font-weight:600;color:var(--text-primary)">XAF — Franc CFA CEMAC</div>
+                            <div style="font:var(--font-text-xs);color:var(--text-tertiary)">Cameroun · Gabon · Congo · Tchad · RCA · Guinée Eq.</div>
+                        </div>
+                    </button>
+                    <button class="lc-dropdown__item">
+                        <span class="lc-currency-flag lc-currency-flag--eur">€</span>
+                        <div style="flex:1">
+                            <div style="font-weight:600;color:var(--text-primary)">EUR — Euro</div>
+                            <div style="font:var(--font-text-xs);color:var(--text-tertiary)">Zone euro</div>
+                        </div>
+                    </button>
+                    <button class="lc-dropdown__item">
+                        <span class="lc-currency-flag lc-currency-flag--usd">$</span>
+                        <div style="flex:1">
+                            <div style="font-weight:600;color:var(--text-primary)">USD — US Dollar</div>
+                            <div style="font:var(--font-text-xs);color:var(--text-tertiary)">États-Unis · International</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            <div class="form-text mt-3">Ouvrir le dropdown : clic sur le bouton (cliquer ailleurs pour fermer).</div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       CHECKBOX / RADIO / SWITCH
+       ======================================================================== *@
+    <section id="sec-toggles" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Checkbox · radio · toggle switch</h2>
+        <p class="lc-lib__section-sub">Inputs natifs restylés en Untitled UI strict, focus ring 4px à 24%.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="lc-lib__demo-label">Checkboxes</div>
+                    <label class="lc-check"><input type="checkbox" /> Activer les rappels</label><br>
+                    <label class="lc-check"><input type="checkbox" checked /> Sauvegarder en local</label><br>
+                    <label class="lc-check"><input type="checkbox" disabled /> Désactivé</label><br>
+                    <label class="lc-check"><input type="checkbox" checked disabled /> Coché et désactivé</label>
+                </div>
+                <div class="col-md-4">
+                    <div class="lc-lib__demo-label">Radios</div>
+                    <label class="lc-radio"><input type="radio" name="r1" /> XOF — FCFA</label><br>
+                    <label class="lc-radio"><input type="radio" name="r1" checked /> EUR — €</label><br>
+                    <label class="lc-radio"><input type="radio" name="r1" /> USD — $</label>
+                </div>
+                <div class="col-md-4">
+                    <div class="lc-lib__demo-label">Toggles</div>
+                    <label class="lc-switch">
+                        <input type="checkbox" checked />
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        Synchronisation automatique
+                    </label><br>
+                    <label class="lc-switch lc-switch--lg" style="margin-top:8px">
+                        <input type="checkbox" />
+                        <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                        Mode hors ligne forcé
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       BADGES
+       ======================================================================== *@
+    <section id="sec-badges" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Badges</h2>
+        <p class="lc-lib__section-sub">7 sémantiques × dot / icône / closable. Statuts métier gestcom.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-label">Statuts métier</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-badge lc-badge--gray"><span class="lc-badge__dot" style="background:var(--text-quaternary)"></span>Brouillon</span>
+                <span class="lc-badge lc-badge--info"><span class="lc-badge__dot"></span>Envoyé</span>
+                <span class="lc-badge lc-badge--success"><span class="lc-badge__dot"></span>Accepté / Payé</span>
+                <span class="lc-badge lc-badge--warning"><span class="lc-badge__dot"></span>Partiel</span>
+                <span class="lc-badge lc-badge--error"><span class="lc-badge__dot"></span>Refusé / En retard</span>
+                <span class="lc-badge lc-badge--primary"><span class="lc-badge__dot" style="background:var(--color-primary-600)"></span>Validé</span>
+                <span class="lc-badge lc-badge--local">Local</span>
+            </div>
+
+            <div class="lc-lib__demo-label">Avec icône</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-badge lc-badge--success"><i data-lucide="check" style="width:12px;height:12px"></i>Synchronisé</span>
+                <span class="lc-badge lc-badge--warning"><i data-lucide="clock" style="width:12px;height:12px"></i>En attente</span>
+                <span class="lc-badge lc-badge--error"><i data-lucide="x-circle" style="width:12px;height:12px"></i>Erreur 409</span>
+                <span class="lc-badge lc-badge--info"><i data-lucide="cloud" style="width:12px;height:12px"></i>Distant</span>
+            </div>
+
+            <div class="lc-lib__demo-label">Closables (filtres actifs)</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-badge lc-badge--primary">
+                    Statut : Validé
+                    <button style="background:transparent;border:none;padding:0;color:inherit;cursor:pointer;display:grid;place-items:center" aria-label="Retirer">
+                        <i data-lucide="x" style="width:12px;height:12px"></i>
+                    </button>
+                </span>
+                <span class="lc-badge lc-badge--gray">
+                    Devise : XOF
+                    <button style="background:transparent;border:none;padding:0;color:inherit;cursor:pointer;display:grid;place-items:center" aria-label="Retirer">
+                        <i data-lucide="x" style="width:12px;height:12px"></i>
+                    </button>
+                </span>
+                <span class="lc-badge lc-badge--gray">
+                    Période : avril 2026
+                    <button style="background:transparent;border:none;padding:0;color:inherit;cursor:pointer;display:grid;place-items:center" aria-label="Retirer">
+                        <i data-lucide="x" style="width:12px;height:12px"></i>
+                    </button>
+                </span>
+            </div>
+
+            <div class="lc-lib__demo-label">Variante "square" (border-radius xs)</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-badge lc-badge--primary" style="border-radius:var(--radius-xs)">Nouveau</span>
+                <span class="lc-badge lc-badge--success" style="border-radius:var(--radius-xs)">Soldé</span>
+                <span class="lc-badge lc-badge--warning" style="border-radius:var(--radius-xs)">Stock bas</span>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       CARDS
+       ======================================================================== *@
+    <section id="sec-cards" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Cards</h2>
+        <p class="lc-lib__section-sub">3 niveaux d'élévation : flat (sans relief) · outlined (border) · elevated (shadow md).</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="lc-card lc-card--flat">
+                        <div class="lc-card__header"><h3 class="lc-card__title">Flat</h3></div>
+                        <div class="lc-card__body">
+                            <p style="margin:0;color:var(--text-tertiary)">Sans bordure ni ombre, fond légèrement teinté. Idéal pour zones imbriquées.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="lc-card lc-card--outlined">
+                        <div class="lc-card__header"><h3 class="lc-card__title">Outlined</h3></div>
+                        <div class="lc-card__body">
+                            <p style="margin:0;color:var(--text-tertiary)">Bordure 1px sans ombre. Cas par défaut pour la plupart des panneaux.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="lc-card lc-card--elevated">
+                        <div class="lc-card__header"><h3 class="lc-card__title">Elevated</h3></div>
+                        <div class="lc-card__body">
+                            <p style="margin:0;color:var(--text-tertiary)">Shadow md, pour modules importants ou éléments flottants.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       PAGE HEADER
+       ======================================================================== *@
+    <section id="sec-pageheader" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Page header</h2>
+        <p class="lc-lib__section-sub">Titre + description + actions à droite + tabs intégrés.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-page-header lc-page-header--with-tabs">
+                <div>
+                    <h1 class="lc-page-title">Factures</h1>
+                    <p class="lc-page-sub">Gérer les factures clients · 42 documents · 3 480 000 FCFA en attente.</p>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-secondary"><i data-lucide="download" style="width:14px;height:14px"></i>Exporter</button>
+                    <button class="btn btn-primary"><i data-lucide="plus" style="width:14px;height:14px"></i>Nouvelle facture</button>
+                </div>
+                <div class="lc-tabs" style="grid-column:1 / -1;width:100%" data-tabs data-tabs-panels="#ph-panels">
+                    <button class="lc-tab is-active" data-tab="all">Toutes <span class="lc-tab__count">42</span></button>
+                    <button class="lc-tab" data-tab="draft">Brouillons <span class="lc-tab__count">3</span></button>
+                    <button class="lc-tab" data-tab="sent">Envoyées <span class="lc-tab__count">12</span></button>
+                    <button class="lc-tab" data-tab="paid">Payées <span class="lc-tab__count">22</span></button>
+                    <button class="lc-tab" data-tab="late">En retard <span class="lc-tab__count">5</span></button>
+                </div>
+            </div>
+            <div id="ph-panels">
+                <div class="lc-tab-panel is-active" data-tab-panel="all"><p class="form-text">Liste de toutes les factures…</p></div>
+                <div class="lc-tab-panel" data-tab-panel="draft"><p class="form-text">3 brouillons.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="sent"><p class="form-text">12 envoyées.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="paid"><p class="form-text">22 payées.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="late"><p class="form-text">5 en retard.</p></div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       STAT CARDS DASHBOARD
+       ======================================================================== *@
+    <section id="sec-stats" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Stat cards dashboard</h2>
+        <p class="lc-lib__section-sub">Compactes (pas marketing) : label + valeur + delta + sparkline SVG inline.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="lc-stat lc-stat--with-spark">
+                        <div>
+                            <div class="lc-stat__label">CA du mois</div>
+                            <div class="lc-stat__value">8 240 500</div>
+                            <div class="lc-stat__delta lc-stat__delta--up">↑ 12,4 % vs avril</div>
+                        </div>
+                        <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none">
+                            <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4 90,36 0,36" fill="currentColor" opacity="0.1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="lc-stat lc-stat--with-spark">
+                        <div>
+                            <div class="lc-stat__label">Factures impayées</div>
+                            <div class="lc-stat__value">3 480 000</div>
+                            <div class="lc-stat__delta lc-stat__delta--down">↑ 8 % vs avril (alerte)</div>
+                        </div>
+                        <svg class="lc-stat__spark lc-stat__spark--down" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none">
+                            <polyline points="0,18 12,16 24,20 36,14 48,22 60,18 72,26 90,30" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="lc-stat lc-stat--with-spark">
+                        <div>
+                            <div class="lc-stat__label">Devis en cours</div>
+                            <div class="lc-stat__value">12</div>
+                            <div class="lc-stat__delta">7,2 M FCFA potentiel</div>
+                        </div>
+                        <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" style="color:var(--color-info-600)">
+                            <polyline points="0,20 15,18 30,22 45,16 60,18 75,12 90,14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="lc-stat lc-stat--with-spark">
+                        <div>
+                            <div class="lc-stat__label">Marge brute</div>
+                            <div class="lc-stat__value">32,8 <span style="font-size:14px;color:var(--text-tertiary)">%</span></div>
+                            <div class="lc-stat__delta lc-stat__delta--up">↑ 1,2 pt vs avril</div>
+                        </div>
+                        <svg class="lc-stat__spark lc-stat__spark--up" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none">
+                            <polyline points="0,24 12,22 24,18 36,20 48,14 60,12 72,10 90,8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       TABS
+       ======================================================================== *@
+    <section id="sec-tabs" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Tabs</h2>
+        <p class="lc-lib__section-sub">Underline (par défaut) et pills (compact, sur fond gris).</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-label">Underline</div>
+            <div class="lc-tabs" data-tabs data-tabs-panels="#tabs-u">
+                <button class="lc-tab is-active" data-tab="ov">Vue d'ensemble</button>
+                <button class="lc-tab" data-tab="li">Lignes <span class="lc-tab__count">8</span></button>
+                <button class="lc-tab" data-tab="hi">Historique</button>
+                <button class="lc-tab" data-tab="at">Pièces jointes <span class="lc-tab__count">2</span></button>
+            </div>
+            <div id="tabs-u">
+                <div class="lc-tab-panel is-active" data-tab-panel="ov"><p class="form-text">Contenu Vue d'ensemble.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="li"><p class="form-text">8 lignes.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="hi"><p class="form-text">Historique du document.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="at"><p class="form-text">2 pièces jointes.</p></div>
+            </div>
+
+            <div class="lc-lib__demo-label" style="margin-top:24px">Pills</div>
+            <div class="lc-tabs lc-tabs--pills" data-tabs data-tabs-panels="#tabs-p">
+                <button class="lc-tab is-active" data-tab="day">Jour</button>
+                <button class="lc-tab" data-tab="week">Semaine</button>
+                <button class="lc-tab" data-tab="month">Mois</button>
+                <button class="lc-tab" data-tab="year">Année</button>
+            </div>
+            <div id="tabs-p">
+                <div class="lc-tab-panel is-active" data-tab-panel="day"><p class="form-text">Vue jour.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="week"><p class="form-text">Vue semaine.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="month"><p class="form-text">Vue mois.</p></div>
+                <div class="lc-tab-panel" data-tab-panel="year"><p class="form-text">Vue année.</p></div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       BREADCRUMBS
+       ======================================================================== *@
+    <section id="sec-breadcrumbs" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Breadcrumbs</h2>
+
+        <div class="lc-lib__demo">
+            <nav class="lc-breadcrumbs" aria-label="Fil d'Ariane">
+                <a href="#"><i data-lucide="home" style="width:14px;height:14px"></i></a>
+                <i data-lucide="chevron-right" class="lc-breadcrumbs__sep" style="width:14px;height:14px"></i>
+                <a href="#">Ventes</a>
+                <i data-lucide="chevron-right" class="lc-breadcrumbs__sep" style="width:14px;height:14px"></i>
+                <a href="#">Factures</a>
+                <i data-lucide="chevron-right" class="lc-breadcrumbs__sep" style="width:14px;height:14px"></i>
+                <span class="lc-breadcrumbs__current">FA-2026-0042</span>
+            </nav>
+        </div>
+    </section>
+
+    @* ========================================================================
+       AVATARS
+       ======================================================================== *@
+    <section id="sec-avatars" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Avatars</h2>
+        <p class="lc-lib__section-sub">Initiales colorées, 6 tailles, groupe avec overlap.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-label">Tailles</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-avatar lc-avatar--xs">CA</span>
+                <span class="lc-avatar lc-avatar--sm">JM</span>
+                <span class="lc-avatar lc-avatar--md">SK</span>
+                <span class="lc-avatar lc-avatar--lg">FB</span>
+                <span class="lc-avatar lc-avatar--xl">MM</span>
+                <span class="lc-avatar lc-avatar--2xl">DE</span>
+            </div>
+
+            <div class="lc-lib__demo-label">Couleurs</div>
+            <div class="lc-lib__demo-row">
+                <span class="lc-avatar lc-avatar--lg">CA</span>
+                <span class="lc-avatar lc-avatar--lg lc-avatar--gray">JM</span>
+                <span class="lc-avatar lc-avatar--lg lc-avatar--success">SK</span>
+                <span class="lc-avatar lc-avatar--lg lc-avatar--warning">FB</span>
+                <span class="lc-avatar lc-avatar--lg lc-avatar--info">MM</span>
+            </div>
+
+            <div class="lc-lib__demo-label">Groupes</div>
+            <div class="lc-lib__demo-row">
+                <div class="lc-avatar-group">
+                    <span class="lc-avatar lc-avatar-group__more">+5</span>
+                    <span class="lc-avatar lc-avatar--info">DE</span>
+                    <span class="lc-avatar lc-avatar--warning">FB</span>
+                    <span class="lc-avatar lc-avatar--success">SK</span>
+                    <span class="lc-avatar">CA</span>
+                </div>
+                <span class="form-text">9 collaborateurs sur ce document</span>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       MODALS
+       ======================================================================== *@
+    <section id="sec-modals" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Modals</h2>
+        <p class="lc-lib__section-sub">3 tailles · feature icon en cercle coloré · CTA primary à droite.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-secondary" data-modal-open="modal-sm">Modal sm — confirmation</button>
+                <button class="btn btn-secondary" data-modal-open="modal-md">Modal md — formulaire</button>
+                <button class="btn btn-secondary" data-modal-open="modal-lg">Modal lg — tableau</button>
+            </div>
+        </div>
+
+        @* Modal sm *@
+        <div class="lc-modal-backdrop" id="modal-sm">
+            <div class="lc-modal lc-modal--sm" role="dialog">
+                <div class="lc-modal__header">
+                    <div class="lc-feature-icon lc-feature-icon--error"><i data-lucide="trash-2"></i></div>
+                    <h2 class="lc-modal__title">Supprimer la facture FA-2026-0042 ?</h2>
+                    <p class="lc-modal__sub">Cette action est irréversible. Le numéro sera réutilisé pour la prochaine facture.</p>
+                </div>
+                <footer class="lc-modal__footer">
+                    <button class="btn btn-secondary" data-modal-close>Annuler</button>
+                    <button class="btn btn-danger" data-modal-close>Supprimer</button>
+                </footer>
+            </div>
+        </div>
+
+        @* Modal md *@
+        <div class="lc-modal-backdrop" id="modal-md">
+            <div class="lc-modal lc-modal--md" role="dialog">
+                <div class="lc-modal__header">
+                    <div class="lc-feature-icon lc-feature-icon--primary"><i data-lucide="user-plus"></i></div>
+                    <h2 class="lc-modal__title">Créer un nouveau client</h2>
+                    <p class="lc-modal__sub">Renseigne les informations principales. Tu pourras compléter ensuite.</p>
+                </div>
+                <div class="lc-modal__body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Code client</label><input class="form-control" type="text" value="CLI-009" /></div>
+                        <div class="col-md-6"><label class="form-label">Nom commercial</label><input class="form-control" type="text" /></div>
+                        <div class="col-md-12"><label class="form-label">Email</label><input class="form-control" type="email" /></div>
+                        <div class="col-md-6"><label class="form-label">Téléphone</label><input class="form-control" type="tel" /></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Devise par défaut</label>
+                            <select class="form-select"><option>XOF — FCFA</option><option>EUR — €</option><option>USD — $</option></select>
+                        </div>
+                    </div>
+                </div>
+                <footer class="lc-modal__footer">
+                    <button class="btn btn-secondary" data-modal-close>Annuler</button>
+                    <button class="btn btn-primary" data-modal-close>Créer le client</button>
+                </footer>
+            </div>
+        </div>
+
+        @* Modal lg *@
+        <div class="lc-modal-backdrop" id="modal-lg">
+            <div class="lc-modal lc-modal--lg" role="dialog">
+                <div class="lc-modal__header">
+                    <div class="lc-feature-icon lc-feature-icon--info"><i data-lucide="layers"></i></div>
+                    <h2 class="lc-modal__title">Sélectionner des articles à ajouter</h2>
+                    <p class="lc-modal__sub">Coche les articles à insérer dans la facture. Disponibilité en temps réel.</p>
+                </div>
+                <div class="lc-modal__body">
+                    <table class="lc-table">
+                        <thead>
+                            <tr><th style="width:32px"></th><th>SKU</th><th>Libellé</th><th class="text-end">Stock</th><th class="text-end">Prix HT</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><input type="checkbox" class="form-check-input"></td><td><strong>ART-0125</strong></td><td>Ciment CPA 45 sac 50 kg</td><td class="text-end">320</td><td class="text-end">4 200 FCFA</td></tr>
+                            <tr><td><input type="checkbox" class="form-check-input"></td><td><strong>ART-0126</strong></td><td>Tôle bac galvanisée 0,3 mm</td><td class="text-end">85</td><td class="text-end">15 500 FCFA</td></tr>
+                            <tr><td><input type="checkbox" class="form-check-input" checked></td><td><strong>ART-0127</strong></td><td>Riz parfumé 25 kg</td><td class="text-end">156</td><td class="text-end">22 000 FCFA</td></tr>
+                            <tr><td><input type="checkbox" class="form-check-input"></td><td><strong>ART-0128</strong></td><td>Huile palme 5 L</td><td class="text-end">42</td><td class="text-end">5 800 FCFA</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="lc-modal__footer">
+                    <button class="btn btn-secondary" data-modal-close>Annuler</button>
+                    <button class="btn btn-primary" data-modal-close>Ajouter 1 article</button>
+                </footer>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       DRAWERS
+       ======================================================================== *@
+    <section id="sec-drawers" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Drawers (panneau droit)</h2>
+        <p class="lc-lib__section-sub">md (480px) pour formulaires · lg (720px) pour preview PDF.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-secondary" data-drawer-open="drawer-md">Drawer md — détails</button>
+                <button class="btn btn-secondary" data-drawer-open="drawer-lg">Drawer lg — preview PDF</button>
+            </div>
+        </div>
+
+        @* Drawer md *@
+        <div class="lc-drawer-backdrop"></div>
+        <aside class="lc-drawer lc-drawer--md" id="drawer-md" role="dialog">
+            <header class="lc-drawer__header">
+                <div class="lc-feature-icon lc-feature-icon--primary" style="width:36px;height:36px;box-shadow:none">
+                    <i data-lucide="file-text" style="width:18px;height:18px"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <h2 class="lc-drawer__title">Détails du devis DV-2026-0017</h2>
+                    <div class="form-text">SARL Komlan & Fils · 27 avr. 2026</div>
+                </div>
+                <button class="lc-icon-btn" data-drawer-close aria-label="Fermer"><i data-lucide="x"></i></button>
+            </header>
+            <div class="lc-drawer__body" style="padding:20px">
+                <div class="row g-3">
+                    <div class="col-12"><label class="form-label">Numéro</label><input class="form-control" value="DV-2026-0017" readonly></div>
+                    <div class="col-12"><label class="form-label">Client</label><input class="form-control" value="SARL Komlan & Fils"></div>
+                    <div class="col-md-6"><label class="form-label">Date</label><input class="form-control" type="date" value="2026-04-27"></div>
+                    <div class="col-md-6"><label class="form-label">Validité</label><input class="form-control" type="date" value="2026-05-27"></div>
+                    <div class="col-12"><label class="form-label">Notes internes</label><textarea class="form-control" rows="3"></textarea></div>
+                </div>
+            </div>
+            <footer style="padding:12px 20px;border-top:1px solid var(--border-secondary);display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn btn-secondary" data-drawer-close>Annuler</button>
+                <button class="btn btn-primary"><i data-lucide="save" style="width:14px;height:14px"></i>Enregistrer</button>
+            </footer>
+        </aside>
+
+        @* Drawer lg avec preview PDF *@
+        <div class="lc-drawer-backdrop"></div>
+        <aside class="lc-drawer lc-drawer--lg" id="drawer-lg" role="dialog">
+            <header class="lc-drawer__header">
+                <div class="lc-feature-icon lc-feature-icon--info" style="width:36px;height:36px;box-shadow:none">
+                    <i data-lucide="file-text" style="width:18px;height:18px"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <h2 class="lc-drawer__title">Aperçu PDF — Facture FA-2026-0042</h2>
+                    <div class="form-text">SARL Komlan & Fils · 1 250 000 FCFA</div>
+                </div>
+                <button class="btn btn-secondary btn-sm"><i data-lucide="download" style="width:14px;height:14px"></i>Télécharger</button>
+                <button class="lc-icon-btn" data-drawer-close aria-label="Fermer"><i data-lucide="x"></i></button>
+            </header>
+            <div class="lc-drawer__pdf">
+                <div class="lc-drawer__pdf-page">
+                    <div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--color-gray-900);padding-bottom:16px;margin-bottom:24px">
+                        <div>
+                            <div style="font-size:18px;font-weight:700">FACTURE</div>
+                            <div>FA-2026-0042</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-weight:700">MaPME SARL</div>
+                            <div>Rue de la Fraternité, Lomé</div>
+                            <div>RCCM TG-LFW-2018-A-1234</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:24px">
+                        <div style="color:var(--color-gray-500);font-size:11px;text-transform:uppercase">Facturé à</div>
+                        <div style="font-weight:600">SARL Komlan & Fils</div>
+                        <div>Quartier Adidogomé, Lomé</div>
+                    </div>
+                    <table style="width:100%;font-size:11px;border-collapse:collapse">
+                        <thead>
+                            <tr style="background:var(--color-gray-100)">
+                                <th style="padding:8px;text-align:left">Désignation</th>
+                                <th style="padding:8px;text-align:right">Qté</th>
+                                <th style="padding:8px;text-align:right">PU HT</th>
+                                <th style="padding:8px;text-align:right">Total HT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td style="padding:8px;border-bottom:1px solid var(--color-gray-200)">Ciment CPA 45 sac 50 kg</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">200</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">4 200</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">840 000</td></tr>
+                            <tr><td style="padding:8px;border-bottom:1px solid var(--color-gray-200)">Tôle bac galvanisée 0,3 mm</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">15</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">14 622</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--color-gray-200)">219 322</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="text-align:right;margin-top:16px;font-size:11px">
+                        <div>Sous-total HT&nbsp;&nbsp;<strong>1 059 322 FCFA</strong></div>
+                        <div>TVA 18&#37;&nbsp;&nbsp;<strong>190 678 FCFA</strong></div>
+                        <div style="font-size:14px;margin-top:8px"><strong>Total TTC&nbsp;&nbsp;1 250 000 FCFA</strong></div>
+                    </div>
+                </div>
+                <div class="form-text">Page 1 sur 1</div>
+            </div>
+        </aside>
+    </section>
+
+    @* ========================================================================
+       TOASTS
+       ======================================================================== *@
+    <section id="sec-toasts" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Toasts</h2>
+        <p class="lc-lib__section-sub">4 sémantiques bottom-right · auto-dismiss 4s · API <code>LigComToast.push({...})</code>.</p>
+
+        <div class="lc-lib__demo">
+            <div class="lc-lib__demo-row">
+                <button class="btn btn-secondary" onclick="LigComToast.push({title:'Facture enregistrée', desc:'FA-2026-0043 a été ajoutée à la file de synchronisation.', kind:'success'})">
+                    <i data-lucide="check-circle" style="width:14px;height:14px"></i>Toast success
+                </button>
+                <button class="btn btn-secondary" onclick="LigComToast.push({title:'Stock bas détecté', desc:'12 articles passent sous le seuil minimum.', kind:'warning'})">
+                    <i data-lucide="alert-triangle" style="width:14px;height:14px"></i>Toast warning
+                </button>
+                <button class="btn btn-secondary" onclick="LigComToast.push({title:'Erreur de synchronisation', desc:'Conflit 409 sur FA-2026-0042. Réessayez ou résolvez le conflit.', kind:'error', timeout:6000})">
+                    <i data-lucide="x-circle" style="width:14px;height:14px"></i>Toast error
+                </button>
+                <button class="btn btn-secondary" onclick="LigComToast.push({title:'Mise à jour disponible', desc:'Une nouvelle version de LigCom est prête à être installée.', kind:'info'})">
+                    <i data-lucide="info" style="width:14px;height:14px"></i>Toast info
+                </button>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       EMPTY STATES
+       ======================================================================== *@
+    <section id="sec-empty" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Empty states</h2>
+        <p class="lc-lib__section-sub">SVG inline · titre · description · 1-2 actions.</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="lc-empty">
+                        <svg class="lc-empty__art" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="14" y="20" width="68" height="56" rx="6"/>
+                            <path d="M14 32h68"/>
+                            <line x1="26" y1="46" x2="56" y2="46" stroke-linecap="round"/>
+                            <line x1="26" y1="56" x2="46" y2="56" stroke-linecap="round"/>
+                            <line x1="26" y1="66" x2="50" y2="66" stroke-linecap="round"/>
+                        </svg>
+                        <h3 class="lc-empty__title">Aucune facture pour le moment</h3>
+                        <p class="lc-empty__desc">Crée ta première facture pour commencer à suivre les paiements clients.</p>
+                        <div class="lc-empty__actions">
+                            <button class="btn btn-secondary"><i data-lucide="upload" style="width:14px;height:14px"></i>Importer CSV</button>
+                            <button class="btn btn-primary"><i data-lucide="plus" style="width:14px;height:14px"></i>Nouvelle facture</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="lc-empty">
+                        <svg class="lc-empty__art" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="44" cy="44" r="22"/>
+                            <line x1="60" y1="60" x2="78" y2="78" stroke-linecap="round" stroke-width="2.5"/>
+                            <line x1="32" y1="44" x2="56" y2="44" stroke-linecap="round"/>
+                        </svg>
+                        <h3 class="lc-empty__title">Aucun résultat pour « ZX2024 »</h3>
+                        <p class="lc-empty__desc">Vérifie l'orthographe ou utilise un autre terme. Recherche par code, nom ou montant.</p>
+                        <div class="lc-empty__actions">
+                            <button class="btn btn-secondary">Réinitialiser les filtres</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ========================================================================
+       SKELETON LOADERS
+       ======================================================================== *@
+    <section id="sec-skeleton" class="lc-lib__section">
+        <h2 class="lc-lib__section-title">Skeleton loaders</h2>
+        <p class="lc-lib__section-sub">Pour tableaux et formulaires en cours de chargement (shimmer 1,4 s).</p>
+
+        <div class="lc-lib__demo">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="lc-lib__demo-label">Tableau</div>
+                    <div class="lc-card lc-card--outlined">
+                        <div class="lc-card__body">
+                            <div class="lc-skel lc-skel--row" style="margin-bottom:10px"></div>
+                            <div class="lc-skel lc-skel--row"></div>
+                            <div class="lc-skel lc-skel--row"></div>
+                            <div class="lc-skel lc-skel--row"></div>
+                            <div class="lc-skel lc-skel--row"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="lc-lib__demo-label">Formulaire</div>
+                    <div class="lc-card lc-card--outlined">
+                        <div class="lc-card__body">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                                <div class="lc-skel lc-skel--circle"></div>
+                                <div style="flex:1">
+                                    <div class="lc-skel lc-skel--title" style="width:60%"></div>
+                                    <div class="lc-skel lc-skel--text" style="width:40%"></div>
+                                </div>
+                            </div>
+                            <div class="lc-skel lc-skel--text" style="width:30%"></div>
+                            <div class="lc-skel lc-skel--row" style="margin-bottom:12px"></div>
+                            <div class="lc-skel lc-skel--text" style="width:40%"></div>
+                            <div class="lc-skel lc-skel--row" style="margin-bottom:12px"></div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                                <div class="lc-skel lc-skel--btn"></div>
+                                <div class="lc-skel lc-skel--btn"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    </div>
+</div>

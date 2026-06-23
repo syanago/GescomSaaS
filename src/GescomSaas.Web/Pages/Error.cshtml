@@ -1,26 +1,54 @@
-﻿@page
+@page
 @model ErrorModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "Erreur";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title text-danger">Une erreur s'est produite</h1>
+        <div class="page-header-sub">Un probleme est survenu lors du traitement de ta requete</div>
+    </div>
+    <div>
+        <a class="btn btn-secondary" asp-page="/Index">
+            <i class="bi bi-house me-1"></i>Retour a l'accueil
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-danger mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Erreur</strong> — une erreur s'est produite lors du traitement de la requete.
+</div>
 
 @if (Model.ShowRequestId)
 {
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
+    <div class="card mb-3">
+        <div class="section-header">
+            <i class="bi bi-tag"></i>
+            <span>Identifiant de requete</span>
+        </div>
+        <div class="card-body">
+            <p class="small text-muted mb-1">Communique cet identifiant au support pour faciliter le diagnostic :</p>
+            <code class="d-inline-block px-3 py-2" style="background:var(--gc-border-light); border-radius:6px;">@Model.RequestId</code>
+        </div>
+    </div>
 }
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-info-circle"></i>
+        <span>Mode developpement</span>
+    </div>
+    <div class="card-body">
+        <p>
+            Passer en environnement <strong>Development</strong> affiche des informations detaillees sur l'erreur.
+        </p>
+        <div class="alert alert-warning mb-0">
+            <i class="bi bi-shield-exclamation me-2"></i>
+            <strong>L'environnement Development ne doit pas etre active sur les deploiements publics.</strong>
+            Il peut exposer des informations sensibles. Pour le debogage local, definis la variable
+            d'environnement <code>ASPNETCORE_ENVIRONMENT</code> a <code>Development</code> puis redemarre l'application.
+        </div>
+    </div>
+</div>

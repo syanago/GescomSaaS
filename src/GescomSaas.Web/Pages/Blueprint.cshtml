@@ -4,67 +4,82 @@
     ViewData["Title"] = "Architecture";
 }
 
-<section class="plain-panel">
-    <span class="eyebrow">Blueprint</span>
-    <h1>Architecture cible de la solution Gescom SaaS</h1>
-    <p>
-        Le projet est pense comme une gestion commerciale web moderne inspirée de Sage Gescom 100,
-        avec une couche SaaS native pour gerer les comptes clients, leurs abonnements et l'isolation de leurs donnees.
-    </p>
-</section>
-
-<section class="content-grid blueprint-grid">
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Piliers techniques</span>
-                <h2>Choix structurants</h2>
-            </div>
-        </div>
-        <ul class="feature-list">
-            @foreach (var item in Model.TechnicalDecisions)
-            {
-                <li>@item</li>
-            }
-        </ul>
-    </article>
-
-    <article class="panel-card">
-        <div class="panel-header">
-            <div>
-                <span class="eyebrow">Roadmap</span>
-                <h2>Prochaines briques prioritaires</h2>
-            </div>
-        </div>
-        <ul class="feature-list">
-            @foreach (var item in Model.Roadmap)
-            {
-                <li>@item</li>
-            }
-        </ul>
-    </article>
-</section>
-
-<section class="panel-card">
-    <div class="panel-header">
-        <div>
-            <span class="eyebrow">Modules Gescom</span>
-            <h2>Couverture fonctionnelle visee</h2>
-        </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Architecture cible de LigCom SaaS</h1>
+        <div class="page-header-sub">Gestion commerciale web moderne avec couche SaaS multi-tenant native</div>
     </div>
-    <div class="module-stack">
-        @foreach (var module in Model.Modules)
-        {
-            <div class="module-card">
-                <h3>@module.Title</h3>
-                <p>@module.Description</p>
-                <ul>
-                    @foreach (var feature in module.Features)
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p class="mb-0">
+            Le projet est pense comme une gestion commerciale web moderne inspiree de Sage Gescom 100,
+            avec une couche SaaS native pour gerer les comptes clients, leurs abonnements et l'isolation de leurs donnees.
+        </p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-stack"></i>
+                <span>Piliers techniques</span>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    @foreach (var item in Model.TechnicalDecisions)
                     {
-                        <li>@feature</li>
+                        <li class="mb-1">@item</li>
                     }
                 </ul>
             </div>
-        }
+        </div>
     </div>
-</section>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-flag"></i>
+                <span>Roadmap</span>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    @foreach (var item in Model.Roadmap)
+                    {
+                        <li class="mb-1">@item</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="section-header">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <span>Modules Gescom — couverture fonctionnelle</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            @foreach (var module in Model.Modules)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <h6 class="text-primary mb-2">@module.Title</h6>
+                            <p class="small text-muted mb-3">@module.Description</p>
+                            <ul class="small mb-0">
+                                @foreach (var feature in module.Features)
+                                {
+                                    <li>@feature</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,396 @@
+@*
+   _LayoutAuth.cshtml — Layout pour les pages d'authentification (Identity).
+
+   Pas de sidebar/header d'app : on est avant connexion. Layout centré épuré
+   façon Stripe / Linear / Notion, avec les tokens Untitled UI strict.
+*@
+<!doctype html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "LigCom") · LigCom</title>
+
+    @* Détection thème AVANT le rendu (anti-flash) *@
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem('lc-theme-mode') || 'system';
+                var theme = (mode === 'light' || mode === 'dark')
+                    ? mode
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            } catch (e) {}
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/ligcom-untitled.css" asp-append-version="true" />
+
+    <style>
+        /* Layout d'auth dédié : centré, fond gris, carte blanche */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-canvas);
+        }
+        .lc-auth-shell {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 32px 16px;
+        }
+        .lc-auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 32px;
+        }
+        .lc-auth-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .lc-auth-brand__logo {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-sm);
+            background: var(--color-primary-600);
+            color: #fff;
+            display: grid; place-items: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .lc-auth-brand__name {
+            font: var(--font-text-lg);
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        .lc-auth-card h1, .lc-auth-card h2 {
+            font: var(--font-display-xs);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 8px;
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+        .lc-auth-card > p,
+        .lc-auth-card > h3 {
+            text-align: center;
+            color: var(--text-tertiary);
+            font: var(--font-text-sm);
+            margin: 0 0 24px;
+        }
+        .lc-auth-card form { display: flex; flex-direction: column; gap: 14px; }
+        .lc-auth-card .form-floating {
+            position: relative;
+        }
+        .lc-auth-card .form-floating > label {
+            font: var(--font-text-sm);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .lc-auth-card .form-control {
+            width: 100%;
+        }
+        .lc-auth-card .checkbox,
+        .lc-auth-card .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font: var(--font-text-sm);
+            color: var(--text-secondary);
+        }
+        .lc-auth-card button[type="submit"],
+        .lc-auth-card .btn-primary,
+        .lc-auth-card .w-100 {
+            width: 100%;
+            justify-content: center;
+        }
+        .lc-auth-card hr {
+            border-top: 1px solid var(--border-secondary);
+            margin: 16px 0;
+        }
+        .lc-auth-links {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 16px;
+            font: var(--font-text-sm);
+            text-align: center;
+        }
+        .lc-auth-links a {
+            color: var(--color-primary-700);
+            text-decoration: none;
+        }
+        .lc-auth-links a:hover { text-decoration: underline; }
+        .lc-auth-footer {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-tertiary);
+            font: var(--font-text-xs);
+        }
+        .lc-auth-footer a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .lc-auth-footer a:hover { color: var(--text-secondary); text-decoration: underline; }
+        /* === Hardening Identity UI scaffold (Login/Register/etc.) === */
+
+        /* Layout : la card prend toute la largeur, on annule la grid 2-colonnes
+           générée par Identity (col-lg-6 form / col-lg-4 external services) */
+        .lc-auth-card .row { display: block; margin: 0; }
+        .lc-auth-card [class*="col-lg-"],
+        .lc-auth-card [class*="col-md-"] {
+            width: 100%; max-width: 100%; padding: 0; flex: 0 0 100%;
+        }
+
+        /* Cache la colonne "Use another service to log in" — aucun provider
+           externe configuré, donc rien d'utile à montrer */
+        .lc-auth-card .col-lg-4.col-lg-offset-2,
+        .lc-auth-card section + section { display: none; }
+        /* Sécurité : si la liste de providers externes est vide, masque le bloc */
+        .lc-auth-card .col-md-6:nth-child(2):has(p) { display: none; }
+
+        /* Titres Identity (h1 "Log in", h2 sous-titre, h3 "Use another...") */
+        .lc-auth-card h1 {
+            font: var(--font-display-xs);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 6px;
+            text-align: center;
+        }
+        .lc-auth-card h2,
+        .lc-auth-card h3 {
+            font: var(--font-text-sm);
+            font-weight: 400;
+            color: var(--text-tertiary);
+            margin: 0 0 20px;
+            text-align: center;
+        }
+
+        /* Form floating Bootstrap : cohérent avec nos tokens en clair ET sombre */
+        .lc-auth-card .form-floating {
+            margin-bottom: 12px;
+        }
+        .lc-auth-card .form-floating > .form-control {
+            height: 56px;
+            padding: 16px 12px 4px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+        }
+        .lc-auth-card .form-floating > .form-control:focus {
+            border-color: var(--border-focus);
+            box-shadow: var(--focus-ring);
+        }
+        .lc-auth-card .form-floating > label {
+            color: var(--text-tertiary);
+            padding: 16px 12px;
+        }
+        .lc-auth-card .form-floating > .form-control:focus ~ label,
+        .lc-auth-card .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: var(--text-tertiary);
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.1rem);
+        }
+        /* Anti-autofill jaune Chrome en sombre (très important !) */
+        .lc-auth-card input:-webkit-autofill,
+        .lc-auth-card input:-webkit-autofill:hover,
+        .lc-auth-card input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text-primary) !important;
+            -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Checkbox "Remember me" : restyle Bootstrap natif pour matcher Untitled UI */
+        .lc-auth-card .checkbox,
+        .lc-auth-card .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px !important;
+        }
+        .lc-auth-card .form-check-input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-input);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            box-shadow: var(--shadow-xs);
+            margin: 0;
+            float: none;
+            position: relative;
+            transition: background-color 80ms, border-color 80ms;
+            flex-shrink: 0;
+        }
+        .lc-auth-card .form-check-input:hover {
+            border-color: var(--color-primary-500);
+            background: var(--color-primary-25);
+        }
+        .lc-auth-card .form-check-input:focus-visible {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        .lc-auth-card .form-check-input:checked {
+            background: var(--color-primary-600);
+            border-color: var(--color-primary-600);
+        }
+        .lc-auth-card .form-check-input:checked::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M2 5l2 2 4-4' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/10px no-repeat;
+        }
+        .lc-auth-card .checkbox label,
+        .lc-auth-card .form-check label {
+            font: var(--font-text-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin: 0;
+        }
+        /* Identity wrap parfois le checkbox dans <label class="form-label">
+           qui chez nous est "label au-dessus de l'input" — on neutralise */
+        .lc-auth-card .checkbox > .form-label {
+            display: flex; align-items: center; gap: 8px;
+            margin: 0; font-weight: 500;
+        }
+
+        /* Bouton Log in plein largeur — déjà géré par .w-100 .btn-primary */
+        .lc-auth-card button[type="submit"].w-100,
+        .lc-auth-card .w-100.btn-primary {
+            margin-top: 8px;
+            height: 44px;
+            font: var(--font-text-md);
+            font-weight: 600;
+        }
+
+        /* Liens "Forgot password / Register / Resend confirmation" :
+           Identity les rend en <p><a>...</a></p> empilés */
+        .lc-auth-card form + p,
+        .lc-auth-card p {
+            text-align: center;
+            margin: 8px 0 0;
+            font: var(--font-text-sm);
+        }
+        .lc-auth-card p a {
+            color: var(--color-primary-700);
+            text-decoration: none;
+        }
+        .lc-auth-card p a:hover { text-decoration: underline; }
+        [data-bs-theme="dark"] .lc-auth-card p a { color: var(--color-primary-300); }
+
+        /* Validation summary (erreurs auth) */
+        .lc-auth-card .validation-summary-errors,
+        .lc-auth-card .text-danger {
+            background: var(--color-error-50);
+            border: 1px solid var(--color-error-100);
+            color: var(--color-error-700);
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            font: var(--font-text-sm);
+            margin-bottom: 12px;
+        }
+        .lc-auth-card .validation-summary-errors ul {
+            margin: 0; padding-left: 18px;
+        }
+        [data-bs-theme="dark"] .lc-auth-card .validation-summary-errors,
+        [data-bs-theme="dark"] .lc-auth-card .text-danger {
+            background: rgba(217, 45, 32, 0.16);
+            border-color: rgba(217, 45, 32, 0.32);
+            color: #FDA29B;
+        }
+
+        /* Toggle thème mini en haut à droite de la card auth */
+        .lc-auth-theme-toggle {
+            position: absolute;
+            top: 16px; right: 16px;
+            width: 32px; height: 32px;
+            border: 1px solid var(--border-secondary);
+            background: var(--bg-surface-0);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: grid; place-items: center;
+            color: var(--text-tertiary);
+        }
+        .lc-auth-theme-toggle:hover { color: var(--text-primary); background: var(--bg-hover); }
+    </style>
+</head>
+<body>
+
+<main class="lc-auth-shell">
+    <div class="lc-auth-card" style="position:relative">
+        <button type="button" class="lc-auth-theme-toggle" onclick="toggleAuthTheme()" aria-label="Basculer le thème" title="Basculer le thème">
+            <svg id="authIconLight" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <svg id="authIconDark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="lc-auth-brand">
+            <div class="lc-auth-brand__logo" aria-hidden="true">L</div>
+            <span class="lc-auth-brand__name">LigCom</span>
+        </div>
+
+        @RenderBody()
+
+        <div class="lc-auth-links">
+            <a href="/">← Retour à l'accueil</a>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Toggle thème spécifique au layout d'auth (3 modes : system/light/dark)
+    (function() {
+        function syncIcons() {
+            var theme = document.documentElement.getAttribute('data-bs-theme');
+            var l = document.getElementById('authIconLight');
+            var d = document.getElementById('authIconDark');
+            if (l) l.style.display = theme === 'dark' ? 'none' : '';
+            if (d) d.style.display = theme === 'dark' ? '' : 'none';
+        }
+        window.toggleAuthTheme = function() {
+            var order = ['light', 'dark', 'system'];
+            var current = (function() { try { return localStorage.getItem('lc-theme-mode') || 'system'; } catch { return 'system'; } })();
+            var next = order[(order.indexOf(current) + 1) % order.length];
+            try { localStorage.setItem('lc-theme-mode', next); } catch {}
+            var theme = (next === 'light' || next === 'dark')
+                ? next
+                : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            syncIcons();
+        };
+        // Suit l'OS si mode = system
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+            try {
+                if ((localStorage.getItem('lc-theme-mode') || 'system') === 'system') {
+                    var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                    syncIcons();
+                }
+            } catch {}
+        });
+        syncIcons();
+    })();
+</script>
+
+<footer class="lc-auth-footer">
+    LigCom @DateTime.UtcNow.Year ·
+    <a href="/Privacy">Confidentialité</a>·
+    <a href="/Blueprint">Architecture</a>
+</footer>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

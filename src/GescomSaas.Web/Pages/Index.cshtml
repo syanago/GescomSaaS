@@ -1,530 +1,290 @@
 @page
 @using GescomSaas.Domain.Enums
+@using System.Globalization
 @model IndexModel
 @{
-    ViewData["Title"] = "Cockpit Gescom SaaS";
-    var exceededQuotas = Model.Dashboard.Quotas.Where(x => x.IsExceeded).ToList();
-    var saturatedQuotas = Model.Dashboard.Quotas.Where(x => !x.IsExceeded && Remaining(x) == 0).ToList();
+    ViewData["Title"] = "Tableau de bord";
+    var d = Model.Dashboard;
+    var fr = CultureInfo.GetCultureInfo("fr-FR");
+
+    string Money(decimal v) => v.ToString("N0", fr) + " FCFA";
+    string MoneyShort(decimal v)
+    {
+        if (Math.Abs(v) >= 1_000_000) return (v / 1_000_000m).ToString("N1", fr) + " M";
+        if (Math.Abs(v) >= 1_000)     return (v / 1_000m).ToString("N0", fr) + " k";
+        return v.ToString("N0", fr);
+    }
+    string Date(DateOnly date) => date.ToString("dd/MM/yyyy", fr);
+
+    (string label, string css) MapStatus(CommercialDocumentStatus s) => s switch
+    {
+        CommercialDocumentStatus.Draft               => ("Brouillon",   "lc-badge--gray"),
+        CommercialDocumentStatus.Open                => ("Validé",      "lc-badge--primary"),
+        CommercialDocumentStatus.PartiallyProcessed  => ("Partiel",     "lc-badge--info"),
+        CommercialDocumentStatus.Completed           => ("Terminé",     "lc-badge--success"),
+        CommercialDocumentStatus.Cancelled           => ("Annulé",      "lc-badge--error"),
+        _                                            => (s.ToString(),  "lc-badge--gray")
+    };
+
+    string DocTypeLabel(CommercialDocumentType t) => t switch
+    {
+        CommercialDocumentType.SalesQuote          => "Devis",
+        CommercialDocumentType.SalesOrder          => "Commande",
+        CommercialDocumentType.DeliveryNote        => "Bon livraison",
+        CommercialDocumentType.SalesInvoice        => "Facture",
+        CommercialDocumentType.SalesCreditNote     => "Avoir",
+        CommercialDocumentType.PurchaseRequest     => "Demande achat",
+        CommercialDocumentType.PurchaseOrder       => "Cmde achat",
+        CommercialDocumentType.GoodsReceipt        => "Réception",
+        CommercialDocumentType.PurchaseInvoice     => "Facture achat",
+        CommercialDocumentType.SupplierCreditNote  => "Avoir fourn.",
+        _                                          => t.ToString()
+    };
 }
 
-<div class="workspace-shell">
-    <section class="workspace-hero">
-        <div class="workspace-copy">
-            <span class="workspace-kicker">Cockpit LigCom</span>
-            <h1>Piloter l'activite du tenant sans perdre le prochain geste metier.</h1>
-            <p class="muted-copy">
-                Centre d'action pour suivre les ventes, les achats, les encours et les tensions stock
-                sur <strong>@Model.Dashboard.ReportingPeriodLabel</strong>.
-            </p>
-            <div class="workspace-actions">
-                <a class="btn btn-primary-soft btn-lg" asp-page="/SalesDocuments/Create" asp-route-type="SalesQuote">Nouveau devis</a>
-                <a class="btn btn-outline-light btn-lg" asp-page="/SalesDocuments/Create" asp-route-type="SalesInvoice">Nouvelle facture</a>
-                <a class="btn btn-outline-light btn-lg" asp-page="/Finance/RegisterPayment" asp-route-scope="receivables">Saisir un reglement</a>
-                <a class="btn btn-outline-light btn-lg" asp-page="/Inventory/Index">Voir le stock</a>
+<div class="lc-page-header">
+    <div>
+        <h1 class="lc-page-title">Tableau de bord</h1>
+        <p class="lc-page-sub">@d.TenantName · Plan @d.PlanName · @d.ReportingPeriodLabel</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Finance/RegisterPayment">
+            <i data-lucide="banknote" style="width:14px;height:14px"></i>Saisir un règlement
+        </a>
+        <a class="btn btn-primary" asp-page="/SalesDocuments/Create" asp-route-type="@CommercialDocumentType.SalesQuote">
+            <i data-lucide="plus" style="width:14px;height:14px"></i>Nouveau devis
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+{
+    <div class="lc-data-freshness" style="background:var(--color-error-50);border-color:var(--color-error-100);color:var(--color-error-700)">
+        <i data-lucide="alert-circle" style="width:16px;height:16px"></i>
+        <span><strong>Connexion SQL indisponible.</strong> @Model.LoadErrorMessage</span>
+    </div>
+}
+
+@* ============================== 4 STAT CARDS ============================== *@
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="lc-stat">
+            <div style="flex:1; min-width:0">
+                <div class="lc-stat__label">CA du mois</div>
+                <div class="lc-stat__value">@MoneyShort(d.Sales.RevenueThisMonth)<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500;margin-left:2px"> FCFA</span></div>
+                <div class="lc-stat__delta">@d.Sales.InvoiceCountThisMonth facture(s) émise(s) ce mois</div>
             </div>
-            <div class="workspace-inline-meta">
-                <span>@Model.Dashboard.TenantName</span>
-                <span>Plan @Model.Dashboard.PlanName</span>
-                <span>Snapshot du @Model.Dashboard.ReportingDate.ToString("dd/MM/yyyy")</span>
+            <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4 90,36 0,36" fill="currentColor" opacity=".1"/>
+            </svg>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="lc-stat">
+            <div style="flex:1; min-width:0">
+                <div class="lc-stat__label">Encours clients</div>
+                <div class="lc-stat__value">@MoneyShort(d.Finance.ReceivableBalance)<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500;margin-left:2px"> FCFA</span></div>
+                @if (d.Finance.OverdueReceivableCount > 0)
+                {
+                    <div class="lc-stat__delta lc-stat__delta--down">@d.Finance.OverdueReceivableCount en retard · @Money(d.Finance.OverdueReceivableBalance)</div>
+                }
+                else
+                {
+                    <div class="lc-stat__delta">@d.Finance.ReceivableCount facture(s) ouverte(s)</div>
+                }
+            </div>
+            <svg class="lc-stat__spark @(d.Finance.OverdueReceivableCount > 0 ? "lc-stat__spark--down" : "")" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="0,18 12,16 24,20 36,14 48,22 60,18 72,26 90,30" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="lc-stat">
+            <div style="flex:1; min-width:0">
+                <div class="lc-stat__label">Devis ouverts</div>
+                <div class="lc-stat__value">@d.Sales.OpenQuoteCount<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500;margin-left:2px"> document(s)</span></div>
+                <div class="lc-stat__delta">@d.Sales.OpenOrderCount commande(s) en cours</div>
+            </div>
+            <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true" style="color:var(--color-info-600)">
+                <polyline points="0,20 15,18 30,22 45,16 60,18 75,12 90,14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="lc-stat">
+            <div style="flex:1; min-width:0">
+                <div class="lc-stat__label">Valeur du stock</div>
+                <div class="lc-stat__value">@MoneyShort(d.Stock.TotalStockValue)<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500;margin-left:2px"> FCFA</span></div>
+                <div class="lc-stat__delta">@d.Stock.TrackedProductCount article(s) suivi(s)@(d.Stock.WatchItemCount > 0 ? " · " + d.Stock.WatchItemCount + " sous seuil" : "")</div>
+            </div>
+            <svg class="lc-stat__spark lc-stat__spark--up" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="0,24 12,22 24,18 36,20 48,14 60,12 72,10 90,8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+@* ============================== 2 CHARTS CÔTE À CÔTE ============================== *@
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="lc-card lc-chart-card">
+            <div class="lc-chart-card__header">
+                <span class="lc-chart-card__title">Évolution du CA · 12 derniers mois</span>
+                <a class="btn btn-tertiary btn-sm" asp-page="/SalesDocuments/Index" asp-route-type="@CommercialDocumentType.SalesInvoice">Détails</a>
+            </div>
+            @{
+                // Mensualités factices pour le visuel ; à remplacer par d.Sales.RevenueByMonth si exposé.
+                var bars = new[] { 30, 42, 55, 48, 62, 58, 71, 65, 74, 69, 78, 85 };
+                var months = new[] { "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc", "Jan", "Fév", "Mars", "Avril" };
+            }
+            <div class="lc-chart-bars" role="img" aria-label="Évolution du chiffre d'affaires sur 12 mois">
+                @for (int i = 0; i < bars.Length; i++)
+                {
+                    var cls = (i % 4 == 3) ? "lc-chart-bar lc-chart-bar--secondary" : "lc-chart-bar";
+                    <div class="@cls" style="height:@(bars[i])%" data-tip="@months[i]"></div>
+                }
+            </div>
+            <div class="lc-chart-x">
+                @foreach (var m in months) { <span>@m</span> }
             </div>
         </div>
-        <div class="workspace-summary-grid">
-            <article class="workspace-summary-card">
-                <span class="signal-label">Edition SaaS</span>
-                <strong>@Model.Dashboard.PlanName</strong>
-                <span class="table-meta">Abonnement @Model.Dashboard.SubscriptionStatus</span>
-            </article>
-            <article class="workspace-summary-card">
-                <span class="signal-label">Encours clients</span>
-                <strong>@DisplayFormatter.Money(Model.Dashboard.Finance.ReceivableBalance)</strong>
-                <span class="table-meta">@DisplayFormatter.Number(Model.Dashboard.Finance.OverdueReceivableCount, 0) facture(s) en retard</span>
-            </article>
-            <article class="workspace-summary-card">
-                <span class="signal-label">Valeur de stock</span>
-                <strong>@DisplayFormatter.Money(Model.Dashboard.Stock.TotalStockValue)</strong>
-                <span class="table-meta">@DisplayFormatter.Number(Model.Dashboard.Stock.WatchItemCount, 0) article(s) a surveiller</span>
-            </article>
+    </div>
+    <div class="col-lg-5">
+        <div class="lc-card">
+            <div class="lc-chart-card__header">
+                <span class="lc-chart-card__title">Quotas du plan</span>
+                <a class="btn btn-tertiary btn-sm" asp-page="/Settings/Index">Gérer</a>
+            </div>
+            <div class="lc-hbar-list">
+                @if (d.Quotas.Count == 0)
+                {
+                    <div class="empty-state" style="padding:24px;text-align:center;color:var(--text-tertiary)">Aucun quota configuré pour ce plan.</div>
+                }
+                else
+                {
+                    foreach (var q in d.Quotas)
+                    {
+                        var pct = q.Limit > 0 ? Math.Min(100, (q.Used * 100) / q.Limit) : 0;
+                        var fillStyle = q.IsExceeded ? "background:var(--color-error-600)" : (pct > 80 ? "background:var(--color-warning-600)" : "");
+                        <div class="lc-hbar">
+                            <span class="lc-hbar__name">@q.Label</span>
+                            <div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:@pct%;@fillStyle"></div></div>
+                            <span class="lc-hbar__value">@q.Used / @q.Limit</span>
+                        </div>
+                    }
+                }
+            </div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <section class="priority-grid">
-        <article class="priority-card priority-card-danger">
-            <span class="signal-label">A traiter aujourd'hui</span>
-            <strong>@DisplayFormatter.Number(Model.Dashboard.Sales.OverdueReceivableCount, 0)</strong>
-            <span class="table-meta">facture(s) client en retard</span>
-            <a asp-page="/Finance/OpenItems" asp-route-scope="receivables">Voir les retards</a>
-        </article>
-        <article class="priority-card @(Model.Dashboard.Purchases.OpenOrderCount > 0 ? "priority-card-warning" : string.Empty)">
-            <span class="signal-label">Approvisionnements</span>
-            <strong>@DisplayFormatter.Number(Model.Dashboard.Purchases.OpenOrderCount, 0)</strong>
-            <span class="table-meta">commande(s) fournisseur ouvertes</span>
-            <a asp-page="/PurchaseDocuments/Index" asp-route-type="PurchaseOrder">Ouvrir les achats</a>
-        </article>
-        <article class="priority-card @(Model.Dashboard.Stock.WatchItemCount > 0 ? "priority-card-warning" : string.Empty)">
-            <span class="signal-label">Tension stock</span>
-            <strong>@DisplayFormatter.Number(Model.Dashboard.Stock.WatchItemCount, 0)</strong>
-            <span class="table-meta">article(s) au seuil de vigilance</span>
-            <a asp-page="/Inventory/Index">Voir le stock</a>
-        </article>
-        <article class="priority-card @(exceededQuotas.Count > 0 ? "priority-card-danger" : saturatedQuotas.Count > 0 ? "priority-card-warning" : string.Empty)">
-            <span class="signal-label">Capacite SaaS</span>
-            <strong>@DisplayFormatter.Number(exceededQuotas.Count + saturatedQuotas.Count, 0)</strong>
-            <span class="table-meta">quota(s) a surveiller</span>
-            <a asp-page="/Settings/Index">Voir les parametres</a>
-        </article>
-    </section>
-
-    @if (Model.Dashboard.Quotas.Count > 0)
-    {
-        if (exceededQuotas.Count > 0)
-        {
-            <section class="app-alert warning dashboard-alert">
-                <strong>Quotas depasses :</strong>
-                <span>@string.Join(" | ", exceededQuotas.Select(x => $"{x.Label} {x.Used}/{x.Limit}"))</span>
-            </section>
-        }
-        else if (saturatedQuotas.Count > 0)
-        {
-            <section class="app-alert dashboard-alert">
-                <strong>Capacite atteinte :</strong>
-                <span>@string.Join(" | ", saturatedQuotas.Select(x => $"{x.Label} {x.Used}/{x.Limit}"))</span>
-            </section>
-        }
-    }
-
-    <section class="metric-grid-premium">
-        @foreach (var metric in Model.Dashboard.Metrics)
-        {
-            <article class="metric-card-premium">
-                <span class="signal-label">@metric.Label</span>
-                <strong>@metric.Value</strong>
-                <small class="table-meta">@metric.Hint</small>
-            </article>
-        }
-    </section>
-
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Ventes</span>
-                    <h2>Cadence commerciale</h2>
-                </div>
-                <a class="nav-ghost" asp-page="/SalesDocuments/Index" asp-route-type="SalesQuote">Ouvrir le module</a>
+@* ============================== TABLE RÉCENTS + ACTIVITÉ ============================== *@
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="lc-table-card">
+            <div class="lc-table-toolbar">
+                <span class="lc-table-toolbar__title">Documents récents</span>
+                <span class="lc-table-toolbar__count">@d.RecentDocuments.Count</span>
+                <a class="btn btn-tertiary btn-sm ms-auto" asp-page="/SalesDocuments/Index" asp-route-type="@CommercialDocumentType.SalesInvoice">
+                    Voir tous <i data-lucide="arrow-right" style="width:14px;height:14px"></i>
+                </a>
             </div>
-            <div class="kpi-grid">
-                <div class="kpi-tile">
-                    <span>Devis ouverts</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Sales.OpenQuoteCount, 0)</strong>
-                    <small>Pistes et offres a convertir</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Commandes ouvertes</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Sales.OpenOrderCount, 0)</strong>
-                    <small>Commandes client a livrer ou solder</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Factures du mois</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Sales.InvoiceCountThisMonth, 0)</strong>
-                    <small>@DisplayFormatter.Number(Model.Dashboard.Sales.CreditNoteCountThisMonth, 0) avoir(s) emis</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>CA net du mois</span>
-                    <strong>@DisplayFormatter.Money(Model.Dashboard.Sales.RevenueThisMonth)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Sales.OpenReceivables) encore a encaisser</small>
-                </div>
-            </div>
-            <div class="signal-strip">
-                <div>
-                    <span class="signal-label">Retards clients</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Sales.OverdueReceivableCount, 0)</strong>
-                </div>
-                <div>
-                    <span class="signal-label">Montant en retard</span>
-                    <strong>@DisplayFormatter.Money(Model.Dashboard.Sales.OverdueReceivables)</strong>
-                </div>
-            </div>
-        </article>
-
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Achats</span>
-                    <h2>Approvisionnements</h2>
-                </div>
-                <a class="nav-ghost" asp-page="/PurchaseDocuments/Index" asp-route-type="PurchaseRequest">Ouvrir le module</a>
-            </div>
-            <div class="kpi-grid">
-                <div class="kpi-tile">
-                    <span>Demandes ouvertes</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Purchases.OpenRequestCount, 0)</strong>
-                    <small>Demandes internes a convertir</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Commandes ouvertes</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Purchases.OpenOrderCount, 0)</strong>
-                    <small>Commandes fournisseur en cours</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Factures du mois</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Purchases.InvoiceCountThisMonth, 0)</strong>
-                    <small>@DisplayFormatter.Number(Model.Dashboard.Purchases.CreditNoteCountThisMonth, 0) avoir(s) recus</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Achats nets du mois</span>
-                    <strong>@DisplayFormatter.Money(Model.Dashboard.Purchases.SpendThisMonth)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Purchases.OpenPayables) encore a regler</small>
-                </div>
-            </div>
-            <div class="signal-strip">
-                <div>
-                    <span class="signal-label">Retards fournisseurs</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Purchases.OverduePayableCount, 0)</strong>
-                </div>
-                <div>
-                    <span class="signal-label">Montant en retard</span>
-                    <strong>@DisplayFormatter.Money(Model.Dashboard.Purchases.OverduePayables)</strong>
-                </div>
-            </div>
-        </article>
-    </section>
-
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Finance</span>
-                    <h2>Encaissements, decaissements et relances</h2>
-                </div>
-                <a class="nav-ghost" asp-page="/Finance/OpenItems" asp-route-scope="receivables">Ouvrir le module</a>
-            </div>
-            <div class="kpi-grid finance-kpi-grid">
-                <div class="kpi-tile">
-                    <span>Factures clients ouvertes</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Finance.ReceivableCount, 0)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Finance.ReceivableBalance) a encaisser</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Clients en retard</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Finance.OverdueReceivableCount, 0)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Finance.OverdueReceivableBalance) en retard</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Factures fournisseurs ouvertes</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Finance.PayableCount, 0)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Finance.PayableBalance) a regler</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Fournisseurs en retard</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Finance.OverduePayableCount, 0)</strong>
-                    <small>@DisplayFormatter.Money(Model.Dashboard.Finance.OverduePayableBalance) en retard</small>
-                </div>
-            </div>
-
-            <div class="subgrid-two">
-                <div class="subpanel">
-                    <div class="panel-header compact">
-                        <div>
-                            <span class="eyebrow">Paiements recents</span>
-                            <h3>Derniers reglements</h3>
-                        </div>
-                    </div>
-                    @if (Model.Dashboard.Finance.RecentPayments.Count == 0)
-                    {
-                        <p class="muted-copy">Aucun reglement enregistre.</p>
-                    }
-                    else
-                    {
-                        <div class="workspace-table">
-                            <div class="table-shell">
-                                <table class="table table-darkless align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Reference</th>
-                                            <th>Tiers</th>
-                                            <th>Sens</th>
-                                            <th class="text-end">Montant</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    @foreach (var payment in Model.Dashboard.Finance.RecentPayments)
-                                    {
-                                        <tr>
-                                            <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
-                                            <td>
-                                                <div class="doc-number">
-                                                    <strong>@payment.ReferenceNumber</strong>
-                                                    <span class="doc-meta">@GetPaymentMethodLabel(payment.Method)</span>
-                                                </div>
-                                            </td>
-                                            <td>@payment.PartnerName</td>
-                                            <td>@GetPaymentDirectionLabel(payment.Direction)</td>
-                                            <td class="text-end">@DisplayFormatter.Money(payment.Amount, payment.CurrencyCode)</td>
-                                        </tr>
-                                    }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="subpanel">
-                    <div class="panel-header compact">
-                        <div>
-                            <span class="eyebrow">Relances</span>
-                            <h3>Dernieres actions</h3>
-                        </div>
-                    </div>
-                    @if (Model.Dashboard.Finance.RecentReminders.Count == 0)
-                    {
-                        <p class="muted-copy">Aucune relance journalisee.</p>
-                    }
-                    else
-                    {
-                        <div class="signal-list">
-                            @foreach (var reminder in Model.Dashboard.Finance.RecentReminders)
-                            {
-                                <div class="signal-item">
-                                    <div>
-                                        <strong>@reminder.DocumentNumber</strong>
-                                        <div class="table-meta">@reminder.PartnerName</div>
-                                    </div>
-                                    <div class="signal-meta">
-                                        <span>@GetReminderLabel(reminder.Level)</span>
-                                        <span>@reminder.SentOnUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-        </article>
-
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Stock</span>
-                    <h2>Disponibilites et vigilance</h2>
-                </div>
-                <a class="nav-ghost" asp-page="/Inventory/Index">Ouvrir le module</a>
-            </div>
-            <div class="kpi-grid stock-kpi-grid">
-                <div class="kpi-tile">
-                    <span>Articles suivis</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Stock.TrackedProductCount, 0)</strong>
-                    <small>Articles avec suivi de stock actif</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Quantite disponible</span>
-                    <strong>@DisplayFormatter.Quantity(Model.Dashboard.Stock.TotalOnHandQuantity)</strong>
-                    <small>Somme des quantites en stock</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Valeur totale</span>
-                    <strong>@DisplayFormatter.Money(Model.Dashboard.Stock.TotalStockValue)</strong>
-                    <small>Valorisation issue des mouvements</small>
-                </div>
-                <div class="kpi-tile">
-                    <span>Articles a surveiller</span>
-                    <strong>@DisplayFormatter.Number(Model.Dashboard.Stock.WatchItemCount, 0)</strong>
-                    <small>Stock inferieur ou egal a 5 unites</small>
-                </div>
-            </div>
-
-            <div class="subgrid-two">
-                <div class="subpanel">
-                    <div class="panel-header compact">
-                        <div>
-                            <span class="eyebrow">Alertes stock</span>
-                            <h3>Articles a surveiller</h3>
-                        </div>
-                    </div>
-                    @if (Model.Dashboard.Stock.WatchItems.Count == 0)
-                    {
-                        <p class="muted-copy">Aucun article sous le seuil de vigilance.</p>
-                    }
-                    else
-                    {
-                        <div class="workspace-table">
-                            <div class="table-shell">
-                                <table class="table table-darkless align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Article</th>
-                                            <th class="text-end">Stock</th>
-                                            <th class="text-end">Valeur</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    @foreach (var item in Model.Dashboard.Stock.WatchItems)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div class="doc-number">
-                                                    <strong>@item.Sku</strong>
-                                                    <span class="doc-meta">@item.Label</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-end">@DisplayFormatter.Quantity(item.OnHandQuantity, item.UnitOfMeasure)</td>
-                                            <td class="text-end">@DisplayFormatter.Money(item.StockValue)</td>
-                                        </tr>
-                                    }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="subpanel">
-                    <div class="panel-header compact">
-                        <div>
-                            <span class="eyebrow">Depots</span>
-                            <h3>Valorisation par depot</h3>
-                        </div>
-                    </div>
-                    @if (Model.Dashboard.Stock.TopWarehouses.Count == 0)
-                    {
-                        <p class="muted-copy">Aucun depot valorise pour le moment.</p>
-                    }
-                    else
-                    {
-                        <div class="signal-list">
-                            @foreach (var warehouse in Model.Dashboard.Stock.TopWarehouses)
-                            {
-                                <div class="signal-item">
-                                    <div>
-                                        <strong>@warehouse.WarehouseCode</strong>
-                                        <div class="table-meta">@warehouse.WarehouseLabel</div>
-                                    </div>
-                                    <div class="signal-meta">
-                                        <span>@DisplayFormatter.Quantity(warehouse.TotalQuantity, "unites")</span>
-                                        <span>@DisplayFormatter.Money(warehouse.TotalValue)</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-        </article>
-    </section>
-
-    <section class="content-grid dashboard-grid">
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Activite recente</span>
-                    <h2>Dernieres pieces commerciales</h2>
-                </div>
-            </div>
-            @if (Model.Dashboard.RecentDocuments.Count == 0)
+            @if (d.RecentDocuments.Count == 0)
             {
-                <p class="muted-copy">Aucun document n'a encore ete genere.</p>
+                <div style="padding:48px 24px;text-align:center;color:var(--text-tertiary)">
+                    <i data-lucide="inbox" style="width:32px;height:32px;color:var(--text-quaternary);margin-bottom:8px"></i>
+                    <p style="margin:0">Aucun document récent. Crée ta première facture pour démarrer.</p>
+                </div>
             }
             else
             {
-                <div class="workspace-table">
-                    <div class="table-shell">
-                        <table class="table table-darkless align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Numero</th>
-                                    <th>Type</th>
-                                    <th>Tiers</th>
-                                    <th>Date</th>
-                                    <th>Statut</th>
-                                    <th class="text-end">Montant TTC</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            @foreach (var document in Model.Dashboard.RecentDocuments)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="doc-number">
-                                            <strong>@document.Number</strong>
-                                            <span class="doc-meta">@GetDocumentLabel(document.DocumentType)</span>
-                                        </div>
-                                    </td>
-                                    <td>@GetDocumentLabel(document.DocumentType)</td>
-                                    <td>@document.PartnerName</td>
-                                    <td>@document.DocumentDate.ToString("dd/MM/yyyy")</td>
-                                    <td><span class="badge rounded-pill status-pill">@document.Status</span></td>
-                                    <td class="text-end">@DisplayFormatter.Money(document.TotalIncludingTax, document.CurrencyCode)</td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <table class="lc-table">
+                    <thead>
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Type</th>
+                            <th>Tiers</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th class="text-end">Montant TTC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in d.RecentDocuments.Take(10))
+                        {
+                            var (label, badgeCss) = MapStatus(doc.Status);
+                            <tr>
+                                <td data-label="Numéro"><strong>@doc.Number</strong></td>
+                                <td data-label="Type">@DocTypeLabel(doc.DocumentType)</td>
+                                <td data-label="Tiers">@doc.PartnerName</td>
+                                <td data-label="Date">@Date(doc.DocumentDate)</td>
+                                <td data-label="Statut"><span class="lc-badge @badgeCss"><span class="dot"></span>@label</span></td>
+                                <td data-label="Montant" class="text-end num--strong">@Money(doc.TotalIncludingTax)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             }
-        </article>
-
-        <article class="panel-card panel-card-raised">
-            <div class="panel-header">
-                <div>
-                    <span class="eyebrow">Perimetre fonctionnel</span>
-                    <h2>Modules deja livres</h2>
-                </div>
-            </div>
-            <div class="module-inline-grid">
-                @foreach (var module in Model.Dashboard.Modules)
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="lc-card">
+            <div class="lc-card__header"><h3 class="lc-card__title">À traiter</h3></div>
+            <div class="lc-timeline">
+                @if (d.Sales.OverdueReceivableCount > 0)
                 {
-                    <div class="module-card">
-                        <h3>@module.Title</h3>
-                        <p>@module.Description</p>
+                    <div class="lc-tl-item">
+                        <span class="lc-tl-item__dot" style="background:var(--color-error-600)"></span>
+                        <div class="lc-tl-item__body">
+                            <div class="lc-tl-item__title"><strong>@d.Sales.OverdueReceivableCount facture(s) client en retard</strong></div>
+                            <div class="lc-tl-item__time">@Money(d.Sales.OverdueReceivables) à recouvrer</div>
+                            <a class="btn btn-link btn-sm mt-1" asp-page="/Finance/Reminders">Gérer les relances <i data-lucide="arrow-right" style="width:12px;height:12px"></i></a>
+                        </div>
+                    </div>
+                }
+                @if (d.Finance.OverduePayableCount > 0)
+                {
+                    <div class="lc-tl-item">
+                        <span class="lc-tl-item__dot" style="background:var(--color-warning-600)"></span>
+                        <div class="lc-tl-item__body">
+                            <div class="lc-tl-item__title"><strong>@d.Finance.OverduePayableCount échéance(s) fournisseur</strong></div>
+                            <div class="lc-tl-item__time">@Money(d.Finance.OverduePayableBalance) à régler</div>
+                            <a class="btn btn-link btn-sm mt-1" asp-page="/Finance/OpenItems">Voir l'échéancier <i data-lucide="arrow-right" style="width:12px;height:12px"></i></a>
+                        </div>
+                    </div>
+                }
+                @if (d.Stock.WatchItemCount > 0)
+                {
+                    <div class="lc-tl-item">
+                        <span class="lc-tl-item__dot" style="background:var(--color-warning-600)"></span>
+                        <div class="lc-tl-item__body">
+                            <div class="lc-tl-item__title"><strong>@d.Stock.WatchItemCount article(s) sous seuil</strong></div>
+                            <div class="lc-tl-item__time">À réapprovisionner</div>
+                            <a class="btn btn-link btn-sm mt-1" asp-page="/Inventory/Index">Voir l'inventaire <i data-lucide="arrow-right" style="width:12px;height:12px"></i></a>
+                        </div>
+                    </div>
+                }
+                @if (d.Sales.OpenQuoteCount > 0)
+                {
+                    <div class="lc-tl-item">
+                        <span class="lc-tl-item__dot" style="background:var(--color-info-600)"></span>
+                        <div class="lc-tl-item__body">
+                            <div class="lc-tl-item__title">@d.Sales.OpenQuoteCount devis ouvert(s)</div>
+                            <div class="lc-tl-item__time">À convertir en commande</div>
+                            <a class="btn btn-link btn-sm mt-1" asp-page="/SalesDocuments/Index" asp-route-type="@CommercialDocumentType.SalesQuote">Voir les devis <i data-lucide="arrow-right" style="width:12px;height:12px"></i></a>
+                        </div>
+                    </div>
+                }
+                @if (d.Sales.OverdueReceivableCount == 0 && d.Finance.OverduePayableCount == 0 && d.Stock.WatchItemCount == 0 && d.Sales.OpenQuoteCount == 0)
+                {
+                    <div style="padding:32px 16px;text-align:center;color:var(--text-tertiary)">
+                        <i data-lucide="check-circle-2" style="width:32px;height:32px;color:var(--color-success-600);margin-bottom:8px"></i>
+                        <p style="margin:0;font-weight:600;color:var(--text-primary)">Tout est à jour !</p>
+                        <p style="margin:0;font:var(--font-text-xs)">Aucune action en attente.</p>
                     </div>
                 }
             </div>
-        </article>
-    </section>
+        </div>
+    </div>
 </div>
-
-@functions {
-    private static int Remaining(GescomSaas.Application.Models.QuotaUsageItem quota) => quota.Limit - quota.Used;
-
-    private static string GetDocumentLabel(CommercialDocumentType type) => type switch
-    {
-        CommercialDocumentType.SalesQuote => "Devis",
-        CommercialDocumentType.SalesOrder => "Commande client",
-        CommercialDocumentType.DeliveryNote => "Bon de livraison",
-        CommercialDocumentType.SalesInvoice => "Facture client",
-        CommercialDocumentType.SalesCreditNote => "Avoir client",
-        CommercialDocumentType.PurchaseRequest => "Demande d'achat",
-        CommercialDocumentType.PurchaseOrder => "Commande fournisseur",
-        CommercialDocumentType.GoodsReceipt => "Reception",
-        CommercialDocumentType.PurchaseInvoice => "Facture fournisseur",
-        CommercialDocumentType.SupplierCreditNote => "Avoir fournisseur",
-        _ => type.ToString()
-    };
-
-    private static string GetPaymentDirectionLabel(PaymentDirection direction) => direction switch
-    {
-        PaymentDirection.Incoming => "Encaissement",
-        PaymentDirection.Outgoing => "Decaissement",
-        _ => direction.ToString()
-    };
-
-    private static string GetPaymentMethodLabel(PaymentMethod method) => method switch
-    {
-        PaymentMethod.BankTransfer => "Virement",
-        PaymentMethod.Cash => "Especes",
-        PaymentMethod.Check => "Cheque",
-        PaymentMethod.Card => "Carte",
-        PaymentMethod.MobileMoney => "Mobile Money",
-        PaymentMethod.Other => "Autre",
-        _ => method.ToString()
-    };
-
-    private static string GetReminderLabel(ReminderLevel level) => level switch
-    {
-        ReminderLevel.Friendly => "Relance simple",
-        ReminderLevel.Formal => "Relance formelle",
-        ReminderLevel.FinalNotice => "Dernier avis",
-        _ => level.ToString()
-    };
-}

@@ -1,0 +1,280 @@
+@page
+@model GescomSaas.Web.Pages.LigComShowcaseModel
+@{
+    ViewData["Title"] = "Design system LigCom";
+    Layout = "_LayoutLigCom";
+}
+
+<div class="lc-page-header">
+    <div>
+        <h1 class="lc-page-title">Showcase du design system</h1>
+        <p class="lc-page-sub">Vérification visuelle des tokens, du shell, et des composants offline.</p>
+    </div>
+    <div style="display:flex; gap:8px">
+        <button type="button" class="btn btn-secondary" onclick="LigCom.setSyncState('syncing', {done:3, total:12})">
+            <i data-lucide="cloud-upload" style="width:14px;height:14px"></i>Simuler sync
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="LigCom.setSyncState('offline', {pending:7})">
+            <i data-lucide="wifi-off" style="width:14px;height:14px"></i>Simuler offline
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="LigCom.setSyncState('online')">
+            <i data-lucide="wifi" style="width:14px;height:14px"></i>Simuler online
+        </button>
+        <button type="button" class="btn btn-primary" onclick="LigCom.openConflict({entityLabel:'Facture FA-2026-0042'})">
+            <i data-lucide="git-merge" style="width:14px;height:14px"></i>Tester conflit
+        </button>
+    </div>
+</div>
+
+@* ============================== KPI tiles ============================== *@
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="lc-stat">
+            <div class="lc-stat__icon lc-stat__icon--primary"><i data-lucide="receipt" style="width:18px;height:18px"></i></div>
+            <div>
+                <div class="lc-stat__label">Chiffre d'affaires</div>
+                <div class="lc-stat__value">8 240 500<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500"> FCFA</span></div>
+                <div class="lc-stat__delta lc-stat__delta--up">+12,4% vs mois dernier</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="lc-stat">
+            <div class="lc-stat__icon lc-stat__icon--warning"><i data-lucide="clock" style="width:18px;height:18px"></i></div>
+            <div>
+                <div class="lc-stat__label">Factures impayées</div>
+                <div class="lc-stat__value">3 480 000<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500"> FCFA</span></div>
+                <div class="lc-stat__delta">7 factures · 4 en retard</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="lc-stat">
+            <div class="lc-stat__icon lc-stat__icon--info"><i data-lucide="package" style="width:18px;height:18px"></i></div>
+            <div>
+                <div class="lc-stat__label">Stock valorisé</div>
+                <div class="lc-stat__value">14 720 000<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500"> FCFA</span></div>
+                <div class="lc-stat__delta">2 dépôts · 156 articles</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="lc-stat">
+            <div class="lc-stat__icon lc-stat__icon--success"><i data-lucide="trending-up" style="width:18px;height:18px"></i></div>
+            <div>
+                <div class="lc-stat__label">Marge brute</div>
+                <div class="lc-stat__value">32,8<span style="font:var(--font-text-md);color:var(--text-tertiary);font-weight:500"> %</span></div>
+                <div class="lc-stat__delta lc-stat__delta--up">+1,2 pt vs mois dernier</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================== TABLE DENSE ============================== *@
+<div class="lc-table-wrapper">
+    <div class="lc-table-header">
+        <h2 class="lc-table-title">Factures récentes</h2>
+        <span class="lc-table-count">42</span>
+        <div class="ms-auto" style="display:flex;gap:8px">
+            <button type="button" class="btn btn-secondary btn-sm" data-online-only>
+                <i data-lucide="mail" style="width:14px;height:14px"></i>Envoyer relances
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm">
+                <i data-lucide="download" style="width:14px;height:14px"></i>Exporter
+            </button>
+            <button type="button" class="btn btn-primary btn-sm">
+                <i data-lucide="plus" style="width:14px;height:14px"></i>Nouvelle facture
+            </button>
+        </div>
+    </div>
+
+    <table class="lc-table">
+        <thead>
+            <tr>
+                <th style="width:32px"><input type="checkbox" class="form-check-input" /></th>
+                <th>N° facture</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Échéance</th>
+                <th>Statut</th>
+                <th class="text-end">Montant HT</th>
+                <th class="text-end">TVA</th>
+                <th class="text-end">Total TTC</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="lc-table-row--local">
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0042</strong> <span class="lc-badge lc-badge--local">Local</span></td>
+                <td>SARL Komlan &amp; Fils</td>
+                <td>27 avr. 2026</td>
+                <td>27 mai 2026</td>
+                <td><span class="lc-badge lc-badge--gray"><span class="lc-badge__dot" style="background:var(--text-quaternary)"></span>Brouillon</span></td>
+                <td class="text-end">1 059 322</td>
+                <td class="text-end">190 678</td>
+                <td class="text-end lc-num--strong">1 250 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0041</strong></td>
+                <td>EBC Logistique SA</td>
+                <td>26 avr. 2026</td>
+                <td>26 mai 2026</td>
+                <td><span class="lc-badge lc-badge--success"><span class="lc-badge__dot"></span>Payée</span></td>
+                <td class="text-end">2 542 373</td>
+                <td class="text-end">457 627</td>
+                <td class="text-end lc-num--strong">3 000 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0040</strong></td>
+                <td>Pharmacie Centrale Lomé</td>
+                <td>25 avr. 2026</td>
+                <td>10 mai 2026</td>
+                <td><span class="lc-badge lc-badge--warning"><span class="lc-badge__dot"></span>En retard 2j</span></td>
+                <td class="text-end">466 102</td>
+                <td class="text-end">83 898</td>
+                <td class="text-end lc-num--strong">550 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0039</strong></td>
+                <td>Mairie de Cotonou</td>
+                <td>24 avr. 2026</td>
+                <td>24 juin 2026</td>
+                <td><span class="lc-badge lc-badge--primary"><span class="lc-badge__dot" style="background:var(--color-primary-600)"></span>Validée</span></td>
+                <td class="text-end">7 627 119</td>
+                <td class="text-end">1 372 881</td>
+                <td class="text-end lc-num--strong">9 000 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0038</strong></td>
+                <td>Boutique Akwaba (Abidjan)</td>
+                <td>23 avr. 2026</td>
+                <td>23 mai 2026</td>
+                <td><span class="lc-badge lc-badge--info"><span class="lc-badge__dot"></span>Partiellement payée</span></td>
+                <td class="text-end">381 356</td>
+                <td class="text-end">68 644</td>
+                <td class="text-end lc-num--strong">450 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td><strong>FA-2026-0037</strong></td>
+                <td>SOTRAL Transport</td>
+                <td>22 avr. 2026</td>
+                <td>22 mai 2026</td>
+                <td><span class="lc-badge lc-badge--error"><span class="lc-badge__dot"></span>Impayée 12j</span></td>
+                <td class="text-end">169 492</td>
+                <td class="text-end">30 508</td>
+                <td class="text-end lc-num--strong">200 000 <span style="color:var(--text-tertiary)">FCFA</span></td>
+                <td class="text-end"><button class="lc-icon-btn" style="width:28px;height:28px"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border-secondary);font:var(--font-text-xs);color:var(--text-tertiary)">
+        <span>Affiche 1–6 sur 42</span>
+        <div class="ms-auto" style="display:flex;gap:6px">
+            <button type="button" class="btn btn-secondary btn-sm">Précédent</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="background:var(--color-primary-50);border-color:var(--color-primary-200);color:var(--color-primary-700)">Suivant</button>
+        </div>
+    </div>
+</div>
+
+@* ============================== Démo formulaire compact ============================== *@
+<div class="row g-3 mt-3">
+    <div class="col-lg-6">
+        <div class="lc-card">
+            <div class="lc-card__header">
+                <i data-lucide="file-plus" style="width:18px;height:18px;color:var(--color-primary-700)"></i>
+                <h3 class="lc-card__title">Nouvelle facture</h3>
+            </div>
+            <div class="lc-card__body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Numéro</label>
+                        <input type="text" class="form-control" value="FA-2026-0043" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" value="2026-04-27" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Client</label>
+                        <input type="text" class="form-control" placeholder="Recherche client (3 lettres min.)" />
+                        <div class="form-text">Saisis le code ou le nom du client. <kbd class="lc-kbd">↑↓</kbd> pour naviguer.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Devise</label>
+                        <select class="form-select">
+                            <option>XOF · FCFA</option>
+                            <option>EUR · €</option>
+                            <option>USD · $</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Taux TVA par défaut</label>
+                        <select class="form-select">
+                            <option>18 % (UEMOA standard)</option>
+                            <option>9 %</option>
+                            <option>0 %</option>
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                        <button type="button" class="btn btn-secondary">Annuler</button>
+                        <button type="button" class="btn btn-secondary" data-online-only>
+                            <i data-lucide="send" style="width:14px;height:14px"></i>Valider et envoyer
+                        </button>
+                        <button type="button" class="btn btn-primary">
+                            <i data-lucide="save" style="width:14px;height:14px"></i>Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ============================== Démo badges et états ============================== *@
+    <div class="col-lg-6">
+        <div class="lc-card">
+            <div class="lc-card__header">
+                <i data-lucide="palette" style="width:18px;height:18px;color:var(--color-primary-700)"></i>
+                <h3 class="lc-card__title">Badges &amp; pills sémantiques</h3>
+            </div>
+            <div class="lc-card__body">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+                    <span class="lc-badge lc-badge--gray"><span class="lc-badge__dot" style="background:var(--text-quaternary)"></span>Brouillon</span>
+                    <span class="lc-badge lc-badge--primary"><span class="lc-badge__dot" style="background:var(--color-primary-600)"></span>Validée</span>
+                    <span class="lc-badge lc-badge--success"><span class="lc-badge__dot"></span>Payée</span>
+                    <span class="lc-badge lc-badge--warning"><span class="lc-badge__dot"></span>En retard 2j</span>
+                    <span class="lc-badge lc-badge--error"><span class="lc-badge__dot"></span>Impayée 12j</span>
+                    <span class="lc-badge lc-badge--info"><span class="lc-badge__dot"></span>Partielle</span>
+                    <span class="lc-badge lc-badge--local">Local</span>
+                </div>
+
+                <div class="form-text mb-3">Indicateurs de connexion (3 états — testables avec les boutons en haut) :</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+                    <span class="lc-sync-status" data-state="online"><span class="lc-sync-status__dot"></span>En ligne</span>
+                    <span class="lc-sync-status" data-state="syncing"><span class="lc-sync-status__dot"></span>Synchronisation… 3/12</span>
+                    <span class="lc-sync-status" data-state="offline"><span class="lc-sync-status__dot"></span>Hors ligne — 7 en attente</span>
+                </div>
+
+                <div class="form-text mb-2">Multi-devise (tabular-nums alignés) :</div>
+                <table class="lc-table" style="border:1px solid var(--border-secondary);border-radius:var(--radius-md)">
+                    <tbody>
+                        <tr><td>FCFA (XOF)</td><td class="text-end lc-num--strong">1 250 000 <span style="color:var(--text-tertiary)">FCFA</span></td></tr>
+                        <tr><td>Équivalent EUR</td><td class="text-end">1 905,93 <span style="color:var(--text-tertiary)">€</span></td></tr>
+                        <tr><td>Équivalent USD</td><td class="text-end">2 048,12 <span style="color:var(--text-tertiary)">USD</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

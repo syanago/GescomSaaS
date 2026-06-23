@@ -1,0 +1,2977 @@
+<!doctype html>
+<html lang="fr" data-bs-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LigCom — Design System & Composants métier</title>
+
+<!-- Détection thème AVANT rendu pour éviter le flash -->
+<script>
+  (function () {
+    try {
+      // Nouvelle clé : lc-theme-mode (system|light|dark) ; fallback sur ancienne clé lc-theme
+      var mode = localStorage.getItem('lc-theme-mode') || localStorage.getItem('lc-theme') || 'system';
+      var theme = (mode === 'light' || mode === 'dark')
+        ? mode
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+/* =========================================================================
+   1. TOKENS — Untitled UI strict (palette + typo + radius + shadows)
+   ========================================================================= */
+:root {
+    /* Grays (11 paliers Untitled, PAS Bootstrap) */
+    --gray-25:#FCFCFD; --gray-50:#F9FAFB; --gray-100:#F2F4F7; --gray-200:#EAECF0;
+    --gray-300:#D0D5DD; --gray-400:#98A2B3; --gray-500:#667085; --gray-600:#475467;
+    --gray-700:#344054; --gray-800:#1D2939; --gray-900:#101828; --gray-950:#0C111D;
+
+    /* Primary (vert business profond, base #079455) */
+    --primary-25:#F6FEF9;  --primary-50:#E5FBED;  --primary-100:#C8F7DA;
+    --primary-200:#86EBAB; --primary-300:#36DC7E; --primary-400:#0FB561;
+    --primary-500:#08A65D; --primary-600:#079455; --primary-700:#057A47;
+    --primary-800:#046138; --primary-900:#03492A;
+
+    /* Success (jade, distinct du primary) */
+    --success-50:#ECFDF3; --success-100:#D1FADF; --success-600:#17B26A; --success-700:#067647;
+    /* Warning (ambre) */
+    --warning-50:#FFFAEB; --warning-100:#FEF0C7; --warning-600:#DC6803; --warning-700:#B54708;
+    /* Error */
+    --error-50:#FEF3F2; --error-100:#FEE4E2; --error-600:#D92D20; --error-700:#B42318;
+    /* Info */
+    --info-50:#EFF8FF; --info-100:#D1E9FF; --info-600:#1570EF; --info-700:#175CD3;
+    /* Local (pour badges "non synchronisé") — violet doux */
+    --local-50:#F4F3FF; --local-100:#EBE9FE; --local-600:#7A5AF8; --local-700:#5925DC;
+
+    /* Surfaces light */
+    --bg-canvas:var(--gray-50); --bg-surface-0:#FFFFFF; --bg-surface-1:var(--gray-25);
+    --bg-surface-2:var(--gray-50); --bg-input:#FFFFFF; --bg-input-disabled:var(--gray-50);
+    --bg-hover:var(--gray-50); --bg-active:var(--primary-50); --bg-row-selected:var(--primary-50);
+
+    /* Texte */
+    --text-primary:var(--gray-900); --text-secondary:var(--gray-700);
+    --text-tertiary:var(--gray-500); --text-quaternary:var(--gray-400);
+    --text-disabled:var(--gray-300); --text-on-primary:#fff;
+
+    /* Borders */
+    --border-primary:var(--gray-300); --border-secondary:var(--gray-200);
+    --border-tertiary:var(--gray-100); --border-focus:var(--primary-600);
+
+    /* Ombres Untitled UI : 2 box-shadows par couche */
+    --shadow-xs:0 1px 2px 0 rgba(16,24,40,.05);
+    --shadow-sm:0 1px 3px 0 rgba(16,24,40,.10), 0 1px 2px 0 rgba(16,24,40,.06);
+    --shadow-md:0 4px 8px -2px rgba(16,24,40,.10), 0 2px 4px -2px rgba(16,24,40,.06);
+    --shadow-lg:0 12px 16px -4px rgba(16,24,40,.08), 0 4px 6px -2px rgba(16,24,40,.03);
+    --shadow-xl:0 20px 24px -4px rgba(16,24,40,.08), 0 8px 8px -4px rgba(16,24,40,.03);
+
+    /* Focus ring 4px à 24% — jamais d'outline natif */
+    --focus-ring:0 0 0 4px rgba(7,148,85,.24);
+    --focus-ring-error:0 0 0 4px rgba(217,45,32,.24);
+
+    /* Radius (max 12px sur conteneurs) */
+    --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:10px; --r-xl:12px; --r-full:9999px;
+
+    /* Typo */
+    --font-sans:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+    --t-display-xs:24px/32px var(--font-sans);
+    --t-xl:20px/30px var(--font-sans); --t-lg:18px/28px var(--font-sans);
+    --t-md:16px/24px var(--font-sans); --t-sm:14px/20px var(--font-sans);
+    --t-xs:12px/18px var(--font-sans);
+
+    /* Layout */
+    --sidebar-w:260px; --sidebar-w-collapsed:64px; --header-h:60px;
+
+    /* Surcharges Bootstrap --bs-* */
+    --bs-body-bg:var(--bg-canvas); --bs-body-color:var(--text-primary);
+    --bs-body-font-family:var(--font-sans); --bs-body-font-size:14px;
+    --bs-body-line-height:20px;
+    --bs-primary:var(--primary-600); --bs-primary-rgb:7,148,85;
+    --bs-success:var(--success-600); --bs-warning:var(--warning-600);
+    --bs-danger:var(--error-600); --bs-info:var(--info-600);
+    --bs-border-radius:var(--r-md); --bs-border-color:var(--border-secondary);
+    --bs-link-color:var(--primary-700); --bs-link-hover-color:var(--primary-800);
+}
+
+[data-bs-theme="dark"] {
+    --bg-canvas:var(--gray-950); --bg-surface-0:var(--gray-900);
+    --bg-surface-1:var(--gray-900); --bg-surface-2:var(--gray-800);
+    --bg-input:var(--gray-900); --bg-input-disabled:var(--gray-800);
+    --bg-hover:rgba(255,255,255,.04); --bg-active:rgba(7,148,85,.16);
+    --bg-row-selected:rgba(7,148,85,.10);
+
+    --text-primary:var(--gray-50); --text-secondary:var(--gray-300);
+    --text-tertiary:var(--gray-400); --text-quaternary:var(--gray-500);
+    --text-disabled:var(--gray-700);
+
+    --border-primary:var(--gray-700); --border-secondary:var(--gray-800);
+    --border-tertiary:var(--gray-800);
+
+    /* Ombres quasi nulles, élévation par surface */
+    --shadow-xs:0 1px 0 0 rgba(255,255,255,.03);
+    --shadow-sm:0 1px 2px 0 rgba(0,0,0,.4);
+    --shadow-md:0 4px 8px -2px rgba(0,0,0,.5);
+    --shadow-lg:0 12px 16px -4px rgba(0,0,0,.55);
+    --shadow-xl:0 20px 24px -4px rgba(0,0,0,.6);
+
+    --focus-ring:0 0 0 4px rgba(7,148,85,.36);
+
+    --bs-body-bg:var(--bg-canvas); --bs-body-color:var(--text-primary);
+    --bs-border-color:var(--border-primary);
+}
+
+/* =========================================================================
+   2. RESET léger
+   ========================================================================= */
+*, *::before, *::after { box-sizing:border-box; }
+html, body { height:100%; margin:0; }
+body {
+    font:var(--t-sm); font-family:var(--font-sans);
+    color:var(--text-primary); background:var(--bg-canvas);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+table, .tabular, .money, .qty { font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1, "lnum" 1; }
+[hidden] { display:none !important; } /* override Bootstrap utility hidden */
+kbd { background:var(--bg-surface-2); border:1px solid var(--border-secondary); border-radius:var(--r-xs);
+      padding:1px 6px; font:var(--t-xs); font-weight:500; color:var(--text-tertiary); }
+
+/* =========================================================================
+   3. LAYOUT SHELL — grille sidebar + header + main + banner offline
+   ========================================================================= */
+.lc-shell {
+    display:grid;
+    grid-template-columns:var(--sidebar-w) 1fr;
+    grid-template-rows:var(--header-h) 1fr;
+    grid-template-areas:"sidebar header" "sidebar main";
+    min-height:100vh; transition:grid-template-columns 200ms ease;
+}
+.lc-shell.is-collapsed { grid-template-columns:var(--sidebar-w-collapsed) 1fr; }
+.lc-shell.is-banner-on {
+    grid-template-rows:40px var(--header-h) 1fr;
+    grid-template-areas:"banner banner" "sidebar header" "sidebar main";
+}
+
+/* Sidebar */
+.lc-sidebar {
+    grid-area:sidebar; display:flex; flex-direction:column;
+    background:var(--bg-surface-0); border-right:1px solid var(--border-secondary);
+    overflow:hidden; min-height:100vh;
+}
+.lc-sidebar__header {
+    display:flex; align-items:center; gap:10px;
+    padding:16px 20px; height:var(--header-h);
+    border-bottom:1px solid var(--border-secondary); flex-shrink:0;
+}
+.lc-sidebar__logo {
+    width:32px; height:32px; border-radius:var(--r-sm);
+    background:var(--primary-600); color:#fff;
+    display:grid; place-items:center; font-weight:700; flex-shrink:0;
+}
+.lc-sidebar__brand { font:var(--t-md); font-weight:600; color:var(--text-primary); }
+.is-collapsed .lc-sidebar__brand,
+.is-collapsed .lc-sidebar__section-title,
+.is-collapsed .lc-nav-item__label,
+.is-collapsed .lc-nav-item__badge,
+.is-collapsed .lc-sidebar__footer-text { display:none; }
+
+.lc-sidebar__nav { flex:1; overflow-y:auto; padding:12px 12px 16px; }
+.lc-sidebar__nav::-webkit-scrollbar { width:6px; }
+.lc-sidebar__nav::-webkit-scrollbar-thumb { background:var(--border-secondary); border-radius:3px; }
+.lc-sidebar__section + .lc-sidebar__section { margin-top:16px; }
+.lc-sidebar__section-title {
+    font:var(--t-xs); font-weight:600; color:var(--text-quaternary);
+    text-transform:uppercase; letter-spacing:.04em;
+    padding:8px 12px 4px; margin:0;
+}
+.lc-nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 12px; border-radius:var(--r-sm);
+    color:var(--text-secondary); text-decoration:none;
+    font:var(--t-sm); font-weight:500;
+    margin:1px 0; cursor:pointer; border:none; background:transparent;
+    width:100%; text-align:left; min-height:36px;
+}
+.lc-nav-item:hover { background:var(--bg-hover); color:var(--text-primary); }
+.lc-nav-item.is-active { background:var(--bg-active); color:var(--primary-700); font-weight:600; }
+[data-bs-theme="dark"] .lc-nav-item.is-active { color:var(--primary-300); }
+.lc-nav-item__icon { width:20px; height:20px; flex-shrink:0; stroke-width:1.75; }
+.lc-nav-item__label { flex:1; }
+.lc-nav-item__badge {
+    background:var(--primary-50); color:var(--primary-700);
+    border:1px solid var(--primary-100); border-radius:var(--r-full);
+    font:var(--t-xs); font-weight:600; padding:1px 8px;
+}
+.lc-nav-item__badge--danger { background:var(--error-50); color:var(--error-700); border-color:var(--error-100); }
+[data-bs-theme="dark"] .lc-nav-item__badge {
+    background:rgba(7,148,85,.16); color:var(--primary-300); border-color:rgba(7,148,85,.32);
+}
+.is-collapsed .lc-nav-item { justify-content:center; padding:10px; }
+
+.lc-sidebar__footer {
+    border-top:1px solid var(--border-secondary); padding:12px; flex-shrink:0;
+}
+.lc-sidebar__company, .lc-sidebar__exercise {
+    display:flex; align-items:center; gap:8px; padding:8px 10px;
+    border-radius:var(--r-sm); font:var(--t-xs); color:var(--text-secondary); margin-bottom:4px;
+}
+.lc-sidebar__company {
+    background:var(--bg-surface-2); cursor:pointer;
+    border:1px solid var(--border-tertiary);
+}
+.lc-sidebar__company:hover { background:var(--bg-hover); }
+.lc-sidebar__company-name {
+    font-weight:600; color:var(--text-primary); flex:1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.lc-sidebar__exercise-dot {
+    width:6px; height:6px; border-radius:50%; background:var(--success-600);
+}
+.lc-sidebar__profile {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:var(--r-sm); cursor:pointer; margin-top:8px;
+}
+.lc-sidebar__profile:hover { background:var(--bg-hover); }
+.lc-avatar {
+    display:inline-grid; place-items:center;
+    width:32px; height:32px; border-radius:50%;
+    background:var(--primary-100); color:var(--primary-700);
+    font:var(--t-xs); font-weight:600; flex-shrink:0;
+    overflow:hidden;
+}
+.lc-avatar img { width:100%; height:100%; object-fit:cover; }
+.lc-avatar--xs { width:24px; height:24px; font-size:10px; }
+.lc-avatar--sm { width:28px; height:28px; font-size:11px; }
+.lc-avatar--lg { width:40px; height:40px; font-size:14px; }
+.lc-avatar--gray   { background:var(--gray-200);    color:var(--gray-700); }
+.lc-avatar--info   { background:var(--info-100);    color:var(--info-700); }
+.lc-avatar--warning{ background:var(--warning-100); color:var(--warning-700); }
+
+.lc-sidebar__profile-text { flex:1; overflow:hidden; }
+.lc-sidebar__profile-name { font:var(--t-sm); font-weight:600; color:var(--text-primary); }
+.lc-sidebar__profile-role { font:var(--t-xs); color:var(--text-tertiary); }
+
+/* Mobile sidebar drawer */
+@media (max-width: 991.98px) {
+    .lc-shell { grid-template-columns:1fr; grid-template-areas:"header" "main"; }
+    .lc-shell.is-banner-on { grid-template-areas:"banner" "header" "main"; }
+    .lc-sidebar {
+        position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-w); z-index:1050;
+        transform:translateX(-100%); transition:transform 200ms ease;
+    }
+    .lc-sidebar.is-open { transform:translateX(0); }
+    .lc-sidebar-backdrop {
+        position:fixed; inset:0; background:rgba(16,24,40,.5); z-index:1040;
+        opacity:0; pointer-events:none; transition:opacity 200ms ease;
+    }
+    .lc-sidebar-backdrop.is-open { opacity:1; pointer-events:auto; }
+}
+
+/* Header sticky */
+.lc-header {
+    grid-area:header; display:flex; align-items:center; gap:12px;
+    padding:0 20px; background:var(--bg-surface-0);
+    border-bottom:1px solid var(--border-secondary);
+    height:var(--header-h); position:sticky; top:0; z-index:30;
+}
+.lc-breadcrumb {
+    display:flex; align-items:center; gap:6px;
+    font:var(--t-sm); color:var(--text-tertiary); flex-shrink:0;
+}
+.lc-breadcrumb a { color:var(--text-tertiary); text-decoration:none; padding:4px 8px; border-radius:var(--r-sm); }
+.lc-breadcrumb a:hover { background:var(--bg-hover); color:var(--text-secondary); }
+.lc-breadcrumb__sep { width:14px; height:14px; color:var(--text-quaternary); }
+.lc-breadcrumb__current { color:var(--text-primary); font-weight:500; padding:4px 8px; }
+
+.lc-header__search {
+    flex:1; max-width:480px; position:relative; margin:0 auto;
+}
+.lc-header__search input {
+    width:100%; height:36px; padding:0 60px 0 36px;
+    border:1px solid var(--border-primary); border-radius:var(--r-md);
+    background:var(--bg-input); color:var(--text-primary); font:var(--t-sm);
+    box-shadow:var(--shadow-xs);
+}
+.lc-header__search input:focus { outline:none; border-color:var(--border-focus); box-shadow:var(--focus-ring); }
+.lc-header__search-icon {
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; color:var(--text-tertiary); pointer-events:none;
+}
+.lc-header__search-kbd { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:flex; gap:2px; pointer-events:none; }
+
+.lc-header__actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+
+.lc-icon-btn {
+    min-width:36px; height:36px;
+    border:1px solid transparent; background:transparent;
+    border-radius:var(--r-md); color:var(--text-secondary);
+    display:grid; place-items:center; cursor:pointer; position:relative; padding:0 8px;
+}
+.lc-icon-btn:hover { background:var(--bg-hover); color:var(--text-primary); }
+.lc-icon-btn:focus-visible { outline:none; box-shadow:var(--focus-ring); }
+.lc-icon-btn__notif-dot {
+    position:absolute; top:8px; right:8px;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--error-600); border:2px solid var(--bg-surface-0);
+}
+
+/* Main */
+.lc-main { grid-area:main; padding:20px 24px 80px; overflow-x:auto; min-width:0; }
+
+@media (max-width: 575.98px) { .lc-main { padding:16px 12px 80px; } }
+
+/* Page header */
+.lc-page-header {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:16px; margin-bottom:20px; flex-wrap:wrap;
+}
+.lc-page-title { font:var(--t-display-xs); font-weight:600; letter-spacing:-.02em; color:var(--text-primary); margin:0 0 2px; }
+.lc-page-sub { font:var(--t-sm); color:var(--text-tertiary); margin:0; }
+
+/* Page switcher (pills) — démo navigation entre les 3 pages */
+.lc-tabs--pills {
+    background:var(--bg-surface-2); padding:4px; border-radius:var(--r-md);
+    display:inline-flex; gap:2px;
+}
+.lc-tabs--pills button {
+    padding:6px 12px; font:var(--t-sm); font-weight:500;
+    color:var(--text-tertiary); background:transparent; border:none;
+    border-radius:var(--r-sm); cursor:pointer;
+}
+.lc-tabs--pills button:hover { color:var(--text-secondary); }
+.lc-tabs--pills button.is-active {
+    background:var(--bg-surface-0); color:var(--text-primary);
+    box-shadow:var(--shadow-xs); font-weight:600;
+}
+
+/* =========================================================================
+   4. OFFLINE COMPONENTS — banner, sync badge, drawer file de sync
+   ========================================================================= */
+.lc-offline-banner {
+    grid-area:banner; display:flex; align-items:center; justify-content:center;
+    gap:10px; height:40px; padding:0 20px;
+    background:var(--warning-50); border-bottom:1px solid var(--warning-100);
+    color:var(--warning-700); font:var(--t-sm); font-weight:500; position:relative;
+}
+[data-bs-theme="dark"] .lc-offline-banner {
+    background:rgba(220,104,3,.18); border-bottom-color:rgba(220,104,3,.38); color:#FDB022;
+}
+.lc-offline-banner__close {
+    position:absolute; right:12px; background:transparent; border:none;
+    cursor:pointer; color:inherit; padding:4px; border-radius:var(--r-xs);
+}
+
+.lc-sync-status {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; min-height:32px;
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-full); font:var(--t-xs); font-weight:500;
+    color:var(--text-secondary); cursor:pointer;
+}
+.lc-sync-status[data-state="online"]  { color:var(--success-700); }
+.lc-sync-status[data-state="online"]  .dot { background:var(--success-600); }
+.lc-sync-status[data-state="syncing"] { color:var(--warning-700); }
+.lc-sync-status[data-state="syncing"] .dot { background:var(--warning-600); animation:lc-pulse 1.4s ease-in-out infinite; }
+.lc-sync-status[data-state="offline"] {
+    color:var(--error-700); background:var(--error-50); border-color:var(--error-100);
+}
+.lc-sync-status[data-state="offline"] .dot { background:var(--error-600); }
+[data-bs-theme="dark"] .lc-sync-status[data-state="offline"] {
+    background:rgba(217,45,32,.16); border-color:rgba(217,45,32,.32); color:#FDA29B;
+}
+.lc-sync-status .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+@keyframes lc-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(.85); } }
+
+/* =========================================================================
+   5. BUTTONS — primary / secondary / tertiary / link / danger × sm/md/lg
+   ========================================================================= */
+.btn {
+    display:inline-flex; align-items:center; gap:6px;
+    height:36px; padding:0 14px;
+    border-radius:var(--r-md); border:1px solid transparent;
+    font:var(--t-sm); font-weight:600; line-height:1; cursor:pointer;
+    transition:background-color 80ms, border-color 80ms, color 80ms;
+    white-space:nowrap;
+}
+.btn:focus-visible { outline:none; box-shadow:var(--focus-ring); }
+.btn:active:not([disabled]) { transform:translateY(.5px); }
+.btn[disabled], .btn:disabled { opacity:.55; cursor:not-allowed; pointer-events:none; }
+
+.btn-primary   { background:var(--primary-600); color:#fff; border-color:var(--primary-600); }
+.btn-primary:hover:not([disabled]) { background:var(--primary-700); border-color:var(--primary-700); color:#fff; }
+
+.btn-secondary { background:var(--bg-surface-0); color:var(--text-secondary); border-color:var(--border-primary); box-shadow:var(--shadow-xs); }
+.btn-secondary:hover:not([disabled]) { background:var(--bg-surface-2); color:var(--text-primary); }
+
+.btn-tertiary  { background:transparent; color:var(--primary-700); }
+.btn-tertiary:hover:not([disabled]) { background:var(--primary-50); }
+[data-bs-theme="dark"] .btn-tertiary:hover:not([disabled]) { background:rgba(7,148,85,.16); }
+
+.btn-link {
+    background:transparent; border:none; height:auto; padding:0;
+    color:var(--primary-700); text-decoration:none;
+}
+.btn-link:hover { color:var(--primary-800); text-decoration:underline; }
+
+.btn-danger { background:var(--error-600); color:#fff; border-color:var(--error-600); }
+.btn-danger:hover:not([disabled]) { background:var(--error-700); border-color:var(--error-700); }
+
+.btn-sm { height:28px; padding:0 10px; font:var(--t-xs); font-weight:600; }
+.btn-lg { height:44px; padding:0 18px; font:var(--t-md); font-weight:600; }
+
+.btn--icon-only { padding:0; width:36px; }
+.btn--icon-only.btn-sm { width:28px; }
+.btn--icon-only.btn-lg { width:44px; }
+
+.btn--loading {
+    pointer-events:none; color:transparent; position:relative;
+}
+.btn--loading::after {
+    content:""; position:absolute; width:14px; height:14px;
+    border:2px solid currentColor; border-top-color:transparent;
+    border-radius:50%; animation:lc-spin 700ms linear infinite;
+    top:50%; left:50%; margin:-7px 0 0 -7px; color:#fff;
+}
+.btn-secondary.btn--loading::after, .btn-tertiary.btn--loading::after { color:var(--text-secondary); }
+@keyframes lc-spin { to { transform:rotate(360deg); } }
+
+/* =========================================================================
+   6. INPUTS — text, search, select, textarea, prefix/suffix, autocomplete
+   ========================================================================= */
+.form-control, .form-select, textarea,
+input[type="text"]:not(.lc-header__search input),
+input[type="email"], input[type="number"], input[type="search"],
+input[type="tel"], input[type="date"], input[type="password"] {
+    height:36px; padding:8px 12px;
+    border:1px solid var(--border-primary); border-radius:var(--r-md);
+    background:var(--bg-input); color:var(--text-primary); font:var(--t-sm);
+    box-shadow:var(--shadow-xs);
+    transition:border-color 80ms, box-shadow 80ms;
+    width:100%;
+}
+textarea { height:auto; line-height:20px; resize:vertical; }
+input:focus, .form-control:focus, .form-select:focus, textarea:focus {
+    outline:none; border-color:var(--border-focus); box-shadow:var(--focus-ring);
+}
+input:disabled, .form-control[readonly] { background:var(--bg-input-disabled); color:var(--text-tertiary); }
+.form-label { font:var(--t-sm); font-weight:500; color:var(--text-secondary); margin-bottom:6px; display:block; }
+.form-text  { font:var(--t-xs); color:var(--text-tertiary); margin-top:4px; }
+.is-invalid { border-color:var(--error-600); }
+.is-invalid:focus { box-shadow:var(--focus-ring-error); }
+.invalid-feedback { color:var(--error-700); font:var(--t-xs); margin-top:4px; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+/* Prefix / suffix group */
+.lc-input-group {
+    display:inline-flex; align-items:stretch; width:100%;
+    border:1px solid var(--border-primary); border-radius:var(--r-md);
+    background:var(--bg-input); box-shadow:var(--shadow-xs); overflow:hidden;
+}
+.lc-input-group:focus-within { border-color:var(--border-focus); box-shadow:var(--focus-ring); }
+.lc-input-group input { border:none; box-shadow:none; flex:1; min-width:0; }
+.lc-input-group input:focus { box-shadow:none; }
+.lc-input-group__addon {
+    display:grid; place-items:center; padding:0 12px;
+    background:var(--bg-surface-2); color:var(--text-tertiary);
+    font:var(--t-sm); font-weight:500;
+    border-left:1px solid var(--border-secondary);
+}
+.lc-input-group__addon--prefix { border-left:none; border-right:1px solid var(--border-secondary); }
+
+/* Custom select native restylé */
+.form-select {
+    -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat; background-position:right 10px center;
+    padding-right:34px;
+}
+
+/* Custom checkbox / radio (Untitled UI strict) */
+.lc-check, .lc-radio {
+    position:relative; display:inline-flex; align-items:center; gap:8px;
+    cursor:pointer; font:var(--t-sm); color:var(--text-secondary); user-select:none;
+}
+.lc-check input, .lc-radio input {
+    appearance:none; -webkit-appearance:none;
+    width:16px; height:16px;
+    border:1px solid var(--border-primary); background:var(--bg-input);
+    cursor:pointer; flex-shrink:0; box-shadow:var(--shadow-xs);
+    transition:background-color 80ms, border-color 80ms;
+}
+.lc-check input { border-radius:var(--r-xs); }
+.lc-radio input { border-radius:50%; }
+.lc-check input:hover, .lc-radio input:hover {
+    border-color:var(--primary-500); background:var(--primary-25);
+}
+.lc-check input:focus-visible, .lc-radio input:focus-visible { outline:none; box-shadow:var(--focus-ring); }
+.lc-check input:checked, .lc-radio input:checked { background:var(--primary-600); border-color:var(--primary-600); }
+.lc-check input:checked::after {
+    content:""; position:absolute; width:10px; height:10px;
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 5l2 2 4-4' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/contain no-repeat;
+    margin:3px; pointer-events:none;
+}
+.lc-radio input:checked::after {
+    content:""; position:absolute; width:6px; height:6px;
+    background:#fff; border-radius:50%; margin:5px; pointer-events:none;
+}
+.lc-check input:indeterminate { background:var(--primary-600); border-color:var(--primary-600); }
+.lc-check input:indeterminate::after {
+    content:""; position:absolute; width:8px; height:1.6px;
+    background:#fff; margin:7px 4px; border-radius:1px;
+}
+
+/* Toggle switch */
+.lc-switch { position:relative; display:inline-flex; align-items:center; gap:10px; cursor:pointer; font:var(--t-sm); }
+.lc-switch input { display:none; }
+.lc-switch__track { position:relative; width:36px; height:20px; background:var(--gray-200); border-radius:12px; flex-shrink:0; transition:background-color 120ms; }
+[data-bs-theme="dark"] .lc-switch__track { background:var(--gray-700); }
+.lc-switch__thumb { position:absolute; top:2px; left:2px; width:16px; height:16px; background:#fff; border-radius:50%; box-shadow:var(--shadow-sm); transition:transform 120ms; }
+.lc-switch input:checked + .lc-switch__track { background:var(--primary-600); }
+.lc-switch input:checked + .lc-switch__track .lc-switch__thumb { transform:translateX(16px); }
+.lc-switch input:focus-visible + .lc-switch__track { box-shadow:var(--focus-ring); }
+
+/* Autocomplete (input + dropdown code+nom) */
+.lc-ac { position:relative; }
+.lc-ac__menu {
+    position:absolute; top:calc(100% + 4px); left:0; right:0;
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-md); box-shadow:var(--shadow-lg);
+    max-height:280px; overflow-y:auto; z-index:60; display:none;
+}
+.lc-ac.is-open .lc-ac__menu { display:block; }
+.lc-ac__item {
+    display:flex; align-items:baseline; gap:12px;
+    padding:8px 12px; cursor:pointer;
+    border-bottom:1px solid var(--border-tertiary); font:var(--t-sm);
+}
+.lc-ac__item:last-child { border-bottom:none; }
+.lc-ac__item:hover, .lc-ac__item.is-active { background:var(--bg-active); }
+.lc-ac__code { font-family:var(--font-mono); font-weight:600; color:var(--primary-700); min-width:90px; font-size:12px; }
+.lc-ac__label { color:var(--text-primary); flex:1; }
+.lc-ac__meta { color:var(--text-tertiary); font:var(--t-xs); }
+
+/* =========================================================================
+   7. BADGES — 7 sémantiques + statuts métier
+   ========================================================================= */
+.lc-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:2px 8px; border-radius:var(--r-full);
+    font:var(--t-xs); font-weight:600; line-height:18px;
+    border:1px solid transparent; white-space:nowrap;
+}
+.lc-badge .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.lc-badge--gray   { background:var(--bg-surface-2);  color:var(--text-secondary); border-color:var(--border-secondary); }
+.lc-badge--gray   .dot { background:var(--text-quaternary); }
+.lc-badge--primary{ background:var(--primary-50);    color:var(--primary-700);    border-color:var(--primary-100); }
+.lc-badge--primary .dot { background:var(--primary-600); }
+.lc-badge--success{ background:var(--success-50);    color:var(--success-700);    border-color:var(--success-100); }
+.lc-badge--success .dot { background:var(--success-600); }
+.lc-badge--warning{ background:var(--warning-50);    color:var(--warning-700);    border-color:var(--warning-100); }
+.lc-badge--warning .dot { background:var(--warning-600); }
+.lc-badge--error  { background:var(--error-50);      color:var(--error-700);      border-color:var(--error-100); }
+.lc-badge--error  .dot { background:var(--error-600); }
+.lc-badge--info   { background:var(--info-50);       color:var(--info-700);       border-color:var(--info-100); }
+.lc-badge--info   .dot { background:var(--info-600); }
+.lc-badge--local  { background:var(--local-50);      color:var(--local-700);      border-color:var(--local-100); }
+.lc-badge--local  .dot { background:var(--local-600); }
+
+[data-bs-theme="dark"] .lc-badge--gray    { background:var(--gray-800); color:var(--gray-300); border-color:var(--gray-700); }
+[data-bs-theme="dark"] .lc-badge--primary { background:rgba(7,148,85,.16); color:var(--primary-300); border-color:rgba(7,148,85,.32); }
+[data-bs-theme="dark"] .lc-badge--success { background:rgba(23,178,106,.16); color:#6CE9A6; border-color:rgba(23,178,106,.32); }
+[data-bs-theme="dark"] .lc-badge--warning { background:rgba(220,104,3,.16); color:#FDB022; border-color:rgba(220,104,3,.32); }
+[data-bs-theme="dark"] .lc-badge--error   { background:rgba(217,45,32,.16); color:#FDA29B; border-color:rgba(217,45,32,.32); }
+[data-bs-theme="dark"] .lc-badge--info    { background:rgba(21,112,239,.16); color:#84CAFF; border-color:rgba(21,112,239,.32); }
+[data-bs-theme="dark"] .lc-badge--local   { background:rgba(122,90,248,.16); color:#BFB0FE; border-color:rgba(122,90,248,.32); }
+
+.lc-badge__close {
+    background:transparent; border:none; padding:0; color:inherit;
+    cursor:pointer; display:grid; place-items:center;
+    margin-left:2px; opacity:.6;
+}
+.lc-badge__close:hover { opacity:1; }
+
+/* =========================================================================
+   8. TABLES — sticky header, sélection, hover, ligne local, sortable
+   ========================================================================= */
+.lc-table-card {
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-lg); box-shadow:var(--shadow-xs); overflow:hidden;
+}
+.lc-table-toolbar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:14px 16px; border-bottom:1px solid var(--border-secondary);
+}
+.lc-table-toolbar__title { font:var(--t-md); font-weight:600; }
+.lc-table-toolbar__count {
+    background:var(--primary-50); color:var(--primary-700);
+    padding:1px 8px; border-radius:var(--r-full); font:var(--t-xs); font-weight:600;
+    border:1px solid var(--primary-100);
+}
+[data-bs-theme="dark"] .lc-table-toolbar__count { background:rgba(7,148,85,.16); color:var(--primary-300); border-color:rgba(7,148,85,.32); }
+
+.lc-filters {
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:10px 16px; border-bottom:1px solid var(--border-secondary);
+    background:var(--bg-surface-1);
+}
+.lc-filters__search { flex:1; min-width:220px; max-width:360px; position:relative; }
+.lc-filters__search input { padding-left:34px; }
+.lc-filters__search-icon {
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--text-tertiary); pointer-events:none;
+}
+
+/* Bulk action bar (apparaît quand sélection > 0) */
+.lc-bulk-bar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:10px 16px; background:var(--primary-50);
+    border-bottom:1px solid var(--primary-100);
+    color:var(--primary-700); font:var(--t-sm); font-weight:500;
+}
+[data-bs-theme="dark"] .lc-bulk-bar {
+    background:rgba(7,148,85,.10); border-bottom-color:rgba(7,148,85,.24); color:var(--primary-300);
+}
+.lc-bulk-bar__count { font-weight:700; }
+.lc-bulk-bar .btn-secondary { background:transparent; }
+
+/* Table */
+.lc-table-scroll { overflow:auto; max-height:65vh; }
+.lc-table {
+    width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;
+}
+.lc-table thead th {
+    background:var(--bg-surface-2);
+    font:var(--t-xs); font-weight:600; color:var(--text-secondary);
+    text-transform:uppercase; letter-spacing:.02em;
+    text-align:left; padding:10px 16px;
+    border-bottom:1px solid var(--border-secondary);
+    white-space:nowrap; position:sticky; top:0; z-index:5;
+}
+.lc-table thead th[data-sort] { cursor:pointer; user-select:none; }
+.lc-table thead th[data-sort]:hover { color:var(--text-primary); background:var(--bg-hover); }
+.lc-table thead th[data-sort] .sort-icon { opacity:.4; vertical-align:-2px; margin-left:4px; }
+.lc-table thead th[data-sort="asc"]  .sort-icon,
+.lc-table thead th[data-sort="desc"] .sort-icon { opacity:1; color:var(--primary-700); }
+
+.lc-table tbody td {
+    padding:12px 16px; border-bottom:1px solid var(--border-tertiary);
+    color:var(--text-primary); font:var(--t-sm); vertical-align:middle;
+}
+.lc-table tbody tr:hover { background:var(--bg-hover); }
+.lc-table tbody tr.is-selected { background:var(--bg-row-selected); }
+.lc-table tbody tr:last-child td { border-bottom:none; }
+.lc-table .text-end, .lc-table .num { text-align:right; font-variant-numeric:tabular-nums; }
+.lc-table .num--strong { font-weight:600; }
+
+/* Ligne avec badge "Local" : bordure gauche violet */
+.lc-table tbody tr.is-local td:first-child {
+    box-shadow:inset 3px 0 0 0 var(--local-600);
+}
+
+/* Avatar + nom en cellule */
+.lc-cell-user { display:flex; align-items:center; gap:8px; }
+.lc-cell-user__name { font-weight:500; }
+
+/* Actions menu (3 dots) */
+.lc-cell-actions { width:40px; }
+.lc-cell-actions .lc-icon-btn { width:28px; height:28px; min-width:28px; padding:0; }
+
+/* Pagination footer */
+.lc-pagination {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:12px 16px; border-top:1px solid var(--border-secondary);
+    background:var(--bg-surface-1); font:var(--t-xs); color:var(--text-tertiary);
+}
+.lc-pagination__pages { display:flex; gap:4px; align-items:center; }
+.lc-pagination__btn {
+    min-width:32px; height:32px; padding:0 10px;
+    background:var(--bg-surface-0); border:1px solid var(--border-primary);
+    border-radius:var(--r-sm); font:var(--t-sm); font-weight:500;
+    color:var(--text-secondary); cursor:pointer;
+}
+.lc-pagination__btn:hover:not(:disabled) { background:var(--bg-hover); color:var(--text-primary); }
+.lc-pagination__btn.is-active {
+    background:var(--primary-600); border-color:var(--primary-600); color:#fff; font-weight:600;
+}
+.lc-pagination__btn:disabled { opacity:.5; cursor:not-allowed; }
+.lc-pagination__perpage {
+    display:flex; align-items:center; gap:6px;
+}
+.lc-pagination__perpage select {
+    height:30px; padding:0 28px 0 8px; font:var(--t-xs);
+    border-radius:var(--r-sm);
+}
+
+/* Responsive table → cards empilées (< 768px) */
+@media (max-width: 767.98px) {
+    .lc-table-scroll { max-height:none; }
+    .lc-table thead { display:none; }
+    .lc-table, .lc-table tbody, .lc-table tr, .lc-table td { display:block; width:100%; }
+    .lc-table tbody tr {
+        background:var(--bg-surface-0); margin:0 0 8px; padding:8px 0;
+        border:1px solid var(--border-secondary); border-radius:var(--r-md);
+    }
+    .lc-table tbody tr.is-local { border-left:3px solid var(--local-600); }
+    .lc-table tbody tr.is-local td:first-child { box-shadow:none; }
+    .lc-table tbody td {
+        display:flex; justify-content:space-between; align-items:center;
+        padding:8px 14px; border-bottom:1px solid var(--border-tertiary);
+        text-align:right;
+    }
+    .lc-table tbody td:last-child { border-bottom:none; }
+    .lc-table tbody td::before {
+        content:attr(data-label); font:var(--t-xs); font-weight:600;
+        color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.02em;
+        margin-right:12px; flex-shrink:0;
+    }
+    .lc-table .text-end, .lc-table .num { text-align:right; }
+}
+
+/* =========================================================================
+   9. FORMS — invoice form, edit lines, sticky footer
+   ========================================================================= */
+.lc-card {
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-lg); box-shadow:var(--shadow-xs);
+}
+.lc-card__header {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px; border-bottom:1px solid var(--border-secondary);
+}
+.lc-card__title { font:var(--t-md); font-weight:600; margin:0; }
+.lc-card__body { padding:16px; }
+
+.lc-doc-header {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:16px; flex-wrap:wrap; margin-bottom:20px;
+}
+.lc-doc-header__main { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.lc-doc-number { font:var(--t-display-xs); font-weight:700; letter-spacing:-.01em; }
+
+/* Lignes éditables — table compacte */
+.lc-edit-lines {
+    width:100%; border-collapse:collapse;
+}
+.lc-edit-lines th {
+    text-align:left; padding:8px 10px;
+    font:var(--t-xs); font-weight:600;
+    color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.02em;
+    border-bottom:1px solid var(--border-secondary); white-space:nowrap;
+}
+.lc-edit-lines td {
+    padding:6px 6px; border-bottom:1px solid var(--border-tertiary); vertical-align:middle;
+}
+.lc-edit-lines tr:hover { background:var(--bg-hover); }
+.lc-edit-lines td input, .lc-edit-lines td select {
+    height:32px; padding:4px 8px; font:var(--t-sm);
+    box-shadow:none; border-color:transparent; background:transparent;
+}
+.lc-edit-lines td input:hover, .lc-edit-lines td select:hover { border-color:var(--border-secondary); background:var(--bg-input); }
+.lc-edit-lines td input:focus, .lc-edit-lines td select:focus { background:var(--bg-input); border-color:var(--border-focus); }
+.lc-edit-lines .num { text-align:right; font-variant-numeric:tabular-nums; }
+.lc-edit-lines .num input { text-align:right; }
+.lc-edit-lines .drag-handle {
+    width:28px; cursor:grab; color:var(--text-quaternary); user-select:none;
+    text-align:center;
+}
+.lc-edit-lines .drag-handle:hover { color:var(--text-secondary); }
+.lc-edit-lines .drag-handle:active { cursor:grabbing; }
+
+/* Sous-totaux */
+.lc-totals {
+    background:var(--bg-surface-1); border:1px solid var(--border-secondary);
+    border-radius:var(--r-md); padding:16px;
+}
+.lc-totals__row {
+    display:flex; justify-content:space-between; padding:6px 0;
+    font:var(--t-sm); color:var(--text-secondary);
+}
+.lc-totals__row span:last-child { font-variant-numeric:tabular-nums; font-weight:500; }
+.lc-totals__row--ttc {
+    border-top:1px solid var(--border-secondary); margin-top:8px;
+    padding-top:14px; font:var(--t-xl); font-weight:700; color:var(--text-primary);
+}
+.lc-totals__row--ttc span:last-child { font-weight:700; }
+.lc-totals__row--secondary { font:var(--t-xs); color:var(--text-tertiary); padding:2px 0; }
+
+/* Sticky footer formulaire */
+.lc-sticky-footer {
+    position:sticky; bottom:0; left:0; right:0; z-index:10;
+    background:var(--bg-surface-0); border-top:1px solid var(--border-secondary);
+    padding:12px 24px; display:flex; gap:8px; justify-content:flex-end;
+    box-shadow:0 -4px 8px -2px rgba(16,24,40,.06);
+    margin:24px -24px -80px;
+}
+[data-bs-theme="dark"] .lc-sticky-footer { box-shadow:0 -4px 8px -2px rgba(0,0,0,.3); }
+
+@media (max-width: 575.98px) { .lc-sticky-footer { margin:24px -12px -80px; padding:12px; } }
+
+/* =========================================================================
+   10. MODALS — sm/md/lg + feature icon
+   ========================================================================= */
+.lc-modal-backdrop {
+    position:fixed; inset:0; background:rgba(16,24,40,.6); z-index:1080;
+    display:none; align-items:center; justify-content:center; padding:24px;
+}
+.lc-modal-backdrop.is-open { display:flex; }
+.lc-modal {
+    background:var(--bg-surface-0); border-radius:var(--r-xl);
+    box-shadow:var(--shadow-xl); width:100%; max-height:90vh;
+    display:flex; flex-direction:column;
+}
+.lc-modal--sm { max-width:400px; }
+.lc-modal--md { max-width:560px; }
+.lc-modal--lg { max-width:880px; }
+.lc-modal__header { padding:20px 24px 16px; border-bottom:1px solid var(--border-secondary); }
+.lc-modal__icon {
+    width:48px; height:48px; border-radius:50%;
+    display:grid; place-items:center; margin-bottom:16px;
+}
+.lc-modal__icon--error  { background:var(--error-100);  color:var(--error-700); }
+.lc-modal__icon--warning{ background:var(--warning-100); color:var(--warning-700); }
+.lc-modal__icon--info   { background:var(--info-100);   color:var(--info-700); }
+.lc-modal__title { font:var(--t-lg); font-weight:600; margin:0 0 4px; }
+.lc-modal__sub   { font:var(--t-sm); color:var(--text-tertiary); margin:0; }
+.lc-modal__body  { flex:1; overflow-y:auto; padding:16px 24px; }
+.lc-modal__footer { display:flex; gap:8px; justify-content:flex-end; padding:16px 24px 20px; border-top:1px solid var(--border-secondary); }
+
+/* Conflit diff 2 cols */
+.lc-diff { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.lc-diff__col { border:1px solid var(--border-secondary); border-radius:var(--r-md); overflow:hidden; }
+.lc-diff__col-header {
+    padding:10px 14px; background:var(--bg-surface-2);
+    border-bottom:1px solid var(--border-secondary);
+    font:var(--t-sm); font-weight:600; display:flex; align-items:center; gap:8px;
+}
+.lc-diff__row {
+    display:grid; grid-template-columns:130px 1fr; padding:8px 14px; gap:12px;
+    border-bottom:1px solid var(--border-tertiary); font:var(--t-sm);
+}
+.lc-diff__row:last-child { border-bottom:none; }
+.lc-diff__label { color:var(--text-tertiary); font-weight:500; }
+.lc-diff__row--changed { background:var(--warning-50); }
+.lc-diff__row--changed .lc-diff__label,
+.lc-diff__row--changed > span:last-child { color:var(--warning-700); font-weight:600; }
+[data-bs-theme="dark"] .lc-diff__row--changed { background:rgba(220,104,3,.12); }
+
+@media (max-width: 575.98px) { .lc-diff { grid-template-columns:1fr; } }
+
+/* =========================================================================
+   11. DRAWERS — file de sync (right md), filtres avancés, preview PDF (lg)
+   ========================================================================= */
+.lc-drawer-backdrop {
+    position:fixed; inset:0; background:rgba(16,24,40,.5); z-index:1060;
+    opacity:0; pointer-events:none; transition:opacity 200ms;
+}
+.lc-drawer-backdrop.is-open { opacity:1; pointer-events:auto; }
+.lc-drawer {
+    position:fixed; top:0; right:0; bottom:0; width:400px; max-width:100vw;
+    background:var(--bg-surface-0); border-left:1px solid var(--border-secondary);
+    box-shadow:var(--shadow-xl); z-index:1070;
+    transform:translateX(100%); transition:transform 220ms cubic-bezier(.4,0,.2,1);
+    display:flex; flex-direction:column;
+}
+.lc-drawer.is-open { transform:translateX(0); }
+.lc-drawer--md { width:480px; }
+.lc-drawer--lg { width:720px; }
+
+@media (max-width: 767.98px) { .lc-drawer { width:100vw; } }
+
+.lc-drawer__header {
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--border-secondary);
+}
+.lc-drawer__title { font:var(--t-md); font-weight:600; margin:0; flex:1; }
+.lc-drawer__body { flex:1; overflow-y:auto; padding:0; }
+
+.lc-sync-item {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:12px 20px; border-bottom:1px solid var(--border-tertiary);
+}
+.lc-sync-item__icon {
+    width:32px; height:32px; border-radius:var(--r-sm);
+    display:grid; place-items:center; flex-shrink:0;
+    background:var(--bg-surface-2); color:var(--text-secondary);
+}
+.lc-sync-item__icon--primary { background:var(--primary-50);  color:var(--primary-700); }
+.lc-sync-item__icon--info    { background:var(--info-50);     color:var(--info-700); }
+.lc-sync-item__icon--success { background:var(--success-50);  color:var(--success-700); }
+.lc-sync-item__body { flex:1; min-width:0; }
+.lc-sync-item__title { font:var(--t-sm); font-weight:600; margin-bottom:2px; }
+.lc-sync-item__meta { display:flex; gap:8px; font:var(--t-xs); color:var(--text-tertiary); }
+
+.lc-pdf-preview {
+    flex:1; background:var(--gray-100); padding:20px;
+    display:flex; flex-direction:column; gap:12px; align-items:center;
+    overflow-y:auto;
+}
+[data-bs-theme="dark"] .lc-pdf-preview { background:var(--gray-950); }
+.lc-pdf-page {
+    width:100%; max-width:560px; aspect-ratio:1 / 1.414;
+    background:#fff; box-shadow:var(--shadow-md);
+    border-radius:var(--r-xs); padding:32px;
+    color:var(--gray-900); font:var(--t-xs);
+}
+
+/* =========================================================================
+   12. TOASTS — 4 sémantiques bottom-right
+   ========================================================================= */
+.lc-toaster {
+    position:fixed; bottom:24px; right:24px; z-index:1090;
+    display:flex; flex-direction:column; gap:10px;
+    max-width:400px; pointer-events:none;
+}
+.lc-toast {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:14px 16px; min-width:320px;
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-md); box-shadow:var(--shadow-lg);
+    pointer-events:auto;
+    animation:lc-toast-in 200ms cubic-bezier(.4,0,.2,1);
+}
+.lc-toast.is-leaving { animation:lc-toast-out 180ms ease-in forwards; }
+@keyframes lc-toast-in  { from { transform:translateX(20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes lc-toast-out { to { transform:translateX(20px); opacity:0; } }
+.lc-toast__icon {
+    width:32px; height:32px; border-radius:50%;
+    display:grid; place-items:center; flex-shrink:0;
+}
+.lc-toast--success .lc-toast__icon { background:var(--success-100); color:var(--success-700); }
+.lc-toast--warning .lc-toast__icon { background:var(--warning-100); color:var(--warning-700); }
+.lc-toast--error   .lc-toast__icon { background:var(--error-100);   color:var(--error-700); }
+.lc-toast--info    .lc-toast__icon { background:var(--info-100);    color:var(--info-700); }
+.lc-toast__body { flex:1; min-width:0; }
+.lc-toast__title { font:var(--t-sm); font-weight:600; }
+.lc-toast__desc  { font:var(--t-xs); color:var(--text-tertiary); }
+.lc-toast__close { width:24px; height:24px; background:transparent; border:none; color:var(--text-quaternary); cursor:pointer; border-radius:var(--r-xs); display:grid; place-items:center; flex-shrink:0; }
+.lc-toast__close:hover { background:var(--bg-hover); color:var(--text-secondary); }
+
+/* =========================================================================
+   13. PAGES — dashboard stat cards + charts placeholders + activité
+   ========================================================================= */
+.lc-stat {
+    display:flex; align-items:center; gap:16px;
+    padding:16px; background:var(--bg-surface-0);
+    border:1px solid var(--border-secondary); border-radius:var(--r-lg);
+    box-shadow:var(--shadow-xs);
+}
+.lc-stat__body { flex:1; min-width:0; }
+.lc-stat__label {
+    font:var(--t-xs); font-weight:500; color:var(--text-tertiary);
+    text-transform:uppercase; letter-spacing:.02em; margin-bottom:4px;
+}
+.lc-stat__value { font:var(--t-xl); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.lc-stat__value-suffix { font:var(--t-sm); color:var(--text-tertiary); font-weight:500; margin-left:2px; }
+.lc-stat__delta { font:var(--t-xs); color:var(--text-tertiary); margin-top:4px; }
+.lc-stat__delta--up   { color:var(--success-700); }
+.lc-stat__delta--down { color:var(--error-700); }
+.lc-stat__spark {
+    width:90px; height:36px; flex-shrink:0; color:var(--primary-600);
+}
+.lc-stat__spark--up   { color:var(--success-600); }
+.lc-stat__spark--down { color:var(--error-600); }
+
+/* Chart placeholder */
+.lc-chart-card { padding:0; }
+.lc-chart-card__header {
+    display:flex; align-items:center; gap:12px; padding:14px 16px;
+    border-bottom:1px solid var(--border-secondary);
+}
+.lc-chart-card__title { font:var(--t-md); font-weight:600; flex:1; }
+.lc-chart-bars {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:6px; height:200px; padding:16px;
+}
+.lc-chart-bar {
+    flex:1; background:var(--primary-600);
+    border-radius:var(--r-xs) var(--r-xs) 0 0;
+    min-width:8px; position:relative;
+}
+.lc-chart-bar--secondary { background:var(--primary-200); }
+.lc-chart-x {
+    display:flex; justify-content:space-between; padding:0 16px 12px;
+    font:var(--t-xs); color:var(--text-tertiary);
+}
+
+.lc-hbar-list { padding:8px 0; }
+.lc-hbar {
+    display:grid; grid-template-columns:160px 1fr 80px;
+    gap:12px; padding:8px 16px; align-items:center; font:var(--t-sm);
+}
+.lc-hbar__name { color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lc-hbar__bar {
+    height:8px; background:var(--bg-surface-2); border-radius:var(--r-full); overflow:hidden;
+}
+.lc-hbar__fill { height:100%; background:var(--primary-600); border-radius:var(--r-full); }
+.lc-hbar__value { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+
+/* Activité timeline */
+.lc-timeline { padding:8px 0; }
+.lc-tl-item {
+    display:flex; gap:12px; padding:12px 16px;
+    border-bottom:1px solid var(--border-tertiary);
+}
+.lc-tl-item:last-child { border-bottom:none; }
+.lc-tl-item__dot {
+    width:8px; height:8px; border-radius:50%; background:var(--primary-600);
+    margin-top:6px; flex-shrink:0;
+}
+.lc-tl-item__dot--info    { background:var(--info-600); }
+.lc-tl-item__dot--warning { background:var(--warning-600); }
+.lc-tl-item__dot--success { background:var(--success-600); }
+.lc-tl-item__body { flex:1; min-width:0; }
+.lc-tl-item__title { font:var(--t-sm); }
+.lc-tl-item__title strong { color:var(--text-primary); font-weight:600; }
+.lc-tl-item__time { font:var(--t-xs); color:var(--text-tertiary); }
+
+.lc-data-freshness {
+    padding:10px 14px; background:var(--warning-50); border:1px solid var(--warning-100);
+    border-radius:var(--r-md); color:var(--warning-700);
+    font:var(--t-xs); font-weight:500; display:flex; align-items:center; gap:8px;
+    margin-bottom:16px;
+}
+[data-bs-theme="dark"] .lc-data-freshness {
+    background:rgba(220,104,3,.16); border-color:rgba(220,104,3,.32); color:#FDB022;
+}
+
+/* Tooltips */
+[data-tip] { position:relative; }
+[data-tip]::after {
+    content:attr(data-tip);
+    position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    background:var(--gray-900); color:#fff;
+    padding:6px 10px; border-radius:var(--r-sm);
+    font:var(--t-xs); white-space:nowrap;
+    pointer-events:none; opacity:0; transition:opacity 100ms;
+    z-index:100; box-shadow:var(--shadow-md);
+}
+[data-tip]:hover::after { opacity:1; }
+[data-bs-theme="dark"] [data-tip]::after { background:var(--gray-700); }
+
+/* =========================================================================
+   14. RESPONSIVE — breakpoints sm 576 / md 768 / lg 992 / xl 1200 / xxl 1400
+   ========================================================================= */
+@media (max-width: 991.98px) {
+    /* Sidebar devient drawer (déjà géré section 3) */
+}
+@media (max-width: 767.98px) {
+    .lc-page-header { flex-direction:column; }
+    .lc-doc-header { flex-direction:column; }
+    .row-2col { grid-template-columns:1fr !important; }
+    /* Touch targets ≥ 44px */
+    .btn { min-height:40px; }
+    .btn-sm { min-height:36px; }
+    .lc-icon-btn { min-width:40px; height:40px; }
+    .lc-nav-item { min-height:40px; }
+}
+@media (max-width: 575.98px) {
+    .lc-header { padding:0 12px; }
+    .lc-header__search { max-width:none; }
+    .lc-header__breadcrumb { display:none; }
+}
+
+/* =========================================================================
+   15. SETTINGS — page paramètres (theme picker, density, regional, sync)
+   ========================================================================= */
+.lc-settings { display:flex; flex-direction:column; gap:24px; max-width:960px; }
+.lc-settings__group {
+    background:var(--bg-surface-0); border:1px solid var(--border-secondary);
+    border-radius:var(--r-lg); box-shadow:var(--shadow-xs); overflow:hidden;
+}
+.lc-settings__group-header {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--border-secondary);
+}
+.lc-settings__group-icon {
+    width:36px; height:36px; border-radius:var(--r-sm);
+    background:var(--primary-50); color:var(--primary-700);
+    display:grid; place-items:center; flex-shrink:0;
+}
+[data-bs-theme="dark"] .lc-settings__group-icon { background:rgba(7,148,85,.16); color:var(--primary-300); }
+.lc-settings__group-title { font:var(--t-md); font-weight:600; margin:0 0 2px; }
+.lc-settings__group-sub { font:var(--t-xs); color:var(--text-tertiary); margin:0; }
+.lc-settings__group-body { padding:16px 20px; display:flex; flex-direction:column; }
+
+.lc-settings__row {
+    display:grid; grid-template-columns:240px 1fr;
+    gap:24px; padding:16px 0;
+    border-top:1px solid var(--border-tertiary);
+}
+.lc-settings__row:first-child { border-top:none; padding-top:0; }
+.lc-settings__row:last-child { padding-bottom:0; }
+.lc-settings__row-label { font:var(--t-sm); font-weight:600; color:var(--text-primary); margin:0; }
+.lc-settings__row-hint  { font:var(--t-xs); color:var(--text-tertiary); margin:4px 0 0; }
+.lc-settings__row-control { min-width:0; }
+
+@media (max-width: 767.98px) { .lc-settings__row { grid-template-columns:1fr; gap:8px; } }
+
+/* === Theme picker (3 cards) === */
+.lc-theme-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:600px; }
+@media (max-width: 575.98px) { .lc-theme-grid { grid-template-columns:1fr; } }
+
+.lc-theme-card {
+    position:relative; cursor:pointer; padding:0;
+    background:var(--bg-surface-0); border:2px solid var(--border-secondary);
+    border-radius:var(--r-md); overflow:hidden;
+    transition:border-color 100ms;
+    text-align:left;
+}
+.lc-theme-card:hover { border-color:var(--gray-400); }
+.lc-theme-card:focus-visible { outline:none; box-shadow:var(--focus-ring); }
+.lc-theme-card.is-active { border-color:var(--primary-600); }
+
+.lc-theme-card__preview {
+    height:88px; padding:8px; display:flex; gap:6px;
+    border-bottom:1px solid var(--border-secondary);
+}
+.lc-theme-card__preview-side {
+    width:14px; border-radius:var(--r-xs);
+    display:flex; flex-direction:column; gap:3px; padding:4px 2px;
+}
+.lc-theme-card__preview-side > span { display:block; height:3px; border-radius:1px; }
+.lc-theme-card__preview-main { flex:1; border-radius:var(--r-xs); padding:5px; display:flex; flex-direction:column; gap:3px; }
+.lc-theme-card__preview-main > span { display:block; height:5px; border-radius:2px; }
+
+/* Light preview */
+.lc-theme-card__preview--light { background:#F9FAFB; }
+.lc-theme-card__preview--light .lc-theme-card__preview-side { background:#FFFFFF; border:1px solid #EAECF0; }
+.lc-theme-card__preview--light .lc-theme-card__preview-side > span { background:#D0D5DD; }
+.lc-theme-card__preview--light .lc-theme-card__preview-side > span:first-child { background:#079455; }
+.lc-theme-card__preview--light .lc-theme-card__preview-main { background:#FFFFFF; border:1px solid #EAECF0; }
+.lc-theme-card__preview--light .lc-theme-card__preview-main > span { background:#EAECF0; }
+.lc-theme-card__preview--light .lc-theme-card__preview-main > span:nth-child(2) { background:#079455; width:60%; }
+
+/* Dark preview */
+.lc-theme-card__preview--dark { background:#0C111D; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-side { background:#101828; border:1px solid #1D2939; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-side > span { background:#344054; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-side > span:first-child { background:#36DC7E; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-main { background:#101828; border:1px solid #1D2939; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-main > span { background:#1D2939; }
+.lc-theme-card__preview--dark .lc-theme-card__preview-main > span:nth-child(2) { background:#36DC7E; width:60%; }
+
+/* System preview = mi-clair / mi-sombre */
+.lc-theme-card__preview--system { background:linear-gradient(to right, #F9FAFB 50%, #0C111D 50%); }
+.lc-theme-card__preview--system .lc-theme-card__preview-side { background:#FFFFFF; border:1px solid #EAECF0; }
+.lc-theme-card__preview--system .lc-theme-card__preview-side > span { background:#D0D5DD; }
+.lc-theme-card__preview--system .lc-theme-card__preview-side > span:first-child { background:#079455; }
+.lc-theme-card__preview--system .lc-theme-card__preview-main {
+    background:linear-gradient(to right, #FFFFFF 50%, #101828 50%);
+    border:1px solid #1D2939;
+}
+.lc-theme-card__preview--system .lc-theme-card__preview-main > span { background:linear-gradient(to right, #EAECF0 50%, #1D2939 50%); }
+.lc-theme-card__preview--system .lc-theme-card__preview-main > span:nth-child(2) { background:linear-gradient(to right, #079455 50%, #36DC7E 50%); width:60%; }
+
+.lc-theme-card__body { padding:10px 12px; display:flex; align-items:center; gap:8px; background:var(--bg-surface-0); }
+.lc-theme-card__icon { color:var(--text-tertiary); width:16px; height:16px; flex-shrink:0; }
+.lc-theme-card.is-active .lc-theme-card__icon { color:var(--primary-700); }
+[data-bs-theme="dark"] .lc-theme-card.is-active .lc-theme-card__icon { color:var(--primary-300); }
+.lc-theme-card__title { font:var(--t-sm); font-weight:600; color:var(--text-primary); }
+.lc-theme-card__check {
+    position:absolute; top:8px; right:8px;
+    width:22px; height:22px; border-radius:50%;
+    background:var(--primary-600); color:#fff;
+    display:none; align-items:center; justify-content:center;
+    box-shadow:var(--shadow-sm);
+}
+.lc-theme-card.is-active .lc-theme-card__check { display:flex; }
+
+/* Density pills */
+.lc-density-pills {
+    display:inline-flex; padding:4px; background:var(--bg-surface-2);
+    border-radius:var(--r-md); gap:2px;
+}
+.lc-density-pills button {
+    padding:6px 14px; border:none; background:transparent;
+    color:var(--text-tertiary); font:var(--t-sm); font-weight:500;
+    border-radius:var(--r-sm); cursor:pointer;
+}
+.lc-density-pills button.is-active {
+    background:var(--bg-surface-0); color:var(--text-primary);
+    box-shadow:var(--shadow-xs); font-weight:600;
+}
+
+/* Danger zone */
+.lc-settings__danger { border-color:var(--error-100); }
+.lc-settings__danger .lc-settings__group-icon {
+    background:var(--error-50); color:var(--error-700);
+}
+[data-bs-theme="dark"] .lc-settings__danger {
+    border-color:rgba(217,45,32,.32);
+}
+[data-bs-theme="dark"] .lc-settings__danger .lc-settings__group-icon {
+    background:rgba(217,45,32,.16); color:#FDA29B;
+}
+</style>
+</head>
+<body>
+
+<!-- Banner offline (caché par défaut, JS toggle) -->
+<div class="lc-shell" id="lc-shell">
+  <div class="lc-offline-banner" id="offlineBanner" hidden>
+    <i data-lucide="wifi-off" style="width:16px;height:16px"></i>
+    <span>Vous travaillez <strong>hors ligne</strong>. Les modifications seront synchronisées au retour de la connexion.</span>
+    <button type="button" class="lc-offline-banner__close" aria-label="Masquer ce message" onclick="document.getElementById('offlineBanner').hidden = true; document.getElementById('lc-shell').classList.remove('is-banner-on');"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+  </div>
+
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside class="lc-sidebar" id="sidebar">
+    <div class="lc-sidebar__header">
+      <div class="lc-sidebar__logo" aria-hidden="true">L</div>
+      <span class="lc-sidebar__brand">LigCom</span>
+      <button class="lc-icon-btn d-lg-none ms-auto" onclick="toggleSidebar(false)" aria-label="Fermer le menu"><i data-lucide="x"></i></button>
+    </div>
+    <nav class="lc-sidebar__nav" aria-label="Navigation principale">
+      <div class="lc-sidebar__section">
+        <a href="#" class="lc-nav-item is-active" aria-current="page">
+          <i data-lucide="layout-dashboard" class="lc-nav-item__icon"></i>
+          <span class="lc-nav-item__label">Tableau de bord</span>
+        </a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Ventes</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="file-text" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Devis</span><span class="lc-nav-item__badge">12</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="shopping-cart" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Commandes</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="truck" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Bons de livraison</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="receipt" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Factures</span><span class="lc-nav-item__badge lc-nav-item__badge--danger">3</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="corner-down-left" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Avoirs</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="banknote" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Paiements</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Achats</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="shopping-bag" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Commandes</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="package" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Réceptions</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="file-input" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Factures fourn.</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Stock</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="box" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Articles</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="clipboard-check" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Inventaires</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="arrow-right-left" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Mouvements</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Tiers</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="users" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Clients</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="warehouse" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Fournisseurs</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Comptabilité</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="book-open" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Échéancier</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="alert-circle" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Relances</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Rapports</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="bar-chart-3" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Ventes</span></a>
+        <a href="#" class="lc-nav-item"><i data-lucide="file-spreadsheet" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">TVA</span></a>
+      </div>
+      <div class="lc-sidebar__section">
+        <h6 class="lc-sidebar__section-title">Paramètres</h6>
+        <a href="#" class="lc-nav-item"><i data-lucide="settings" class="lc-nav-item__icon"></i><span class="lc-nav-item__label">Société</span></a>
+      </div>
+    </nav>
+    <div class="lc-sidebar__footer">
+      <div class="lc-sidebar__company" tabindex="0">
+        <i data-lucide="building-2" style="width:14px;height:14px;color:var(--text-tertiary)"></i>
+        <span class="lc-sidebar__company-name">MaPME SARL</span>
+        <i data-lucide="chevrons-up-down" style="width:14px;height:14px;color:var(--text-quaternary)"></i>
+      </div>
+      <div class="lc-sidebar__exercise">
+        <span class="lc-sidebar__exercise-dot"></span>
+        <span class="lc-sidebar__footer-text">Exercice 2026</span>
+      </div>
+      <div class="lc-sidebar__profile" tabindex="0">
+        <span class="lc-avatar">CA</span>
+        <div class="lc-sidebar__profile-text">
+          <div class="lc-sidebar__profile-name">Charles Agounké</div>
+          <div class="lc-sidebar__profile-role">Gestionnaire</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lc-sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
+  <!-- ============================== HEADER ============================== -->
+  <header class="lc-header">
+    <button class="lc-icon-btn d-lg-none" onclick="toggleSidebar(true)" aria-label="Ouvrir le menu"><i data-lucide="menu"></i></button>
+    <button class="lc-icon-btn d-none d-lg-grid" onclick="document.getElementById('lc-shell').classList.toggle('is-collapsed')" aria-label="Réduire le menu"><i data-lucide="panel-left"></i></button>
+
+    <nav class="lc-breadcrumb d-none d-md-flex" aria-label="Fil d'Ariane">
+      <a href="#"><i data-lucide="home" style="width:14px;height:14px"></i></a>
+      <i data-lucide="chevron-right" class="lc-breadcrumb__sep"></i>
+      <a href="#">Ventes</a>
+      <i data-lucide="chevron-right" class="lc-breadcrumb__sep"></i>
+      <span class="lc-breadcrumb__current" id="bc-current">Tableau de bord</span>
+    </nav>
+
+    <div class="lc-header__search">
+      <i data-lucide="search" class="lc-header__search-icon"></i>
+      <input type="search" id="globalSearch" placeholder="Rechercher client, facture, article…" aria-label="Recherche globale">
+      <span class="lc-header__search-kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+    </div>
+
+    <div class="lc-header__actions">
+      <div class="dropdown">
+        <button class="btn btn-primary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+          <i data-lucide="plus" style="width:14px;height:14px"></i>Nouveau<i data-lucide="chevron-down" style="width:12px;height:12px"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" onclick="switchPage('invoice-form');return false;">Facture</a></li>
+          <li><a class="dropdown-item" href="#">Devis</a></li>
+          <li><a class="dropdown-item" href="#">Client</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Article</a></li>
+        </ul>
+      </div>
+
+      <div class="dropdown">
+        <button class="lc-badge lc-badge--gray" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer; height:32px; border-radius:var(--r-full); padding:4px 10px;">
+          <strong>XOF</strong> · FCFA <i data-lucide="chevron-down" style="width:12px;height:12px"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="min-width:240px">
+          <li><a class="dropdown-item d-flex justify-content-between" href="#"><span><strong>XOF</strong> · FCFA</span><span class="lc-badge lc-badge--primary">Actif</span></a></li>
+          <li><a class="dropdown-item" href="#"><strong>XAF</strong> · FCFA CEMAC</a></li>
+          <li><a class="dropdown-item" href="#"><strong>EUR</strong> · €</a></li>
+          <li><a class="dropdown-item" href="#"><strong>USD</strong> · $</a></li>
+        </ul>
+      </div>
+
+      <button class="lc-sync-status" id="syncStatus" data-state="online" aria-live="polite" aria-label="Statut de synchronisation" onclick="openDrawer('syncDrawer')">
+        <span class="dot"></span><span id="syncLabel">En ligne</span>
+      </button>
+
+      <button class="lc-icon-btn" onclick="toggleTheme()" aria-label="Basculer le thème">
+        <i data-lucide="sun" id="iconLight"></i>
+        <i data-lucide="moon" id="iconDark" style="display:none"></i>
+      </button>
+
+      <button class="lc-icon-btn" aria-label="Notifications"><i data-lucide="bell"></i><span class="lc-icon-btn__notif-dot"></span></button>
+
+      <div class="dropdown">
+        <button class="lc-icon-btn" data-bs-toggle="dropdown" aria-label="Profil utilisateur" style="background:var(--primary-50);color:var(--primary-700);font-weight:600">CA</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Mon profil</a></li>
+          <li><a class="dropdown-item" href="#">Paramètres</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Déconnexion</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================== MAIN ============================== -->
+  <main class="lc-main">
+
+    <div class="lc-page-header">
+      <div>
+        <h1 class="lc-page-title" id="pageTitle">Tableau de bord</h1>
+        <p class="lc-page-sub" id="pageSub">Vue d'ensemble de l'activité commerciale du mois courant.</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <div class="lc-tabs--pills" role="tablist" aria-label="Démo de pages">
+          <button class="is-active" data-page="dashboard" onclick="switchPage('dashboard')">Dashboard</button>
+          <button data-page="invoices" onclick="switchPage('invoices')">Liste factures</button>
+          <button data-page="invoice-form" onclick="switchPage('invoice-form')">Nouvelle facture</button>
+          <button data-page="settings" onclick="switchPage('settings')">Paramètres</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== PAGE 1 : DASHBOARD ============================== -->
+    <section data-page-panel="dashboard">
+
+      <div class="lc-data-freshness" id="dataFreshness" hidden>
+        <i data-lucide="cloud-off" style="width:16px;height:16px"></i>
+        <span>Données du <strong>27/04/2026 14:32</strong> — dernière synchronisation. Les valeurs peuvent être obsolètes.</span>
+      </div>
+
+      <!-- 4 stat cards -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6 col-xl-3">
+          <div class="lc-stat">
+            <div class="lc-stat__body">
+              <div class="lc-stat__label">CA du mois</div>
+              <div class="lc-stat__value">8 240 500<span class="lc-stat__value-suffix">FCFA</span></div>
+              <div class="lc-stat__delta lc-stat__delta--up">↑ 12,4 % vs avril · 12 575 € · 13 511 USD</div>
+            </div>
+            <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <polyline points="0,28 12,24 24,20 36,18 48,12 60,14 72,8 90,4 90,36 0,36" fill="currentColor" opacity=".1"/>
+            </svg>
+          </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+          <div class="lc-stat">
+            <div class="lc-stat__body">
+              <div class="lc-stat__label">Factures impayées</div>
+              <div class="lc-stat__value">3 480 000<span class="lc-stat__value-suffix">FCFA</span></div>
+              <div class="lc-stat__delta lc-stat__delta--down">7 factures · 4 en retard · 5 313 €</div>
+            </div>
+            <svg class="lc-stat__spark lc-stat__spark--down" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,18 12,16 24,20 36,14 48,22 60,18 72,26 90,30" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+          <div class="lc-stat">
+            <div class="lc-stat__body">
+              <div class="lc-stat__label">Devis en cours</div>
+              <div class="lc-stat__value">12<span class="lc-stat__value-suffix">documents</span></div>
+              <div class="lc-stat__delta">7,2 M FCFA potentiel · 11 014 €</div>
+            </div>
+            <svg class="lc-stat__spark" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true" style="color:var(--info-600)">
+              <polyline points="0,20 15,18 30,22 45,16 60,18 75,12 90,14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+          <div class="lc-stat">
+            <div class="lc-stat__body">
+              <div class="lc-stat__label">Nouveaux clients</div>
+              <div class="lc-stat__value">8<span class="lc-stat__value-suffix">ce mois</span></div>
+              <div class="lc-stat__delta lc-stat__delta--up">↑ 33 % vs avril</div>
+            </div>
+            <svg class="lc-stat__spark lc-stat__spark--up" viewBox="0 0 90 36" fill="none" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,24 12,22 24,18 36,20 48,14 60,12 72,10 90,8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 charts side by side -->
+      <div class="row g-3 mb-3">
+        <div class="col-lg-7">
+          <div class="lc-card lc-chart-card">
+            <div class="lc-chart-card__header">
+              <span class="lc-chart-card__title">Évolution du CA · 12 derniers mois</span>
+              <button class="btn btn-tertiary btn-sm">Détails</button>
+            </div>
+            <div class="lc-chart-bars" role="img" aria-label="Bar chart évolution mensuelle du chiffre d'affaires">
+              <div class="lc-chart-bar" style="height:30%"  data-tip="Mai 2025 : 4,2M"></div>
+              <div class="lc-chart-bar" style="height:42%"  data-tip="Juin 2025 : 5,8M"></div>
+              <div class="lc-chart-bar" style="height:55%"  data-tip="Juil 2025 : 7,1M"></div>
+              <div class="lc-chart-bar lc-chart-bar--secondary" style="height:48%" data-tip="Août 2025 : 6,4M"></div>
+              <div class="lc-chart-bar" style="height:62%"  data-tip="Sept 2025 : 7,9M"></div>
+              <div class="lc-chart-bar" style="height:58%"  data-tip="Oct 2025 : 7,4M"></div>
+              <div class="lc-chart-bar" style="height:71%"  data-tip="Nov 2025 : 8,9M"></div>
+              <div class="lc-chart-bar lc-chart-bar--secondary" style="height:65%" data-tip="Déc 2025 : 8,3M"></div>
+              <div class="lc-chart-bar" style="height:74%"  data-tip="Jan 2026 : 9,1M"></div>
+              <div class="lc-chart-bar" style="height:69%"  data-tip="Fév 2026 : 8,6M"></div>
+              <div class="lc-chart-bar lc-chart-bar--secondary" style="height:78%" data-tip="Mars 2026 : 9,8M"></div>
+              <div class="lc-chart-bar" style="height:85%"  data-tip="Avril 2026 : 8,2M"></div>
+            </div>
+            <div class="lc-chart-x">
+              <span>Mai</span><span>Juin</span><span>Juil</span><span>Août</span><span>Sept</span><span>Oct</span><span>Nov</span><span>Déc</span><span>Jan</span><span>Fév</span><span>Mars</span><span>Avril</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="lc-card">
+            <div class="lc-chart-card__header">
+              <span class="lc-chart-card__title">Top 5 clients · CA</span>
+              <button class="btn btn-tertiary btn-sm">Voir tous</button>
+            </div>
+            <div class="lc-hbar-list">
+              <div class="lc-hbar"><span class="lc-hbar__name">SARL Komlan & Fils</span><div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:92%"></div></div><span class="lc-hbar__value">2,4 M</span></div>
+              <div class="lc-hbar"><span class="lc-hbar__name">EBC Logistique SA</span><div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:78%"></div></div><span class="lc-hbar__value">2,0 M</span></div>
+              <div class="lc-hbar"><span class="lc-hbar__name">Mairie de Cotonou</span><div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:60%"></div></div><span class="lc-hbar__value">1,5 M</span></div>
+              <div class="lc-hbar"><span class="lc-hbar__name">Pharmacie Centrale</span><div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:42%"></div></div><span class="lc-hbar__value">1,1 M</span></div>
+              <div class="lc-hbar"><span class="lc-hbar__name">Boutique Akwaba</span><div class="lc-hbar__bar"><div class="lc-hbar__fill" style="width:30%"></div></div><span class="lc-hbar__value">0,8 M</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau récent + activité -->
+      <div class="row g-3">
+        <div class="col-lg-8">
+          <div class="lc-table-card">
+            <div class="lc-table-toolbar">
+              <span class="lc-table-toolbar__title">Factures récentes</span>
+              <span class="lc-table-toolbar__count">6</span>
+              <button class="btn btn-tertiary btn-sm ms-auto">Voir toutes <i data-lucide="arrow-right" style="width:14px;height:14px"></i></button>
+            </div>
+            <table class="lc-table">
+              <thead>
+                <tr>
+                  <th>Numéro</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Statut</th>
+                  <th class="text-end">Montant TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td data-label="Numéro"><strong>FA-2026-0042</strong></td><td data-label="Client">SARL Komlan & Fils</td><td data-label="Date">27/04/2026</td><td data-label="Statut"><span class="lc-badge lc-badge--gray"><span class="dot"></span>Brouillon</span></td><td data-label="Montant" class="text-end num--strong">1 250 000 FCFA</td></tr>
+                <tr><td data-label="Numéro"><strong>FA-2026-0041</strong></td><td data-label="Client">EBC Logistique SA</td><td data-label="Date">26/04/2026</td><td data-label="Statut"><span class="lc-badge lc-badge--success"><span class="dot"></span>Payée</span></td><td data-label="Montant" class="text-end num--strong">3 000 000 FCFA</td></tr>
+                <tr><td data-label="Numéro"><strong>FA-2026-0040</strong></td><td data-label="Client">Pharmacie Centrale</td><td data-label="Date">25/04/2026</td><td data-label="Statut"><span class="lc-badge lc-badge--warning"><span class="dot"></span>En retard 2j</span></td><td data-label="Montant" class="text-end num--strong">550 000 FCFA</td></tr>
+                <tr><td data-label="Numéro"><strong>FA-2026-0039</strong></td><td data-label="Client">Mairie de Cotonou</td><td data-label="Date">24/04/2026</td><td data-label="Statut"><span class="lc-badge lc-badge--primary"><span class="dot"></span>Validée</span></td><td data-label="Montant" class="text-end num--strong">9 000 000 FCFA</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="lc-card">
+            <div class="lc-card__header"><h3 class="lc-card__title">Activité récente</h3></div>
+            <div class="lc-timeline">
+              <div class="lc-tl-item">
+                <span class="lc-tl-item__dot lc-tl-item__dot--success"></span>
+                <div class="lc-tl-item__body">
+                  <div class="lc-tl-item__title"><strong>Charles A.</strong> a validé la facture <strong>FA-2026-0041</strong></div>
+                  <div class="lc-tl-item__time">il y a 12 min</div>
+                </div>
+              </div>
+              <div class="lc-tl-item">
+                <span class="lc-tl-item__dot"></span>
+                <div class="lc-tl-item__body">
+                  <div class="lc-tl-item__title"><strong>Marie M.</strong> a créé un devis pour <strong>SOTRAL Transport</strong></div>
+                  <div class="lc-tl-item__time">il y a 38 min</div>
+                </div>
+              </div>
+              <div class="lc-tl-item">
+                <span class="lc-tl-item__dot lc-tl-item__dot--info"></span>
+                <div class="lc-tl-item__body">
+                  <div class="lc-tl-item__title">Paiement reçu : <strong>3 000 000 FCFA</strong> de EBC Logistique</div>
+                  <div class="lc-tl-item__time">il y a 1 h</div>
+                </div>
+              </div>
+              <div class="lc-tl-item">
+                <span class="lc-tl-item__dot lc-tl-item__dot--warning"></span>
+                <div class="lc-tl-item__body">
+                  <div class="lc-tl-item__title">Stock bas : <strong>Ciment CPA 45</strong> (12 sacs restants)</div>
+                  <div class="lc-tl-item__time">il y a 2 h</div>
+                </div>
+              </div>
+              <div class="lc-tl-item">
+                <span class="lc-tl-item__dot"></span>
+                <div class="lc-tl-item__body">
+                  <div class="lc-tl-item__title"><strong>Charles A.</strong> a ajouté un nouveau client : <strong>BTP Sahel SARL</strong></div>
+                  <div class="lc-tl-item__time">il y a 4 h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================== PAGE 2 : LISTE FACTURES (TABLEAU DENSE) ============================== -->
+    <section data-page-panel="invoices" hidden>
+      <div class="lc-table-card">
+        <div class="lc-table-toolbar">
+          <span class="lc-table-toolbar__title">Factures</span>
+          <span class="lc-table-toolbar__count">247</span>
+          <div class="ms-auto d-flex gap-2 flex-wrap">
+            <button class="btn btn-secondary"><i data-lucide="download" style="width:14px;height:14px"></i>Exporter</button>
+            <button class="btn btn-primary"><i data-lucide="plus" style="width:14px;height:14px"></i>Nouvelle facture</button>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="lc-filters">
+          <div class="lc-filters__search">
+            <i data-lucide="search" class="lc-filters__search-icon"></i>
+            <input type="search" placeholder="Rechercher numéro, client, montant…" aria-label="Rechercher dans les factures">
+          </div>
+          <span class="lc-badge lc-badge--gray">Statut : <strong>Validée</strong><button class="lc-badge__close" aria-label="Retirer le filtre"><i data-lucide="x" style="width:12px;height:12px"></i></button></span>
+          <span class="lc-badge lc-badge--gray">Devise : <strong>XOF</strong><button class="lc-badge__close" aria-label="Retirer le filtre"><i data-lucide="x" style="width:12px;height:12px"></i></button></span>
+          <span class="lc-badge lc-badge--gray">Période : <strong>avril 2026</strong><button class="lc-badge__close" aria-label="Retirer le filtre"><i data-lucide="x" style="width:12px;height:12px"></i></button></span>
+          <button class="btn btn-secondary btn-sm" onclick="openDrawer('filtersDrawer')"><i data-lucide="filter" style="width:14px;height:14px"></i>Filtres avancés</button>
+          <button class="btn btn-link btn-sm">Réinitialiser</button>
+        </div>
+
+        <!-- Bulk actions bar (visible si sélection > 0) -->
+        <div class="lc-bulk-bar" id="bulkBar" hidden>
+          <i data-lucide="check-square" style="width:16px;height:16px"></i>
+          <span><span class="lc-bulk-bar__count" id="bulkCount">0</span> sélectionnée(s)</span>
+          <div class="ms-auto d-flex gap-2 flex-wrap">
+            <button class="btn btn-secondary btn-sm">Marquer payée</button>
+            <button class="btn btn-secondary btn-sm">Envoyer relance</button>
+            <button class="btn btn-secondary btn-sm">Exporter</button>
+            <button class="btn btn-secondary btn-sm" style="color:var(--error-700);border-color:var(--error-100)">Supprimer</button>
+            <button class="btn btn-link btn-sm" onclick="clearBulk()">Désélectionner</button>
+          </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="lc-table-scroll">
+          <table class="lc-table" id="invoicesTable">
+            <thead>
+              <tr>
+                <th style="width:40px"><label class="lc-check"><input type="checkbox" id="selectAll" aria-label="Tout sélectionner"></label></th>
+                <th data-sort="">Numéro <i data-lucide="chevron-down" class="sort-icon" style="width:12px;height:12px"></i></th>
+                <th data-sort="">Client <i data-lucide="chevron-down" class="sort-icon" style="width:12px;height:12px"></i></th>
+                <th data-sort="">Date <i data-lucide="chevron-down" class="sort-icon" style="width:12px;height:12px"></i></th>
+                <th data-sort="">Échéance <i data-lucide="chevron-down" class="sort-icon" style="width:12px;height:12px"></i></th>
+                <th>Statut</th>
+                <th>Commercial</th>
+                <th class="text-end" data-sort="desc">Montant TTC <i data-lucide="chevron-down" class="sort-icon" style="width:12px;height:12px"></i></th>
+                <th class="lc-cell-actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="is-local">
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0042"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0042</strong>&nbsp;<span class="lc-badge lc-badge--local">Local</span></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm">SK</span><span class="lc-cell-user__name">SARL Komlan & Fils</span></div></td>
+                <td data-label="Date">27/04/2026</td>
+                <td data-label="Échéance">27/05/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--gray"><span class="dot"></span>Brouillon</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs">CA</span></td>
+                <td data-label="Montant" class="text-end num--strong">1 250 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions" data-bs-toggle="dropdown"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">Modifier</a></li>
+                    <li><a class="dropdown-item" href="#">Dupliquer</a></li>
+                    <li><a class="dropdown-item" href="#">Aperçu PDF</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" style="color:var(--error-700)">Supprimer</a></li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0041"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0041</strong></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm lc-avatar--info">EB</span><span class="lc-cell-user__name">EBC Logistique SA</span></div></td>
+                <td data-label="Date">26/04/2026</td>
+                <td data-label="Échéance">26/05/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--success"><span class="dot"></span>Payée</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs lc-avatar--info">JM</span></td>
+                <td data-label="Montant" class="text-end num--strong">3 000 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0040"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0040</strong></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm lc-avatar--warning">PC</span><span class="lc-cell-user__name">Pharmacie Centrale Lomé</span></div></td>
+                <td data-label="Date">25/04/2026</td>
+                <td data-label="Échéance">10/05/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--warning"><span class="dot"></span>En retard 2j</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs">CA</span></td>
+                <td data-label="Montant" class="text-end num--strong">550 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0039"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0039</strong></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm">MC</span><span class="lc-cell-user__name">Mairie de Cotonou</span></div></td>
+                <td data-label="Date">24/04/2026</td>
+                <td data-label="Échéance">24/06/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--primary"><span class="dot"></span>Validée</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs lc-avatar--info">JM</span></td>
+                <td data-label="Montant" class="text-end num--strong">9 000 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0038"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0038</strong></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm lc-avatar--gray">BA</span><span class="lc-cell-user__name">Boutique Akwaba</span></div></td>
+                <td data-label="Date">23/04/2026</td>
+                <td data-label="Échéance">23/05/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--info"><span class="dot"></span>Partiellement payée</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs">CA</span></td>
+                <td data-label="Montant" class="text-end num--strong">450 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td data-label=""><label class="lc-check"><input type="checkbox" class="row-check" aria-label="Sélectionner FA-2026-0037"></label></td>
+                <td data-label="Numéro"><strong>FA-2026-0037</strong></td>
+                <td data-label="Client"><div class="lc-cell-user"><span class="lc-avatar lc-avatar--sm lc-avatar--info">ST</span><span class="lc-cell-user__name">SOTRAL Transport</span></div></td>
+                <td data-label="Date">22/04/2026</td>
+                <td data-label="Échéance">22/05/2026</td>
+                <td data-label="Statut"><span class="lc-badge lc-badge--error"><span class="dot"></span>Impayée 12j</span></td>
+                <td data-label="Commercial"><span class="lc-avatar lc-avatar--xs lc-avatar--info">JM</span></td>
+                <td data-label="Montant" class="text-end num--strong">200 000 FCFA</td>
+                <td class="lc-cell-actions"><button class="lc-icon-btn" aria-label="Actions"><i data-lucide="more-horizontal" style="width:14px;height:14px"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="lc-pagination">
+          <span>Affichage <strong>1–25</strong> sur <strong>247</strong></span>
+          <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
+            <div class="lc-pagination__perpage">
+              <span>Par page</span>
+              <select aria-label="Lignes par page"><option>25</option><option>50</option><option>100</option></select>
+            </div>
+            <div class="lc-pagination__pages" aria-label="Navigation pagination">
+              <button class="lc-pagination__btn" disabled aria-label="Page précédente"><i data-lucide="chevron-left" style="width:14px;height:14px"></i></button>
+              <button class="lc-pagination__btn is-active" aria-current="page">1</button>
+              <button class="lc-pagination__btn">2</button>
+              <button class="lc-pagination__btn">3</button>
+              <span style="padding:0 4px; color:var(--text-quaternary)">…</span>
+              <button class="lc-pagination__btn">10</button>
+              <button class="lc-pagination__btn" aria-label="Page suivante"><i data-lucide="chevron-right" style="width:14px;height:14px"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== PAGE 3 : FORMULAIRE FACTURE ============================== -->
+    <section data-page-panel="invoice-form" hidden>
+      <!-- Header doc -->
+      <div class="lc-doc-header">
+        <div class="lc-doc-header__main">
+          <span class="lc-doc-number">FA-2026-0043</span>
+          <span class="lc-badge lc-badge--gray"><span class="dot"></span>Brouillon</span>
+          <span class="lc-badge lc-badge--local">Local — non synchronisé</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-secondary" data-online-only data-tip-offline="Indisponible hors ligne — sera possible une fois reconnecté">
+            <i data-lucide="send" style="width:14px;height:14px"></i>Envoyer
+          </button>
+          <button class="btn btn-secondary" onclick="openDrawer('pdfDrawer')">
+            <i data-lucide="download" style="width:14px;height:14px"></i>Aperçu PDF
+          </button>
+          <button class="btn btn-secondary"><i data-lucide="copy" style="width:14px;height:14px"></i>Dupliquer</button>
+          <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#deleteModal" style="color:var(--error-700);border-color:var(--error-100)">
+            <i data-lucide="trash-2" style="width:14px;height:14px"></i>Supprimer
+          </button>
+        </div>
+      </div>
+
+      <!-- 2 colonnes : client + infos doc -->
+      <div class="row g-3 mb-3 row-2col" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+        <div class="lc-card">
+          <div class="lc-card__header"><h3 class="lc-card__title">Client</h3></div>
+          <div class="lc-card__body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="client-input">Code ou nom du client</label>
+                <div class="lc-ac" id="clientAc">
+                  <input type="text" id="client-input" placeholder="Ex. CLI-001 ou Komlan" autocomplete="off" aria-controls="ac-menu-c" aria-haspopup="listbox" aria-expanded="false">
+                  <div class="lc-ac__menu" id="ac-menu-c" role="listbox"></div>
+                </div>
+                <div class="form-text">Tape les premières lettres. <kbd>↑↓</kbd> pour naviguer · <kbd>Enter</kbd> pour sélectionner.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="email">Email</label>
+                <input type="email" id="email" value="contact@komlanetfils.tg">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="phone">Téléphone</label>
+                <input type="tel" id="phone" value="+228 22 26 14 78">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="addr">Adresse de facturation</label>
+                <textarea id="addr" rows="2">Quartier Adidogomé, BP 12345 Lomé, Togo</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lc-card">
+          <div class="lc-card__header"><h3 class="lc-card__title">Informations document</h3></div>
+          <div class="lc-card__body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="docnum">Numéro</label>
+                <input type="text" id="docnum" value="FA-2026-0043" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="docref">Référence interne</label>
+                <input type="text" id="docref" placeholder="Ex. CMD-202604-018">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="docdate">Date</label>
+                <input type="date" id="docdate" value="2026-04-27">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="docdue">Échéance</label>
+                <input type="date" id="docdue" value="2026-05-27">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="docproject">Projet</label>
+                <input type="text" id="docproject" placeholder="Optionnel">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="doccurrency">Devise</label>
+                <select id="doccurrency" class="form-select">
+                  <option selected>XOF — FCFA</option>
+                  <option>EUR — €</option>
+                  <option>USD — $</option>
+                </select>
+                <div class="form-text">Taux : 1 EUR = 655,957 FCFA · 1 USD = 610 FCFA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau lignes éditables -->
+      <div class="lc-card mb-3">
+        <div class="lc-card__header">
+          <h3 class="lc-card__title">Lignes</h3>
+          <span class="form-text ms-3">Tab entre champs · Enter sur dernier champ ajoute une ligne</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="lc-edit-lines" id="editLines">
+            <thead>
+              <tr>
+                <th style="width:28px" aria-label="Réordonner"></th>
+                <th style="width:200px">Article</th>
+                <th>Description</th>
+                <th class="num" style="width:90px">Qté</th>
+                <th class="num" style="width:130px">PU HT</th>
+                <th class="num" style="width:80px">Remise %</th>
+                <th class="num" style="width:80px">TVA %</th>
+                <th class="num" style="width:140px">Total HT</th>
+                <th style="width:36px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="drag-handle" aria-label="Glisser"><i data-lucide="grip-vertical" style="width:14px;height:14px"></i></td>
+                <td><input type="text" value="ART-0125 — Ciment CPA 45 sac 50 kg" aria-label="Article"></td>
+                <td><input type="text" value="Sac de 50 kg, fabrication Lomé" aria-label="Description"></td>
+                <td class="num"><input type="number" value="200" aria-label="Quantité"></td>
+                <td class="num"><input type="text" value="4 200" aria-label="Prix unitaire HT"></td>
+                <td class="num"><input type="number" value="0" aria-label="Remise"></td>
+                <td class="num"><input type="number" value="18" aria-label="TVA"></td>
+                <td class="num num--strong">840 000</td>
+                <td><button class="lc-icon-btn" style="width:28px;height:28px;min-width:28px" aria-label="Supprimer ligne"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td class="drag-handle"><i data-lucide="grip-vertical" style="width:14px;height:14px"></i></td>
+                <td><input type="text" value="ART-0126 — Tôle bac galvanisée 0,3 mm"></td>
+                <td><input type="text" value="Profil 5 vagues, 6 m × 1 m"></td>
+                <td class="num"><input type="number" value="15"></td>
+                <td class="num"><input type="text" value="14 622"></td>
+                <td class="num"><input type="number" value="0"></td>
+                <td class="num"><input type="number" value="18"></td>
+                <td class="num num--strong">219 322</td>
+                <td><button class="lc-icon-btn" style="width:28px;height:28px;min-width:28px" aria-label="Supprimer ligne"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>
+              </tr>
+              <tr>
+                <td class="drag-handle"><i data-lucide="grip-vertical" style="width:14px;height:14px"></i></td>
+                <td><input type="text" value="ART-0127 — Riz parfumé 25 kg"></td>
+                <td><input type="text" value="Origine Vietnam"></td>
+                <td class="num"><input type="number" value="50"></td>
+                <td class="num"><input type="text" value="22 000"></td>
+                <td class="num"><input type="number" value="5"></td>
+                <td class="num"><input type="number" value="9"></td>
+                <td class="num num--strong">1 045 000</td>
+                <td><button class="lc-icon-btn" style="width:28px;height:28px;min-width:28px" aria-label="Supprimer ligne"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid var(--border-tertiary)">
+          <button class="btn btn-tertiary btn-sm"><i data-lucide="plus" style="width:14px;height:14px"></i>Ajouter une ligne</button>
+        </div>
+      </div>
+
+      <!-- Notes + Sous-totaux -->
+      <div class="row g-3 row-2col" style="display:grid; grid-template-columns:1fr 380px; gap:16px;">
+        <div class="lc-card">
+          <div class="lc-card__header"><h3 class="lc-card__title">Notes & conditions</h3></div>
+          <div class="lc-card__body">
+            <textarea rows="5" placeholder="Conditions générales, mentions légales, conditions de paiement…">Règlement à 30 jours fin de mois. Pénalités de retard : 3 fois le taux d'intérêt légal. Acompte de 30 % à la commande, solde à la livraison.</textarea>
+          </div>
+        </div>
+        <div class="lc-totals">
+          <div class="lc-totals__row"><span>Sous-total HT</span><span>2 104 322 FCFA</span></div>
+          <div class="lc-totals__row"><span>TVA 9 % (riz)</span><span>89 775 FCFA</span></div>
+          <div class="lc-totals__row"><span>TVA 18 %</span><span>190 678 FCFA</span></div>
+          <div class="lc-totals__row"><span>Total TVA</span><span>280 453 FCFA</span></div>
+          <div class="lc-totals__row lc-totals__row--ttc"><span>Total TTC</span><span>2 384 775 FCFA</span></div>
+          <div class="lc-totals__row lc-totals__row--secondary"><span>Équivalent EUR</span><span>3 636,16 €</span></div>
+          <div class="lc-totals__row lc-totals__row--secondary"><span>Équivalent USD</span><span>3 909,47 USD</span></div>
+        </div>
+      </div>
+
+      <!-- Footer sticky bas -->
+      <div class="lc-sticky-footer">
+        <button class="btn btn-secondary">Annuler</button>
+        <button class="btn btn-secondary"><i data-lucide="save" style="width:14px;height:14px"></i>Enregistrer brouillon</button>
+        <button class="btn btn-primary" data-online-only data-tip-offline="Indisponible hors ligne — sera possible une fois reconnecté">
+          <i data-lucide="send" style="width:14px;height:14px"></i>Enregistrer et envoyer
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ============================== PAGE 4 : PARAMÈTRES ============================== -->
+    <section data-page-panel="settings" hidden>
+      <div class="lc-settings">
+
+        <!-- ===== Apparence ===== -->
+        <div class="lc-settings__group">
+          <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="palette" style="width:18px;height:18px"></i></div>
+            <div>
+              <h2 class="lc-settings__group-title">Apparence</h2>
+              <p class="lc-settings__group-sub">Personnalise l'affichage de l'interface.</p>
+            </div>
+          </div>
+          <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Thème</p>
+                <p class="lc-settings__row-hint">Choisis l'apparence claire, sombre ou suis automatiquement la préférence de ton système.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <div class="lc-theme-grid" role="radiogroup" aria-label="Choix du thème">
+                  <button type="button" class="lc-theme-card" data-theme-card="system" role="radio" aria-checked="false" onclick="setThemeMode('system')">
+                    <div class="lc-theme-card__preview lc-theme-card__preview--system">
+                      <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                      <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="lc-theme-card__body">
+                      <i data-lucide="monitor" class="lc-theme-card__icon"></i>
+                      <span class="lc-theme-card__title">Système</span>
+                    </div>
+                    <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                  </button>
+
+                  <button type="button" class="lc-theme-card" data-theme-card="light" role="radio" aria-checked="false" onclick="setThemeMode('light')">
+                    <div class="lc-theme-card__preview lc-theme-card__preview--light">
+                      <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                      <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="lc-theme-card__body">
+                      <i data-lucide="sun" class="lc-theme-card__icon"></i>
+                      <span class="lc-theme-card__title">Clair</span>
+                    </div>
+                    <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                  </button>
+
+                  <button type="button" class="lc-theme-card" data-theme-card="dark" role="radio" aria-checked="false" onclick="setThemeMode('dark')">
+                    <div class="lc-theme-card__preview lc-theme-card__preview--dark">
+                      <div class="lc-theme-card__preview-side"><span></span><span></span><span></span><span></span></div>
+                      <div class="lc-theme-card__preview-main"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="lc-theme-card__body">
+                      <i data-lucide="moon" class="lc-theme-card__icon"></i>
+                      <span class="lc-theme-card__title">Sombre</span>
+                    </div>
+                    <div class="lc-theme-card__check"><i data-lucide="check" style="width:14px;height:14px"></i></div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Densité d'affichage</p>
+                <p class="lc-settings__row-hint">Hauteur des lignes de tableau et des espaces. Compact recommandé pour les power users.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <div class="lc-density-pills" role="radiogroup" aria-label="Densité">
+                  <button type="button" class="is-active" data-density="compact">Compact</button>
+                  <button type="button" data-density="comfortable">Confortable</button>
+                  <button type="button" data-density="spacious">Spacieux</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Animations d'interface</p>
+                <p class="lc-settings__row-hint">Active les transitions et effets de hover. Désactive si tu préfères un rendu strictement instantané.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <label class="lc-switch">
+                  <input type="checkbox" checked>
+                  <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                  <span>Animations activées</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Sidebar réduite par défaut</p>
+                <p class="lc-settings__row-hint">Affiche uniquement les icônes au démarrage. Tu peux étendre à la demande.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <label class="lc-switch">
+                  <input type="checkbox">
+                  <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                  <span>Démarrer en mode réduit</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Régional ===== -->
+        <div class="lc-settings__group">
+          <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="globe" style="width:18px;height:18px"></i></div>
+            <div>
+              <h2 class="lc-settings__group-title">Régional</h2>
+              <p class="lc-settings__group-sub">Langue, devise par défaut et formats locaux.</p>
+            </div>
+          </div>
+          <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Langue de l'interface</p>
+                <p class="lc-settings__row-hint">Affecte les libellés, les messages et les formats de date.</p>
+              </div>
+              <div class="lc-settings__row-control" style="max-width:280px">
+                <select class="form-select">
+                  <option selected>Français (FR)</option>
+                  <option>English (EN)</option>
+                  <option>Português (PT)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Devise par défaut</p>
+                <p class="lc-settings__row-hint">Devise pré-sélectionnée à la création d'un document. La devise du document reste modifiable au cas par cas.</p>
+              </div>
+              <div class="lc-settings__row-control" style="max-width:280px">
+                <select class="form-select">
+                  <option selected>XOF — Franc CFA UEMOA</option>
+                  <option>XAF — Franc CFA CEMAC</option>
+                  <option>EUR — Euro</option>
+                  <option>USD — US Dollar</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Format de date</p>
+                <p class="lc-settings__row-hint">Affichage des dates dans les listes, formulaires et exports.</p>
+              </div>
+              <div class="lc-settings__row-control" style="max-width:280px">
+                <select class="form-select">
+                  <option selected>27/04/2026 (DD/MM/YYYY)</option>
+                  <option>27 avr. 2026 (DD MMM YYYY)</option>
+                  <option>27 avril 2026 (DD MMMM YYYY)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Premier jour de la semaine</p>
+                <p class="lc-settings__row-hint">Affecte les calendriers et les rapports hebdomadaires.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <div class="lc-density-pills">
+                  <button type="button" class="is-active">Lundi</button>
+                  <button type="button">Dimanche</button>
+                  <button type="button">Samedi</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Taux TVA par défaut</p>
+                <p class="lc-settings__row-hint">Taux pré-rempli sur les nouvelles lignes de facture. Standard UEMOA : 18 %.</p>
+              </div>
+              <div class="lc-settings__row-control" style="max-width:200px">
+                <div class="lc-input-group">
+                  <input type="text" value="18,00" inputmode="decimal">
+                  <div class="lc-input-group__addon">%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Synchronisation & données ===== -->
+        <div class="lc-settings__group">
+          <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="cloud-cog" style="width:18px;height:18px"></i></div>
+            <div>
+              <h2 class="lc-settings__group-title">Synchronisation &amp; données</h2>
+              <p class="lc-settings__group-sub">Comportement hors ligne, cache local et préférences réseau.</p>
+            </div>
+          </div>
+          <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Synchronisation automatique</p>
+                <p class="lc-settings__row-hint">Pousse les modifications dès qu'une connexion est disponible. Recommandé activé.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <label class="lc-switch">
+                  <input type="checkbox" checked>
+                  <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                  <span>Activée</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Synchroniser uniquement en Wi-Fi</p>
+                <p class="lc-settings__row-hint">Évite la consommation de données mobiles lors des déplacements.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <label class="lc-switch">
+                  <input type="checkbox">
+                  <span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>
+                  <span>Limiter au Wi-Fi</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Conserver les documents synchronisés</p>
+                <p class="lc-settings__row-hint">Durée de rétention dans le cache local après synchronisation.</p>
+              </div>
+              <div class="lc-settings__row-control" style="max-width:280px">
+                <select class="form-select">
+                  <option>30 jours</option>
+                  <option selected>90 jours</option>
+                  <option>180 jours</option>
+                  <option>1 an</option>
+                  <option>Indéfiniment</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Espace utilisé localement</p>
+                <p class="lc-settings__row-hint">38,2 Mo · 247 documents · 156 articles · 84 clients en cache.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <button class="btn btn-secondary"><i data-lucide="trash-2" style="width:14px;height:14px"></i>Vider le cache local</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Notifications ===== -->
+        <div class="lc-settings__group">
+          <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="bell" style="width:18px;height:18px"></i></div>
+            <div>
+              <h2 class="lc-settings__group-title">Notifications</h2>
+              <p class="lc-settings__group-sub">Choisis ce qui apparaît dans la zone de notification et ce qui est envoyé par email.</p>
+            </div>
+          </div>
+          <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Factures impayées en retard</p>
+                <p class="lc-settings__row-hint">Alerte quand une facture dépasse son échéance.</p>
+              </div>
+              <div class="lc-settings__row-control" style="display:flex; gap:16px; flex-wrap:wrap">
+                <label class="lc-check"><input type="checkbox" checked> Application</label>
+                <label class="lc-check"><input type="checkbox" checked> Email</label>
+                <label class="lc-check"><input type="checkbox"> SMS</label>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Stock bas (seuil minimum)</p>
+                <p class="lc-settings__row-hint">Notification dès qu'un article passe sous son seuil.</p>
+              </div>
+              <div class="lc-settings__row-control" style="display:flex; gap:16px; flex-wrap:wrap">
+                <label class="lc-check"><input type="checkbox" checked> Application</label>
+                <label class="lc-check"><input type="checkbox"> Email</label>
+                <label class="lc-check"><input type="checkbox"> SMS</label>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Conflit de synchronisation</p>
+                <p class="lc-settings__row-hint">Lorsqu'un document doit être résolu manuellement.</p>
+              </div>
+              <div class="lc-settings__row-control" style="display:flex; gap:16px; flex-wrap:wrap">
+                <label class="lc-check"><input type="checkbox" checked> Application</label>
+                <label class="lc-check"><input type="checkbox" checked> Email</label>
+                <label class="lc-check"><input type="checkbox"> SMS</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Zone dangereuse ===== -->
+        <div class="lc-settings__group lc-settings__danger">
+          <div class="lc-settings__group-header">
+            <div class="lc-settings__group-icon"><i data-lucide="alert-triangle" style="width:18px;height:18px"></i></div>
+            <div>
+              <h2 class="lc-settings__group-title">Zone dangereuse</h2>
+              <p class="lc-settings__group-sub">Actions irréversibles. Vérifie deux fois avant de cliquer.</p>
+            </div>
+          </div>
+          <div class="lc-settings__group-body">
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Réinitialiser toutes les préférences</p>
+                <p class="lc-settings__row-hint">Remet thème, densité, langue et tous les paramètres locaux aux valeurs par défaut.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <button class="btn btn-secondary" onclick="resetAllPreferences()" style="color:var(--error-700);border-color:var(--error-100)">
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+
+            <div class="lc-settings__row">
+              <div>
+                <p class="lc-settings__row-label">Déconnecter cet appareil</p>
+                <p class="lc-settings__row-hint">Termine la session locale. Les modifications non synchronisées seront perdues si vous n'êtes pas connecté.</p>
+              </div>
+              <div class="lc-settings__row-control">
+                <button class="btn btn-danger">
+                  <i data-lucide="log-out" style="width:14px;height:14px"></i>Déconnecter
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================== DRAWERS ============================== -->
+
+<!-- Drawer : Filtres avancés -->
+<div class="lc-drawer-backdrop" id="filtersBackdrop" onclick="closeDrawer('filtersDrawer')"></div>
+<aside class="lc-drawer lc-drawer--md" id="filtersDrawer" role="dialog" aria-labelledby="filtersTitle">
+  <div class="lc-drawer__header">
+    <div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--primary-50);color:var(--primary-700);display:grid;place-items:center;flex-shrink:0">
+      <i data-lucide="filter" style="width:18px;height:18px"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <h2 class="lc-drawer__title" id="filtersTitle">Filtres avancés</h2>
+      <div class="form-text">Affine les résultats avec plusieurs critères</div>
+    </div>
+    <button class="lc-icon-btn" onclick="closeDrawer('filtersDrawer')" aria-label="Fermer"><i data-lucide="x"></i></button>
+  </div>
+  <div class="lc-drawer__body" style="padding:16px 20px">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Statut</label>
+        <div class="d-flex flex-column gap-2">
+          <label class="lc-check"><input type="checkbox" checked> Brouillon</label>
+          <label class="lc-check"><input type="checkbox" checked> Validée</label>
+          <label class="lc-check"><input type="checkbox"> Payée</label>
+          <label class="lc-check"><input type="checkbox"> Partiellement payée</label>
+          <label class="lc-check"><input type="checkbox"> En retard</label>
+        </div>
+      </div>
+      <div class="col-12"><label class="form-label">Période</label>
+        <div class="d-flex gap-2">
+          <input type="date" value="2026-04-01">
+          <input type="date" value="2026-04-30">
+        </div>
+      </div>
+      <div class="col-12"><label class="form-label">Devise</label>
+        <select class="form-select">
+          <option>Toutes</option>
+          <option>XOF — FCFA</option>
+          <option>EUR — €</option>
+          <option>USD — $</option>
+        </select>
+      </div>
+      <div class="col-12"><label class="form-label">Montant TTC</label>
+        <div class="d-flex gap-2 align-items-center">
+          <div class="lc-input-group"><input type="text" placeholder="Min"><div class="lc-input-group__addon">FCFA</div></div>
+          <span style="color:var(--text-tertiary)">à</span>
+          <div class="lc-input-group"><input type="text" placeholder="Max"><div class="lc-input-group__addon">FCFA</div></div>
+        </div>
+      </div>
+      <div class="col-12"><label class="form-label">Commercial</label>
+        <select class="form-select"><option>Tous</option><option>Charles A.</option><option>Marie M.</option></select>
+      </div>
+      <div class="col-12">
+        <label class="lc-switch"><input type="checkbox"><span class="lc-switch__track"><span class="lc-switch__thumb"></span></span>Afficher uniquement les non-synchronisées</label>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid var(--border-secondary);padding:12px 20px;display:flex;gap:8px;justify-content:space-between">
+    <button class="btn btn-link" onclick="closeDrawer('filtersDrawer')">Réinitialiser</button>
+    <div class="d-flex gap-2">
+      <button class="btn btn-secondary" onclick="closeDrawer('filtersDrawer')">Annuler</button>
+      <button class="btn btn-primary" onclick="closeDrawer('filtersDrawer')">Appliquer</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Drawer : Sync queue -->
+<div class="lc-drawer-backdrop" id="syncBackdrop" onclick="closeDrawer('syncDrawer')"></div>
+<aside class="lc-drawer lc-drawer--md" id="syncDrawer" role="dialog" aria-labelledby="syncTitle">
+  <div class="lc-drawer__header">
+    <div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--warning-50);color:var(--warning-700);display:grid;place-items:center;flex-shrink:0">
+      <i data-lucide="cloud-upload" style="width:18px;height:18px"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <h2 class="lc-drawer__title" id="syncTitle">File de synchronisation</h2>
+      <div class="form-text">3 modifications en attente</div>
+    </div>
+    <button class="lc-icon-btn" onclick="closeDrawer('syncDrawer')" aria-label="Fermer"><i data-lucide="x"></i></button>
+  </div>
+  <div class="lc-drawer__body">
+    <div class="lc-sync-item">
+      <div class="lc-sync-item__icon lc-sync-item__icon--primary"><i data-lucide="receipt" style="width:18px;height:18px"></i></div>
+      <div class="lc-sync-item__body">
+        <div class="lc-sync-item__title">Facture FA-2026-0042 créée</div>
+        <div class="lc-sync-item__meta"><span class="lc-badge lc-badge--warning"><span class="dot"></span>En attente</span><span>il y a 2 min</span></div>
+      </div>
+    </div>
+    <div class="lc-sync-item">
+      <div class="lc-sync-item__icon lc-sync-item__icon--info"><i data-lucide="banknote" style="width:18px;height:18px"></i></div>
+      <div class="lc-sync-item__body">
+        <div class="lc-sync-item__title">Paiement 250 000 FCFA enregistré</div>
+        <div class="lc-sync-item__meta"><span class="lc-badge lc-badge--error"><span class="dot"></span>Erreur 409</span><span>il y a 5 min</span></div>
+      </div>
+      <button class="btn btn-secondary btn-sm">Réessayer</button>
+    </div>
+    <div class="lc-sync-item">
+      <div class="lc-sync-item__icon lc-sync-item__icon--success"><i data-lucide="check" style="width:18px;height:18px"></i></div>
+      <div class="lc-sync-item__body">
+        <div class="lc-sync-item__title">Article ART-0125 mis à jour</div>
+        <div class="lc-sync-item__meta"><span class="lc-badge lc-badge--success"><span class="dot"></span>Synchronisé</span><span>il y a 12 min</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid var(--border-secondary);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-secondary btn-sm">Effacer terminés</button>
+    <button class="btn btn-primary btn-sm">Tout réessayer</button>
+  </div>
+</aside>
+
+<!-- Drawer : Aperçu PDF (lg) -->
+<div class="lc-drawer-backdrop" id="pdfBackdrop" onclick="closeDrawer('pdfDrawer')"></div>
+<aside class="lc-drawer lc-drawer--lg" id="pdfDrawer" role="dialog" aria-labelledby="pdfTitle">
+  <div class="lc-drawer__header">
+    <div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--info-50);color:var(--info-700);display:grid;place-items:center;flex-shrink:0">
+      <i data-lucide="file-text" style="width:18px;height:18px"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <h2 class="lc-drawer__title" id="pdfTitle">Aperçu — FA-2026-0043</h2>
+      <div class="form-text">SARL Komlan & Fils · 2 384 775 FCFA</div>
+    </div>
+    <button class="btn btn-secondary btn-sm"><i data-lucide="download" style="width:14px;height:14px"></i>Télécharger</button>
+    <button class="lc-icon-btn" onclick="closeDrawer('pdfDrawer')" aria-label="Fermer"><i data-lucide="x"></i></button>
+  </div>
+  <div class="lc-pdf-preview">
+    <div class="lc-pdf-page">
+      <div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--gray-900);padding-bottom:16px;margin-bottom:24px">
+        <div>
+          <div style="font-size:18px;font-weight:700">FACTURE</div>
+          <div>FA-2026-0043</div>
+          <div style="margin-top:6px;color:var(--gray-500)">Date : 27/04/2026</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700">MaPME SARL</div>
+          <div>Rue de la Fraternité, Lomé</div>
+          <div>RCCM TG-LFW-2018-A-1234</div>
+          <div>NIF : 1234567890</div>
+        </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="color:var(--gray-500);font-size:11px;text-transform:uppercase">Facturé à</div>
+        <div style="font-weight:600">SARL Komlan & Fils</div>
+        <div>Quartier Adidogomé, Lomé, Togo</div>
+        <div>+228 22 26 14 78</div>
+      </div>
+      <table style="width:100%;font-size:11px;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--gray-100)">
+            <th style="padding:8px;text-align:left">Désignation</th>
+            <th style="padding:8px;text-align:right">Qté</th>
+            <th style="padding:8px;text-align:right">PU HT</th>
+            <th style="padding:8px;text-align:right">TVA</th>
+            <th style="padding:8px;text-align:right">Total HT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--gray-200)">Ciment CPA 45 sac 50 kg</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">200</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">4 200</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">18 %</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">840 000</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--gray-200)">Tôle bac galvanisée 0,3 mm</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">15</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">14 622</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">18 %</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">219 322</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--gray-200)">Riz parfumé 25 kg (-5%)</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">50</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">22 000</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">9 %</td><td style="padding:8px;text-align:right;border-bottom:1px solid var(--gray-200)">1 045 000</td></tr>
+        </tbody>
+      </table>
+      <div style="text-align:right;margin-top:16px;font-size:11px">
+        <div>Sous-total HT&nbsp;&nbsp;<strong>2 104 322 FCFA</strong></div>
+        <div>TVA 9 %&nbsp;&nbsp;<strong>89 775 FCFA</strong></div>
+        <div>TVA 18 %&nbsp;&nbsp;<strong>190 678 FCFA</strong></div>
+        <div style="font-size:14px;margin-top:8px"><strong>Total TTC&nbsp;&nbsp;2 384 775 FCFA</strong></div>
+      </div>
+    </div>
+    <div class="form-text">Page 1 sur 1</div>
+  </div>
+</aside>
+
+<!-- ============================== MODAL : DELETE CONFIRMATION ============================== -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    <div class="modal-content" style="background:var(--bg-surface-0);border:1px solid var(--border-secondary);border-radius:var(--r-xl);box-shadow:var(--shadow-xl)">
+      <div class="lc-modal__header">
+        <div class="lc-modal__icon lc-modal__icon--error"><i data-lucide="trash-2" style="width:22px;height:22px"></i></div>
+        <h2 class="lc-modal__title">Supprimer la facture FA-2026-0043 ?</h2>
+        <p class="lc-modal__sub">Cette action est irréversible. Le numéro sera réutilisé pour la prochaine facture.</p>
+      </div>
+      <div class="lc-modal__footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-danger" data-bs-dismiss="modal">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== TOASTER ============================== -->
+<div class="lc-toaster" id="toaster" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ============================== JS ============================== -->
+<script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="lib/lucide/lucide.min.js"></script>
+<script>
+/* -----------------------------------------------------------
+   Init Lucide
+   ----------------------------------------------------------- */
+lucide.createIcons();
+
+/* -----------------------------------------------------------
+   Toggle thème + persistance
+   ----------------------------------------------------------- */
+/* -----------------------------------------------------------
+   Thème : 3 modes — system / light / dark
+   - Clé localStorage: lc-theme-mode (source de vérité)
+   - 'system' suit dynamiquement prefers-color-scheme
+   - Toggle header cycle: system → light → dark → system
+   ----------------------------------------------------------- */
+function getThemeMode() {
+    try { return localStorage.getItem('lc-theme-mode') || 'system'; } catch { return 'system'; }
+}
+function resolveTheme(mode) {
+    if (mode === 'light' || mode === 'dark') return mode;
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function applyTheme() {
+    const mode = getThemeMode();
+    const theme = resolveTheme(mode);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    syncThemeUI(mode, theme);
+}
+function syncThemeUI(mode, theme) {
+    // Icône header (sun/moon selon thème actif)
+    const iconLight = document.getElementById('iconLight');
+    const iconDark  = document.getElementById('iconDark');
+    if (iconLight) iconLight.style.display = theme === 'dark' ? 'none' : '';
+    if (iconDark)  iconDark.style.display  = theme === 'dark' ? '' : 'none';
+    // Cards de la page Paramètres
+    document.querySelectorAll('[data-theme-card]').forEach(card => {
+        const isActive = card.dataset.themeCard === mode;
+        card.classList.toggle('is-active', isActive);
+        card.setAttribute('aria-checked', String(isActive));
+    });
+}
+function setThemeMode(mode) {
+    try { localStorage.setItem('lc-theme-mode', mode); } catch {}
+    applyTheme();
+    if (window.LigComToast) {
+        const labels = { system: 'Système', light: 'Clair', dark: 'Sombre' };
+        LigComToast.push({ kind:'success', title:'Thème mis à jour', desc:`Préférence : ${labels[mode]}.`, timeout:2500 });
+    }
+}
+function toggleTheme() {
+    // Cycle pour le bouton header : light → dark → system → light
+    const order = ['light', 'dark', 'system'];
+    const current = getThemeMode();
+    const next = order[(order.indexOf(current) + 1) % order.length];
+    setThemeMode(next);
+}
+function resetAllPreferences() {
+    if (!confirm('Réinitialiser toutes les préférences locales (thème, densité, langue) ?')) return;
+    try {
+        ['lc-theme-mode', 'lc-theme', 'lc-density', 'lc-lang', 'lc-currency'].forEach(k => localStorage.removeItem(k));
+    } catch {}
+    applyTheme();
+    if (window.LigComToast) LigComToast.push({ kind:'info', title:'Préférences réinitialisées' });
+}
+
+// Listen to OS theme change while mode = 'system'
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getThemeMode() === 'system') applyTheme();
+});
+
+// Init au chargement (doit tourner une fois Lucide créé pour les cards)
+applyTheme();
+
+/* -----------------------------------------------------------
+   Mobile sidebar
+   ----------------------------------------------------------- */
+function toggleSidebar(open) {
+    const sb = document.getElementById('sidebar');
+    const bd = document.getElementById('sidebarBackdrop');
+    if (open === undefined) open = !sb.classList.contains('is-open');
+    sb.classList.toggle('is-open', open);
+    bd.classList.toggle('is-open', open);
+}
+
+/* -----------------------------------------------------------
+   Page switcher (démo des 3 pages)
+   ----------------------------------------------------------- */
+function switchPage(name) {
+    document.querySelectorAll('[data-page-panel]').forEach(p => {
+        p.hidden = p.dataset.pagePanel !== name;
+    });
+    document.querySelectorAll('.lc-tabs--pills [data-page]').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.page === name);
+    });
+    const titles = {
+        'dashboard':     ['Tableau de bord', 'Vue d\'ensemble de l\'activité commerciale du mois courant.'],
+        'invoices':      ['Factures', 'Gérer les factures clients · 247 documents · 3 480 000 FCFA en attente.'],
+        'invoice-form':  ['Nouvelle facture', 'Saisie d\'une facture client. Tab/Enter pour naviguer entre les champs.'],
+        'settings':     ['Paramètres', 'Préférences locales : thème, densité, régional, synchronisation.']
+    };
+    const t = titles[name] || ['', ''];
+    document.getElementById('pageTitle').textContent = t[0];
+    document.getElementById('pageSub').textContent = t[1];
+    document.getElementById('bc-current').textContent = t[0];
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* -----------------------------------------------------------
+   Drawer open / close
+   ----------------------------------------------------------- */
+function openDrawer(id) {
+    const drawer = document.getElementById(id);
+    const bdId = id.replace('Drawer', 'Backdrop');
+    const bd = document.getElementById(bdId);
+    drawer.classList.add('is-open');
+    if (bd) bd.classList.add('is-open');
+}
+function closeDrawer(id) {
+    const drawer = document.getElementById(id);
+    const bdId = id.replace('Drawer', 'Backdrop');
+    const bd = document.getElementById(bdId);
+    drawer.classList.remove('is-open');
+    if (bd) bd.classList.remove('is-open');
+}
+
+/* Esc ferme drawers + sidebar mobile */
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.lc-drawer.is-open').forEach(d => closeDrawer(d.id));
+        toggleSidebar(false);
+    }
+});
+
+/* -----------------------------------------------------------
+   Cmd/Ctrl + K = focus recherche globale
+   Cmd/Ctrl + S = enregistrer (toast démo)
+   Cmd/Ctrl + N = nouveau (toast démo)
+   ----------------------------------------------------------- */
+document.addEventListener('keydown', (e) => {
+    const isMod = e.ctrlKey || e.metaKey;
+    if (isMod && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const s = document.getElementById('globalSearch');
+        s.focus(); s.select();
+    } else if (isMod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        pushToast({ kind:'success', title:'Brouillon enregistré', desc:'FA-2026-0043 a été sauvegardée localement.' });
+    } else if (isMod && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        switchPage('invoice-form');
+    }
+});
+
+/* -----------------------------------------------------------
+   Toaster
+   ----------------------------------------------------------- */
+const ICONS = {
+    success: '<i data-lucide="check-circle" style="width:16px;height:16px"></i>',
+    warning: '<i data-lucide="alert-triangle" style="width:16px;height:16px"></i>',
+    error:   '<i data-lucide="x-circle" style="width:16px;height:16px"></i>',
+    info:    '<i data-lucide="info" style="width:16px;height:16px"></i>'
+};
+function pushToast({ title, desc, kind='info', timeout=4000 } = {}) {
+    const t = document.createElement('div');
+    t.className = `lc-toast lc-toast--${kind}`;
+    t.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    t.innerHTML = `
+        <div class="lc-toast__icon">${ICONS[kind] || ICONS.info}</div>
+        <div class="lc-toast__body">
+            ${title ? `<div class="lc-toast__title">${title}</div>` : ''}
+            ${desc ? `<div class="lc-toast__desc">${desc}</div>` : ''}
+        </div>
+        <button class="lc-toast__close" aria-label="Fermer"><i data-lucide="x" style="width:14px;height:14px"></i></button>`;
+    document.getElementById('toaster').appendChild(t);
+    lucide.createIcons();
+    const remove = () => { t.classList.add('is-leaving'); setTimeout(() => t.remove(), 200); };
+    t.querySelector('.lc-toast__close').addEventListener('click', remove);
+    if (timeout > 0) setTimeout(remove, timeout);
+    return t;
+}
+window.LigComToast = { push: pushToast };
+
+/* -----------------------------------------------------------
+   Bulk selection (tableau factures)
+   ----------------------------------------------------------- */
+const selectAll = document.getElementById('selectAll');
+const rowChecks = document.querySelectorAll('.row-check');
+const bulkBar = document.getElementById('bulkBar');
+const bulkCount = document.getElementById('bulkCount');
+
+function refreshBulk() {
+    const checked = Array.from(rowChecks).filter(c => c.checked);
+    bulkBar.hidden = checked.length === 0;
+    bulkCount.textContent = checked.length;
+
+    Array.from(rowChecks).forEach(c => {
+        c.closest('tr').classList.toggle('is-selected', c.checked);
+    });
+
+    if (selectAll) {
+        if (checked.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; }
+        else if (checked.length === rowChecks.length) { selectAll.checked = true; selectAll.indeterminate = false; }
+        else { selectAll.checked = false; selectAll.indeterminate = true; }
+    }
+}
+selectAll?.addEventListener('change', () => {
+    rowChecks.forEach(c => c.checked = selectAll.checked);
+    refreshBulk();
+});
+rowChecks.forEach(c => c.addEventListener('change', refreshBulk));
+function clearBulk() {
+    rowChecks.forEach(c => c.checked = false);
+    refreshBulk();
+}
+
+/* -----------------------------------------------------------
+   Tri colonne (cycle asc/desc, démo visuelle)
+   ----------------------------------------------------------- */
+document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const cur = th.getAttribute('data-sort');
+        document.querySelectorAll('th[data-sort]').forEach(o => { if (o !== th) o.setAttribute('data-sort', ''); });
+        const next = cur === 'asc' ? 'desc' : 'asc';
+        th.setAttribute('data-sort', next);
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.style.transform = next === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+    });
+});
+
+/* -----------------------------------------------------------
+   Autocomplete client (démo)
+   ----------------------------------------------------------- */
+const CLIENTS = [
+    { code:'CLI-001', label:'SARL Komlan & Fils', meta:'Lomé' },
+    { code:'CLI-002', label:'EBC Logistique SA', meta:'Cotonou' },
+    { code:'CLI-003', label:'Pharmacie Centrale Lomé', meta:'Lomé' },
+    { code:'CLI-004', label:'Mairie de Cotonou', meta:'Cotonou' },
+    { code:'CLI-005', label:'Boutique Akwaba', meta:'Abidjan' },
+    { code:'CLI-006', label:'SOTRAL Transport', meta:'Lomé' },
+    { code:'CLI-007', label:'BTP Sahel SARL', meta:'Ouagadougou' },
+    { code:'CLI-008', label:'Hôtel Le Galion', meta:'Dakar' }
+];
+(function setupAc() {
+    const wrap = document.getElementById('clientAc');
+    if (!wrap) return;
+    const input = wrap.querySelector('input');
+    const menu = wrap.querySelector('.lc-ac__menu');
+    let active = -1, vis = [];
+
+    function score(t, q) { t=(t||'').toLowerCase(); q=q.toLowerCase(); if(!q) return 1; if(t.startsWith(q)) return 3; if(t.includes(q)) return 2; let i=0; for(const c of q){i=t.indexOf(c,i); if(i===-1) return 0; i++;} return 1; }
+    function render() {
+        const q = input.value.trim();
+        const list = CLIENTS.map(c => ({c, s:Math.max(score(c.code,q), score(c.label,q), q?0:1)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,8);
+        vis = list.map(x=>x.c); active = -1;
+        menu.innerHTML = vis.length === 0
+            ? '<div style="padding:14px;text-align:center;color:var(--text-tertiary);font-size:12px">Aucun résultat</div>'
+            : vis.map((c,i)=>`<div class="lc-ac__item" data-i="${i}" role="option"><span class="lc-ac__code">${c.code}</span><span class="lc-ac__label">${c.label}</span><span class="lc-ac__meta">${c.meta}</span></div>`).join('');
+        wrap.classList.add('is-open');
+        input.setAttribute('aria-expanded', 'true');
+    }
+    function pick(i) { const c = vis[i]; if(!c) return; input.value = `${c.code} — ${c.label}`; wrap.classList.remove('is-open'); input.setAttribute('aria-expanded','false'); }
+    input.addEventListener('focus', render);
+    input.addEventListener('input', render);
+    input.addEventListener('keydown', e => {
+        const items = menu.querySelectorAll('.lc-ac__item');
+        if (e.key === 'ArrowDown') { e.preventDefault(); if(items.length){ items[active]?.classList.remove('is-active'); active=(active+1)%items.length; items[active].classList.add('is-active'); items[active].scrollIntoView({block:'nearest'}); } }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if(items.length){ items[active]?.classList.remove('is-active'); active=(active-1+items.length)%items.length; items[active].classList.add('is-active'); } }
+        else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(active); }
+        else if (e.key === 'Escape') { wrap.classList.remove('is-open'); input.setAttribute('aria-expanded','false'); }
+    });
+    menu.addEventListener('click', e => { const it = e.target.closest('.lc-ac__item'); if (it) pick(parseInt(it.dataset.i)); });
+    document.addEventListener('click', e => { if (!wrap.contains(e.target)) { wrap.classList.remove('is-open'); input.setAttribute('aria-expanded','false'); } });
+})();
+
+/* -----------------------------------------------------------
+   Simulation toggle online/offline (démo)
+   ----------------------------------------------------------- */
+function setSyncState(state, payload) {
+    const badge = document.getElementById('syncStatus');
+    const label = document.getElementById('syncLabel');
+    const banner = document.getElementById('offlineBanner');
+    const shell = document.getElementById('lc-shell');
+    const freshness = document.getElementById('dataFreshness');
+    badge.dataset.state = state;
+    if (state === 'online') {
+        label.textContent = 'En ligne';
+        banner.hidden = true;
+        shell.classList.remove('is-banner-on');
+        if (freshness) freshness.hidden = true;
+        document.querySelectorAll('[data-online-only]').forEach(b => {
+            b.disabled = false;
+            b.removeAttribute('data-tip');
+        });
+    } else if (state === 'syncing') {
+        label.textContent = `Synchronisation… ${payload?.done ?? 3}/${payload?.total ?? 12}`;
+    } else if (state === 'offline') {
+        const pending = payload?.pending ?? 7;
+        label.textContent = `Hors ligne — ${pending} en attente`;
+        banner.hidden = false;
+        shell.classList.add('is-banner-on');
+        if (freshness) freshness.hidden = false;
+        document.querySelectorAll('[data-online-only]').forEach(b => {
+            b.disabled = true;
+            const tip = b.getAttribute('data-tip-offline');
+            if (tip) b.setAttribute('data-tip', tip);
+        });
+    }
+}
+window.LigCom = { setSyncState };
+
+/* Détection navigateur online/offline */
+window.addEventListener('online', () => setSyncState('online'));
+window.addEventListener('offline', () => setSyncState('offline'));
+setSyncState(navigator.onLine ? 'online' : 'offline');
+
+/* Boutons de démo simulés (Ctrl+Shift+1/2/3) */
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey) {
+        if (e.key === '!') { setSyncState('online'); pushToast({kind:'success', title:'Connexion rétablie'}); }
+        if (e.key === '@') { setSyncState('syncing', {done:3, total:12}); pushToast({kind:'info', title:'Synchronisation 3/12 en cours'}); }
+        if (e.key === '"') { setSyncState('offline', {pending:7}); pushToast({kind:'warning', title:'Connexion perdue', desc:'7 modifications mises en file d\'attente.'}); }
+    }
+});
+
+/* Init Lucide après dynamique */
+setTimeout(() => lucide.createIcons(), 50);
+</script>
+
+<!--
+=================================================================================
+NOTES POUR LE PORTAGE EN PROJET ASP.NET CORE MVC / RAZOR PAGES
+=================================================================================
+
+(a) ORDRE D'IMPORT CSS DANS LE PROJET
+-----------------------------------------------------------------------------
+Dans _Layout.cshtml, ordonner ainsi (overrides en dernier) :
+
+  <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+
+Le fichier site.css contient TOUS les blocs <style> de ce HTML (sections 1-14).
+Il surcharge --bs-* via :root, donc Bootstrap doit être importé en PREMIER.
+
+(b) PORTAGE DES PATTERNS EN RAZOR
+-----------------------------------------------------------------------------
+
+| Pattern HTML                | Razor cible                                          |
+|-----------------------------|------------------------------------------------------|
+| Shell (sidebar+header)      | _Layout.cshtml (Pages/Shared/)                       |
+| Page header / page-sub      | Inline dans chaque View                              |
+| Sidebar nav                 | ViewComponent <vc:sidebar-nav> avec compteurs        |
+|                             | dynamiques (factures impayées, devis en attente)     |
+| Sync status badge           | ViewComponent <vc:sync-status>                       |
+| File de sync drawer         | Partial _SyncDrawer.cshtml (dans _Layout)            |
+| Banner offline              | Partial _OfflineBanner.cshtml (dans _Layout)         |
+| Currency selector header    | ViewComponent <vc:currency-selector>                 |
+| Dashboard stat cards        | Partial _StatCard.cshtml prenant un model Stat       |
+| Tableau dense factures      | View Index.cshtml avec partial _InvoiceRow.cshtml    |
+|                             | (ou tag helper <invoice-row>)                        |
+| Bulk action bar             | Partial _BulkActionBar.cshtml conditionnel           |
+| Filtres avancés drawer      | Partial _FiltersDrawer.cshtml + ViewComponent        |
+| Formulaire facture          | View Edit.cshtml + EditorTemplate _LineRow.cshtml    |
+|                             | pour chaque ligne éditable                           |
+| Aperçu PDF drawer           | Partial _PdfPreview.cshtml (HTML statique pour       |
+|                             | démo — en prod, <iframe> pointant vers QuestPDF)     |
+| Modal delete confirmation   | Partial _DeleteModal.cshtml                          |
+| Toaster                     | <div id="toaster"> dans _Layout, push depuis JS      |
+|                             | (vanilla) ou via TempData.Toast côté serveur         |
+| Autocomplete clients        | Partial _AutocompleteInput.cshtml + endpoint API     |
+|                             | /api/v1/clients?q=... appelé en fetch                |
+
+ViewComponents recommandés (widgets dynamiques DB-bound) :
+  - SidebarNavViewComponent : invoke avec InvokeAsync(),
+    return DB counts (factures impayées, devis ouverts, etc.)
+  - SyncStatusViewComponent : invoke chaque page, return
+    { state, pendingCount } depuis IndexedDB exposé via signalR
+  - CurrencySelectorViewComponent : avec liste des devises
+    autorisées par tenant (table TenantCurrencies)
+
+Partials (markup statique réutilisable) :
+  - _OfflineBanner.cshtml (dans _Layout, conditional render)
+  - _ConflictResolutionModal.cshtml
+  - _StatCard.cshtml (model: { Label, Value, Currency, Delta, Spark })
+  - _BadgeStatus.cshtml (model: { Status enum, Variant })
+  - _Pagination.cshtml (model: PaginationModel)
+
+(c) CLASSES UTILITAIRES CUSTOM CRÉÉES
+-----------------------------------------------------------------------------
+Préfixe systématique « lc- » (LigCom) pour ne pas collide avec Bootstrap :
+
+  Layout :          .lc-shell .lc-sidebar .lc-header .lc-main
+                    .lc-page-header .lc-page-title .lc-page-sub
+
+  Sidebar :         .lc-nav-item .lc-nav-item__icon .lc-nav-item__label
+                    .lc-nav-item__badge .lc-nav-item__badge--danger
+                    .lc-sidebar__section .lc-sidebar__section-title
+                    .lc-sidebar__company .lc-sidebar__profile
+
+  Header :          .lc-breadcrumb .lc-breadcrumb__sep .lc-breadcrumb__current
+                    .lc-header__search .lc-header__actions .lc-icon-btn
+
+  Offline :         .lc-offline-banner .lc-sync-status (data-state attribute)
+                    .lc-data-freshness
+
+  Boutons :         .btn-primary .btn-secondary .btn-tertiary .btn-link .btn-danger
+                    .btn-sm .btn-lg .btn--icon-only .btn--loading
+
+  Inputs :          .lc-input-group .lc-input-group__addon
+                    .lc-input-group__addon--prefix
+                    .lc-check .lc-radio .lc-switch .lc-switch__track
+                    .lc-ac .lc-ac__menu .lc-ac__item .lc-ac__code
+
+  Badges :          .lc-badge .lc-badge--{gray|primary|success|warning|error|info|local}
+                    .lc-badge__close
+
+  Tables :          .lc-table-card .lc-table-toolbar .lc-table .lc-table-scroll
+                    .lc-filters .lc-bulk-bar .lc-pagination .lc-pagination__btn
+                    .lc-cell-user .lc-cell-actions
+                    Modificateurs lignes : .is-selected .is-local
+
+  Forms / facture : .lc-doc-header .lc-doc-number
+                    .lc-edit-lines .lc-totals .lc-totals__row .lc-totals__row--ttc
+                    .lc-sticky-footer
+
+  Modals :          .lc-modal .lc-modal--sm/md/lg .lc-modal__header
+                    .lc-modal__icon .lc-modal__icon--{error|warning|info}
+
+  Drawers :         .lc-drawer .lc-drawer--md/lg .lc-drawer__header
+                    .lc-pdf-preview .lc-pdf-page
+
+  Toasts :          .lc-toast .lc-toast--{success|warning|error|info}
+
+  Pages :           .lc-stat .lc-stat__label .lc-stat__value .lc-stat__spark
+                    .lc-chart-card .lc-chart-bars .lc-chart-bar
+                    .lc-hbar .lc-hbar__bar .lc-hbar__fill
+                    .lc-timeline .lc-tl-item
+
+  Avatars :         .lc-avatar .lc-avatar--xs/sm/lg
+                    .lc-avatar--{gray|info|warning}
+
+  Utilitaires data-* (attributs HTML, pas classes) :
+    [data-tip]            : tooltip CSS pur
+    [data-online-only]    : bouton désactivé hors ligne
+    [data-tip-offline]    : message tooltip quand désactivé offline
+    [data-state]          : sur lc-sync-status (online/syncing/offline)
+    [data-page-panel]     : panneaux de page (démo switcher)
+    [data-sort]           : colonne triable (asc/desc/'')
+    [data-label]          : label affiché en mode card mobile
+    [data-bs-theme]       : sur <html>, light/dark
+
+(d) RECOMMANDATIONS SERVICE WORKER + INDEXEDDB (mode hors ligne)
+-----------------------------------------------------------------------------
+
+STRATÉGIES DE CACHE (service worker) :
+
+  1. cache-first pour assets statiques :
+     - /css/site.css, /js/*.js, /lib/bootstrap/*, /lib/lucide/*
+     - polices Inter (Google Fonts) avec longue durée
+     - icônes, logo
+
+  2. network-first pour data API :
+     - /api/v1/* (clients, articles, factures)
+     - fallback IndexedDB en lecture seule si erreur réseau
+     - expose un événement personnalisé 'data-stale' au front
+       quand fallback (alimente .lc-data-freshness)
+
+  3. stale-while-revalidate pour vues HTML :
+     - shell HTML (_Layout) : cache-first
+     - pages dynamiques : network-first avec offline.html fallback
+
+  4. background-sync pour mutations (POST/PUT/DELETE) :
+     - register('sync-mutations') quand offline
+     - rejoue la queue IndexedDB au retour de connexion
+     - met à jour le badge sync (LigCom.setSyncState)
+
+INDEXEDDB — SCHEMAS RECOMMANDÉS (1 base "ligcom" version 1) :
+
+  Object stores :
+
+    "documents" (keyPath: "id")
+        - id (uuid local ou serveur)
+        - type ('invoice', 'quote', 'order', 'delivery', 'credit')
+        - data (objet sérialisé)
+        - syncStatus ('local', 'pending', 'syncing', 'synced', 'error')
+        - localVersion (timestamp)
+        - serverVersion (timestamp)
+        - lastModified
+      Index : type, syncStatus, lastModified
+
+    "partners" (keyPath: "id")
+        - id, code, name, type ('customer', 'supplier'), data
+        - syncStatus, lastSyncedAt
+      Index : code, type, syncStatus
+
+    "products" (keyPath: "id")
+        - id, sku, label, data
+        - syncStatus
+      Index : sku, syncStatus
+
+    "mutations" (keyPath: "id", autoIncrement)
+        - id, entityType, entityId, op ('create','update','delete')
+        - payload, attempts, error, createdAt
+      Index : entityType, attempts
+
+    "metadata" (keyPath: "key")
+        - { key:'last-sync-at', value: ISO timestamp }
+        - { key:'currency-rates', value: { EUR_XOF: 655.957, USD_XOF: 610 } }
+
+CONFLITS (cas modifié local + serveur pendant la coupure) :
+  - À la sync, comparer localVersion / serverVersion
+  - Si divergence → push event 'conflict' qui ouvre le modal
+    de résolution (composant _ConflictResolutionModal)
+  - L'utilisateur choisit : keep-local / keep-server / merge
+
+ROLLBACK / UNDO :
+  - Soft delete avec syncStatus='deleted-local' (5s undo toast côté UI)
+  - Hard delete seulement après confirmation serveur
+
+PURGE / RÉTENTION :
+  - Documents synced > 90j → purger du cache IndexedDB
+  - Toujours garder les 100 derniers docs récents pour navigation rapide
+
+=================================================================================
+FIN DES NOTES DE PORTAGE
+=================================================================================
+-->
+
+</body>
+</html>
