@@ -5,9 +5,14 @@ namespace GescomSaas.Web.Pages.Finance;
 
 public class PaymentEntryInputModel
 {
-    [Required]
     [Display(Name = "Facture")]
     public Guid? DocumentId { get; set; }
+
+    [Display(Name = "Type de reglement")]
+    public PaymentType Type { get; set; } = PaymentType.Standard;
+
+    [Display(Name = "Affectation")]
+    public PaymentAllocationMode AllocationMode { get; set; } = PaymentAllocationMode.Manual;
 
     [Display(Name = "Date de reglement")]
     [DataType(DataType.Date)]

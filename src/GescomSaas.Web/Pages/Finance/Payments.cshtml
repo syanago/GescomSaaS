@@ -2,53 +2,157 @@
 @model GescomSaas.Web.Pages.Finance.PaymentsModel
 @{
     ViewData["Title"] = Model.Title;
+    var totalAmount = Model.Payments.Sum(x => x.Amount);
+    var firstCurrency = Model.Payments.FirstOrDefault()?.CurrencyCode;
+    var isReceivables = Model.Scope == FinanceScope.Receivables;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Finance</span>
-        <h1>@Model.Title</h1>
-        <p class="muted-copy">Historique des encaissements et decaissements affectes aux factures.</p>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Historique des encaissements et decaissements</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Retour aux echeances</a>
-        <a class="btn btn-primary-soft" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">Nouveau reglement</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">
+            <i class="bi bi-arrow-left me-1"></i>Echeances
+        </a>
+        <a class="btn btn-primary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">
+            <i class="bi bi-plus-lg me-1"></i>Nouveau reglement
+        </a>
+        @if (isReceivables)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-presetType="@GescomSaas.Domain.Enums.PaymentType.Deposit">
+                <i class="bi bi-piggy-bank me-1"></i>Nouvel acompte
+            </a>
+        }
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Reference</th>
-                    <th>Tiers</th>
-                    <th>Mode</th>
-                    <th class="text-end">Montant</th>
-                    <th class="text-end">Affectations</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Payments.Count == 0)
-            {
-                <tr><td colspan="6" class="empty-cell">Aucun reglement.</td></tr>
-            }
-            else
-            {
-                @foreach (var payment in Model.Payments)
-                {
-                    <tr>
-                        <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
-                        <td>@payment.ReferenceNumber</td>
-                        <td>@payment.PartnerName</td>
-                        <td>@payment.Method</td>
-                        <td class="text-end">@DisplayFormatter.Money(payment.Amount, payment.CurrencyCode)</td>
-                        <td class="text-end">@DisplayFormatter.Number(payment.AllocationCount, 0)</td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+@* KPI tiles *@
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-receipt"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Reglements</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.Payments.Count, 0)</div>
+            </div>
+        </div>
     </div>
-</section>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-emerald"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant cumule</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(totalAmount, firstCurrency)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Filtres *@
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-funnel"></i>
+        <span>Filtres</span>
+        @if (Model.HasActiveFilters)
+        {
+            <span class="badge ms-2" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">Actifs</span>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <input type="hidden" name="Scope" value="@Model.Scope" />
+            <div class="col-md-6 col-lg-4">
+                <input type="text" name="Search" value="@Model.Search" class="form-control form-control-sm" placeholder="Tiers ou reference" />
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select asp-for="Method" class="form-select form-select-sm" asp-items="Model.MethodOptions">
+                    <option value="">Tous les modes</option>
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-3 d-flex gap-1">
+                <input type="date" name="DateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+                <input type="date" name="DateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-secondary btn-sm" asp-page="/Finance/Payments" asp-route-scope="@Model.Scope">
+                    <i class="bi bi-x-circle me-1"></i>Reinitialiser
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Reglements</span>
+        <span class="ms-auto small text-muted">@Model.Payments.Count resultat(s)</span>
+    </div>
+    @if (Model.Payments.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox empty-icon"></i>
+            <h6>Aucun reglement</h6>
+            <p>Saisis un nouveau reglement ou ajuste tes filtres.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">
+                <i class="bi bi-plus-lg me-1"></i>Nouveau reglement
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Tiers</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                        <th>Mode</th>
+                        <th class="text-end">Montant</th>
+                        <th class="text-end">Disponible</th>
+                        <th class="text-end">Affectations</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payment in Model.Payments)
+                    {
+                        <tr>
+                            <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                            <td><strong>@payment.ReferenceNumber</strong></td>
+                            <td>
+                                <a asp-page="/Finance/CustomerAccount" asp-route-partnerId="@payment.PartnerId" asp-route-scope="@Model.Scope">
+                                    @(string.IsNullOrWhiteSpace(payment.PartnerCode) ? payment.PartnerName : $"{payment.PartnerCode} — {payment.PartnerName}")
+                                </a>
+                            </td>
+                            <td>@payment.Type</td>
+                            <td>
+                                <span class="badge" style="background:var(--gc-brand-100); color:var(--gc-brand-hover)">@payment.AllocationStatus</span>
+                            </td>
+                            <td>@payment.Method</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(payment.Amount, payment.CurrencyCode)</td>
+                            <td class="text-end money @(payment.AvailableAmount > 0 ? "stat-value-pos" : "")">@DisplayFormatter.Money(payment.AvailableAmount, payment.CurrencyCode)</td>
+                            <td class="text-end money">@DisplayFormatter.Number(payment.AllocationCount, 0)</td>
+                            <td class="text-end">
+                                @if (payment.AvailableAmount > 0m)
+                                {
+                                    <a class="btn btn-sm btn-primary" asp-page="/Finance/AllocatePayment" asp-route-paymentId="@payment.PaymentId" title="Affecter">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

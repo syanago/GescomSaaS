@@ -1,0 +1,182 @@
+@page
+@model GescomSaas.Web.Pages.Finance.RemindersModel
+@{
+    ViewData["Title"] = "File de relance";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">File de relance</h1>
+        <div class="page-header-sub">Factures clients a relancer selon les delais parametres sur le tenant</div>
+    </div>
+    <div>
+        <a class="btn btn-secondary" asp-page="/Finance/OpenItems" asp-route-scope="receivables">
+            <i class="bi bi-arrow-left me-1"></i>Echeances
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
+}
+
+@* KPI tiles *@
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-amber"><i class="bi bi-bell"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Factures a relancer</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.Items.Count, 0)</div>
+                <div class="form-text mb-0">file calculee automatiquement</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-rose"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant concerne</div>
+                <div class="stat-card-value money @(Model.TotalAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(Model.TotalAmount)</div>
+                <div class="form-text mb-0">reste du total</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-people"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Clients concernes</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.GroupedItems.Count, 0)</div>
+                <div class="form-text mb-0">relances groupables</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Relances groupees par client *@
+<div class="card mb-3">
+    <div class="section-header">
+        <i class="bi bi-people-fill"></i>
+        <span>Relance groupee par client</span>
+        <span class="ms-auto small text-muted">@Model.GroupedItems.Count client(s)</span>
+    </div>
+    @if (Model.GroupedItems.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-check-circle-fill empty-icon"></i>
+            <p class="mb-0">Aucune relance groupee disponible.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th class="text-end">Factures</th>
+                        <th class="text-end">Reste du</th>
+                        <th>Retard max</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var group in Model.GroupedItems)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="/Finance/CustomerAccount" asp-route-partnerId="@group.PartnerId" asp-route-scope="receivables">
+                                    @(string.IsNullOrWhiteSpace(group.PartnerCode) ? group.PartnerName : $"{group.PartnerCode} — {group.PartnerName}")
+                                </a>
+                            </td>
+                            <td class="text-end money">@DisplayFormatter.Number(group.DocumentCount, 0)</td>
+                            <td class="text-end money fw-semibold stat-value-neg">@DisplayFormatter.Money(group.TotalBalanceAmount)</td>
+                            <td>
+                                <span class="badge" style="background:#fee2e2;color:#991b1b">@group.MaxOverdueDays j</span>
+                            </td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="RunGrouped" class="d-inline">
+                                    <input type="hidden" name="partnerId" value="@group.PartnerId" />
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-bell me-1"></i>Relance groupee
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* File detaillee *@
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>File detaillee par facture</span>
+        <span class="ms-auto small text-muted">@Model.Items.Count facture(s)</span>
+    </div>
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-check-circle-fill empty-icon"></i>
+            <h6>Aucune relance proposee pour le moment</h6>
+            <p>Les factures sont a jour ou n'ont pas encore atteint le delai parametre.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Facture</th>
+                        <th>Echeance</th>
+                        <th class="text-end">Reste du</th>
+                        <th>Retard</th>
+                        <th>Derniere relance</th>
+                        <th>Prochaine</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="/Finance/CustomerAccount" asp-route-partnerId="@item.PartnerId" asp-route-scope="receivables">
+                                    @(string.IsNullOrWhiteSpace(item.PartnerCode) ? item.PartnerName : $"{item.PartnerCode} — {item.PartnerName}")
+                                </a>
+                            </td>
+                            <td><strong>@item.Number</strong></td>
+                            <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td class="text-end money fw-semibold stat-value-neg">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
+                            <td>
+                                <span class="badge" style="background:#fee2e2;color:#991b1b">@item.OverdueDays j</span>
+                            </td>
+                            <td class="small">@(item.LastReminderLevel is null ? "—" : $"{item.LastReminderLevel} ({item.LastReminderOnUtc:dd/MM})")</td>
+                            <td>
+                                <span class="badge" style="background:var(--gc-brand-100);color:var(--gc-brand-hover)">@item.RecommendedLevel</span>
+                            </td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="Run" class="d-inline">
+                                    <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                    <input type="hidden" name="level" value="@item.RecommendedLevel" />
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-bell"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

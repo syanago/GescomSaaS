@@ -4,46 +4,148 @@
     ViewData["Title"] = Model.Title;
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Finance</span>
-        <h1>@Model.Title</h1>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Saisie d'un reglement (encaissement ou decaissement)</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Retour aux echeances</a>
+    <div>
+        <a class="btn btn-secondary" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">
+            <i class="bi bi-arrow-left me-1"></i>Retour aux echeances
+        </a>
     </div>
-</section>
+</div>
 
-<section class="panel-card">
-    <form method="post" class="stack-form compact-form">
-        <input type="hidden" asp-for="Scope" />
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="form-grid">
-            <div class="full-span">
-                <label asp-for="Input.DocumentId" class="form-label"></label>
-                <select asp-for="Input.DocumentId" asp-items="Model.Documents" class="form-select">
-                    <option value="">Choisir une facture</option>
-                </select>
-                <span asp-validation-for="Input.DocumentId" class="text-danger"></span>
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-wallet2"></i>
+        <span>Informations du reglement</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Scope" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                @* Recherche tiers *@
+                <div class="col-12" data-partner-assist data-partner-lookup-mode="@Model.PartnerLookupMode" data-partner-entity-label="tiers">
+                    <label class="form-label">@Model.PartnerLookupLabel</label>
+                    <input asp-for="SelectedPartnerId" type="hidden" />
+                    <input asp-for="PartnerEntry.Lookup" class="form-control" list="payment-partner-options" placeholder="@Model.PartnerLookupPlaceholder" data-partner-lookup-input />
+                    <datalist id="payment-partner-options" data-partner-options>
+                        @foreach (var partner in Model.PartnerOptions)
+                        {
+                            <option value="@partner.DisplayValue">@partner.Caption</option>
+                        }
+                    </datalist>
+                    <div class="form-text">Le tiers saisi filtre la liste des factures. Si le tiers n'existe pas encore, tu peux le creer a la volee.</div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-partner-create-button>
+                            <i class="bi bi-plus-lg me-1"></i>Nouveau tiers
+                        </button>
+                        <span class="form-text mb-0" data-partner-create-status>Selectionne un tiers existant ou cree-le a la volee.</span>
+                    </div>
+                </div>
+
+                @* Panneau creation rapide tiers *@
+                <div class="col-12" data-partner-create-panel hidden>
+                    <div class="card" style="background:var(--gc-brand-50); border-color:var(--gc-brand-200)">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong>Creation rapide du tiers</strong>
+                                <span class="form-text">S'ouvre automatiquement si aucun tiers correspondant n'est trouve.</span>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input asp-for="PartnerEntry.CreateIfMissing" class="form-check-input" data-partner-create-toggle />
+                                <label asp-for="PartnerEntry.CreateIfMissing" class="form-check-label"></label>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.NewCode" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.NewCode" class="form-control" data-partner-new-code />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.NewName" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.NewName" class="form-control" data-partner-new-name />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.Email" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.Email" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PartnerEntry.PhoneNumber" class="form-label"></label>
+                                    <input asp-for="PartnerEntry.PhoneNumber" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.Type" class="form-label"></label>
+                    <select asp-for="Input.Type" asp-items="Model.PaymentTypes" class="form-select"></select>
+                    <div class="form-text">Choisis « Acompte client » pour enregistrer une avance qui sera imputee plus tard.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.AllocationMode" class="form-label"></label>
+                    <select asp-for="Input.AllocationMode" asp-items="Model.AllocationModes" class="form-select"></select>
+                    <div class="form-text">Si aucune facture n'est choisie, LigCom peut auto-affecter selon cette regle.</div>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Input.DocumentId" class="form-label"></label>
+                    <select asp-for="Input.DocumentId" asp-items="Model.Documents" class="form-select">
+                        <option value="">Aucune facture pour le moment</option>
+                    </select>
+                    <div class="form-text">Obligatoire pour un reglement standard manuel. Laisse vide pour un acompte ou affectation automatique.</div>
+                    <span asp-validation-for="Input.DocumentId" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.PaymentDate" class="form-label"></label>
+                    <input asp-for="Input.PaymentDate" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Method" class="form-label"></label>
+                    <select asp-for="Input.Method" asp-items="Model.Methods" class="form-select"></select>
+                    <div class="form-text">Les modes proviennent de Parametres › Societe et formats.</div>
+                    <span asp-validation-for="Input.Method" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.Amount" class="form-label"></label>
+                    <input asp-for="Input.Amount" type="hidden" />
+                    <input type="text"
+                           id="Input_Amount_display"
+                           value="@DisplayFormatter.MoneyEditor(Model.Input.Amount)"
+                           class="form-control money"
+                           inputmode="decimal"
+                           data-format-kind="money"
+                           data-format-target="Input_Amount" />
+                    <div class="form-text" data-format-preview-for="Input_Amount_display">
+                        Rendu : @DisplayFormatter.Money(Model.Input.Amount)
+                    </div>
+                    <span asp-validation-for="Input.Amount" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.ReferenceNumber" class="form-label"></label>
+                    <input asp-for="Input.ReferenceNumber" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Input.Notes" class="form-label"></label>
+                    <textarea asp-for="Input.Notes" rows="3" class="form-control"></textarea>
+                </div>
             </div>
-            <div><label asp-for="Input.PaymentDate" class="form-label"></label><input asp-for="Input.PaymentDate" class="form-control" /></div>
-            <div><label asp-for="Input.Method" class="form-label"></label><select asp-for="Input.Method" asp-items="Model.Methods" class="form-select"></select></div>
-            <div>
-                <label asp-for="Input.Amount" class="form-label"></label>
-                <input asp-for="Input.Amount" type="hidden" />
-                <input type="text" id="Input_Amount_display" value="@DisplayFormatter.MoneyEditor(Model.Input.Amount)" class="form-control" inputmode="decimal" data-format-kind="money" data-format-target="Input_Amount" />
-                <div class="table-meta" data-format-preview-for="Input_Amount_display">Rendu : @DisplayFormatter.Money(Model.Input.Amount)</div>
-                <span asp-validation-for="Input.Amount" class="text-danger"></span>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Annuler</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>@Model.SubmitLabel
+                </button>
             </div>
-            <div><label asp-for="Input.ReferenceNumber" class="form-label"></label><input asp-for="Input.ReferenceNumber" class="form-control" /></div>
-            <div class="full-span"><label asp-for="Input.Notes" class="form-label"></label><textarea asp-for="Input.Notes" rows="4" class="form-control"></textarea></div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary-soft">Enregistrer le reglement</button>
-            <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">Annuler</a>
-        </div>
-    </form>
-</section>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

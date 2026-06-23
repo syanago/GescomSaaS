@@ -2,117 +2,211 @@
 @model GescomSaas.Web.Pages.Finance.OpenItemsModel
 @{
     ViewData["Title"] = Model.Title;
+    var isReceivables = Model.Scope == "receivables";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Finance</span>
-        <h1>@Model.Title</h1>
-        <p class="muted-copy">Suivez les soldes ouverts, les retards et les relances manuelles.</p>
+        <h1 class="page-header-title">@Model.Title</h1>
+        <div class="page-header-sub">Soldes ouverts, retards et relances manuelles</div>
     </div>
-    <div class="header-actions">
-        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="receivables">Clients</a>
-        <a class="btn btn-outline-light" asp-page="/Finance/OpenItems" asp-route-scope="payables">Fournisseurs</a>
-        <a class="btn btn-primary-soft" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">Saisir un reglement</a>
-        <a class="btn btn-outline-light" asp-page="/Finance/Payments" asp-route-scope="@Model.Scope">Historique</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope">
+            <i class="bi bi-wallet2 me-1"></i>Saisir un reglement
+        </a>
+        @if (isReceivables)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-presetType="@GescomSaas.Domain.Enums.PaymentType.Deposit">
+                <i class="bi bi-piggy-bank me-1"></i>Saisir un acompte
+            </a>
+        }
+        <a class="btn btn-secondary" asp-page="/Finance/Payments" asp-route-scope="@Model.Scope">
+            <i class="bi bi-clock-history me-1"></i>Historique
+        </a>
+        @if (isReceivables)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/Reminders">
+                <i class="bi bi-bell me-1"></i>Relances
+            </a>
+        }
     </div>
-</section>
+</div>
+
+@* Onglets clients / fournisseurs *@
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(isReceivables ? "active" : "")" asp-page="/Finance/OpenItems" asp-route-scope="receivables">
+            <i class="bi bi-people me-1"></i>Clients
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(!isReceivables ? "active" : "")" asp-page="/Finance/OpenItems" asp-route-scope="payables">
+            <i class="bi bi-truck me-1"></i>Fournisseurs
+        </a>
+    </li>
+</ul>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
-    <div class="app-alert">@Model.StatusMessage</div>
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
 }
 
-<section class="section-grid finance-metrics">
-    <article class="metric-card">
-        <span>Pieces ouvertes</span>
-        <strong>@DisplayFormatter.Number(Model.Items.Count, 0)</strong>
-        <small>@Model.Title</small>
-    </article>
-    <article class="metric-card">
-        <span>Montant ouvert</span>
-        <strong>@DisplayFormatter.Money(Model.TotalOpen)</strong>
-        <small>Solde global</small>
-    </article>
-    <article class="metric-card">
-        <span>Montant en retard</span>
-        <strong>@DisplayFormatter.Money(Model.TotalOverdue)</strong>
-        <small>Echeances depassees</small>
-    </article>
-</section>
-
-<section class="panel-card">
-    <div class="table-shell">
-        <table class="table table-darkless align-middle app-table">
-            <thead>
-                <tr>
-                    <th>Numero</th>
-                    <th>Tiers</th>
-                    <th>Date</th>
-                    <th>Echeance</th>
-                    <th class="text-end">Total</th>
-                    <th class="text-end">Regle</th>
-                    <th class="text-end">Reste du</th>
-                    <th>Retard</th>
-                    <th>Derniere relance</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.Items.Count == 0)
-            {
-                <tr><td colspan="10" class="empty-cell">Aucune ecriture ouverte.</td></tr>
-            }
-            else
-            {
-                @foreach (var item in Model.Items)
-                {
-                    var nextReminder = item.LastReminderLevel switch
-                    {
-                        GescomSaas.Domain.Enums.ReminderLevel.Friendly => GescomSaas.Domain.Enums.ReminderLevel.Formal,
-                        GescomSaas.Domain.Enums.ReminderLevel.Formal => GescomSaas.Domain.Enums.ReminderLevel.FinalNotice,
-                        GescomSaas.Domain.Enums.ReminderLevel.FinalNotice => GescomSaas.Domain.Enums.ReminderLevel.FinalNotice,
-                        _ => GescomSaas.Domain.Enums.ReminderLevel.Friendly
-                    };
-                    <tr>
-                        <td>@item.Number</td>
-                        <td>@item.PartnerName</td>
-                        <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td>
-                        <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "-")</td>
-                        <td class="text-end">@DisplayFormatter.Money(item.TotalAmount, item.CurrencyCode)</td>
-                        <td class="text-end">@DisplayFormatter.Money(item.PaidAmount, item.CurrencyCode)</td>
-                        <td class="text-end">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
-                        <td>
-                            @if (item.OverdueDays > 0)
-                            {
-                                <span class="badge rounded-pill overdue-pill">@item.OverdueDays j</span>
-                            }
-                            else
-                            {
-                                <span class="badge rounded-pill status-pill">A jour</span>
-                            }
-                        </td>
-                        <td>
-                            @(item.LastReminderLevel is null
-                                ? "-"
-                                : $"{item.LastReminderLevel} ({item.LastReminderOnUtc:dd/MM})")
-                        </td>
-                        <td class="text-end action-cell">
-                            <a asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-documentId="@item.DocumentId">Regler</a>
-                            @if (Model.Scope == "receivables")
-                            {
-                                <form method="post" asp-page-handler="Remind" class="inline-form">
-                                    <input type="hidden" asp-for="Scope" />
-                                    <input type="hidden" name="documentId" value="@item.DocumentId" />
-                                    <input type="hidden" name="level" value="@nextReminder" />
-                                    <button type="submit" class="btn btn-sm btn-outline-light">Relance</button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+@* KPI tiles *@
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Pieces ouvertes</div>
+                <div class="stat-card-value">@DisplayFormatter.Number(Model.Items.Count, 0)</div>
+                <div class="form-text mb-0">@Model.Title</div>
+            </div>
+        </div>
     </div>
-</section>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-amber"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant ouvert</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.TotalOpen)</div>
+                <div class="form-text mb-0">solde global</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon @(Model.TotalOverdue > 0 ? "stat-icon-rose" : "stat-icon-slate")"><i class="bi bi-clock"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant en retard</div>
+                <div class="stat-card-value money @(Model.TotalOverdue > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(Model.TotalOverdue)</div>
+                <div class="form-text mb-0">echeances depassees</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Tableau *@
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-list-ul"></i>
+        <span>Pieces ouvertes</span>
+        <span class="ms-auto small text-muted">@Model.Items.Count resultat(s)</span>
+    </div>
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-check-circle-fill empty-icon"></i>
+            <h6>Aucune ecriture ouverte</h6>
+            <p>Toutes les pieces sont reglees a jour.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Tiers</th>
+                        <th>Date</th>
+                        <th>Echeance</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Regle</th>
+                        <th class="text-end">Reste du</th>
+                        <th>Statut</th>
+                        <th>Retard</th>
+                        <th>Derniere relance</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var nextReminder = item.LastReminderLevel switch
+                        {
+                            GescomSaas.Domain.Enums.ReminderLevel.Friendly => GescomSaas.Domain.Enums.ReminderLevel.Formal,
+                            GescomSaas.Domain.Enums.ReminderLevel.Formal => GescomSaas.Domain.Enums.ReminderLevel.FinalNotice,
+                            GescomSaas.Domain.Enums.ReminderLevel.FinalNotice => GescomSaas.Domain.Enums.ReminderLevel.FinalNotice,
+                            _ => GescomSaas.Domain.Enums.ReminderLevel.Friendly
+                        };
+                        <tr>
+                            <td><strong>@item.Number</strong></td>
+                            <td>
+                                @if (item.PartnerId.HasValue)
+                                {
+                                    <a asp-page="/Finance/CustomerAccount" asp-route-partnerId="@item.PartnerId" asp-route-scope="@Model.Scope">
+                                        @(string.IsNullOrWhiteSpace(item.PartnerCode) ? item.PartnerName : $"{item.PartnerCode} — {item.PartnerName}")
+                                    </a>
+                                }
+                                else
+                                {
+                                    @item.PartnerName
+                                }
+                            </td>
+                            <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td>
+                            <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td class="text-end money">@DisplayFormatter.Money(item.TotalAmount, item.CurrencyCode)</td>
+                            <td class="text-end money">@DisplayFormatter.Money(item.PaidAmount, item.CurrencyCode)</td>
+                            <td class="text-end money fw-semibold @(item.BalanceAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
+                            <td>
+                                <span class="badge doc-status-@item.PaymentStatus.ToString().ToLowerInvariant()">@item.PaymentStatus</span>
+                            </td>
+                            <td>
+                                @if (item.OverdueDays > 0)
+                                {
+                                    <span class="badge" style="background:#fee2e2;color:#991b1b">@item.OverdueDays j</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background:var(--gc-pill-green-bg);color:var(--gc-pill-green-fg)">A jour</span>
+                                }
+                            </td>
+                            <td class="small">
+                                @(item.LastReminderLevel is null
+                                    ? "—"
+                                    : $"{item.LastReminderLevel} ({item.LastReminderOnUtc:dd/MM})")
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                                    <a class="btn btn-sm btn-primary"
+                                       asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-documentId="@item.DocumentId"
+                                       title="Regler">
+                                        <i class="bi bi-wallet2"></i>
+                                    </a>
+                                    @if (item.PartnerId.HasValue)
+                                    {
+                                        <a class="btn btn-sm btn-secondary"
+                                           asp-page="/Finance/CustomerAccount" asp-route-partnerId="@item.PartnerId" asp-route-scope="@Model.Scope"
+                                           title="Situation du tiers">
+                                            <i class="bi bi-person-lines-fill"></i>
+                                        </a>
+                                    }
+                                    @if (isReceivables)
+                                    {
+                                        <form method="post" asp-page-handler="ApplyDeposits" class="d-inline">
+                                            <input type="hidden" asp-for="Scope" />
+                                            <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                            <button type="submit" class="btn btn-sm btn-secondary" title="Imputer les acomptes">
+                                                <i class="bi bi-piggy-bank"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Remind" class="d-inline">
+                                            <input type="hidden" asp-for="Scope" />
+                                            <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                            <input type="hidden" name="level" value="@nextReminder" />
+                                            <button type="submit" class="btn btn-sm btn-secondary" title="Envoyer une relance">
+                                                <i class="bi bi-bell"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,299 @@
+@page "{partnerId:guid}"
+@model GescomSaas.Web.Pages.Finance.CustomerAccountModel
+@{
+    ViewData["Title"] = "Situation client";
+    var isReceivables = Model.Scope == "receivables";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">@Model.Account!.PartnerCode @Model.Account.PartnerName</h1>
+        <div class="page-header-sub">Situation tiers — echeances, acomptes, reglements et relances</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Finance/OpenItems" asp-route-scope="@Model.Scope">
+            <i class="bi bi-arrow-left me-1"></i>Echeances
+        </a>
+        <a class="btn btn-primary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-selectedPartnerId="@Model.Account.PartnerId">
+            <i class="bi bi-wallet2 me-1"></i>Saisir un reglement
+        </a>
+        @if (isReceivables)
+        {
+            <a class="btn btn-secondary" asp-page="/Finance/RegisterPayment" asp-route-scope="@Model.Scope" asp-route-selectedPartnerId="@Model.Account.PartnerId" asp-route-presetType="@GescomSaas.Domain.Enums.PaymentType.Deposit">
+                <i class="bi bi-piggy-bank me-1"></i>Saisir un acompte
+            </a>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage
+    </div>
+}
+
+@* KPI tiles : 6 metriques tiers *@
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon @(Model.Account.CreditLimitExceeded ? "stat-icon-rose" : "stat-icon-blue")">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Statut compte</div>
+                <div class="stat-card-value">@Model.StatusLabel</div>
+                <div class="form-text mb-0">@(Model.Account.CreditLimitExceeded ? "Plafond credit depasse" : "Suivi commercial")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-amber"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Encours</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.Account.OpenAmount)</div>
+                <div class="form-text mb-0">@DisplayFormatter.Number(Model.Account.OpenDocumentCount, 0) piece(s) ouverte(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon @(Model.Account.OverdueAmount > 0 ? "stat-icon-rose" : "stat-icon-slate")"><i class="bi bi-clock"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Impayes</div>
+                <div class="stat-card-value money @(Model.Account.OverdueAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(Model.Account.OverdueAmount)</div>
+                <div class="form-text mb-0">@DisplayFormatter.Number(Model.Account.OverdueDocumentCount, 0) piece(s) en retard</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-emerald"><i class="bi bi-piggy-bank"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Acomptes disponibles</div>
+                <div class="stat-card-value money stat-value-pos">@DisplayFormatter.Money(Model.Account.AvailableDepositAmount)</div>
+                <div class="form-text mb-0">credits mobilisables</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-violet"><i class="bi bi-receipt"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Reglements non affectes</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.Account.UnallocatedPaymentAmount)</div>
+                <div class="form-text mb-0">hors acomptes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-sky"><i class="bi bi-credit-card-2-front"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Credit restant</div>
+                <div class="stat-card-value money">@(Model.Account.CreditLimit > 0m ? DisplayFormatter.Money(Model.Account.CreditRemaining) : "Non limite")</div>
+                <div class="form-text mb-0">@(Model.Account.OldestOverdueDays > 0 ? $"{Model.Account.OldestOverdueDays} j de retard max." : "Aucun retard critique")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Factures ouvertes + Acomptes cote a cote *@
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Factures ouvertes</span>
+                <span class="ms-auto small text-muted">@Model.Account.OpenItems.Count piece(s)</span>
+            </div>
+            @if (Model.Account.OpenItems.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-check-circle-fill empty-icon"></i>
+                    <h6>Aucune facture ouverte</h6>
+                    <p>Ce tiers est a jour.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Numero</th>
+                                <th>Date</th>
+                                <th>Echeance</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-end">Regle</th>
+                                <th class="text-end">Reste du</th>
+                                <th>Statut</th>
+                                <th>Retard</th>
+                                <th>Relance</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Account.OpenItems)
+                            {
+                                <tr>
+                                    <td><strong>@item.Number</strong></td>
+                                    <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@(item.DueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td class="text-end money">@DisplayFormatter.Money(item.TotalAmount, item.CurrencyCode)</td>
+                                    <td class="text-end money">@DisplayFormatter.Money(item.PaidAmount, item.CurrencyCode)</td>
+                                    <td class="text-end money fw-semibold @(item.BalanceAmount > 0 ? "stat-value-neg" : "")">@DisplayFormatter.Money(item.BalanceAmount, item.CurrencyCode)</td>
+                                    <td>
+                                        <span class="badge doc-status-@item.PaymentStatus.ToString().ToLowerInvariant()">@item.PaymentStatus</span>
+                                    </td>
+                                    <td>
+                                        @if (item.OverdueDays > 0)
+                                        {
+                                            <span class="badge" style="background:#fee2e2;color:#991b1b">@item.OverdueDays j</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge" style="background:var(--gc-pill-green-bg);color:var(--gc-pill-green-fg)">A jour</span>
+                                        }
+                                    </td>
+                                    <td class="small">@(item.LastReminderLevel?.ToString() ?? "—")</td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                                            <form method="post" asp-page-handler="SetDispute" class="d-inline">
+                                                <input type="hidden" name="PartnerId" value="@Model.PartnerId" />
+                                                <input type="hidden" name="Scope" value="@Model.Scope" />
+                                                <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                                <input type="hidden" name="inDispute" value="@(item.InDispute ? "false" : "true")" />
+                                                <button type="submit" class="btn btn-sm btn-secondary" title="@(item.InDispute ? "Retirer du litige" : "Marquer en litige")">
+                                                    <i class="bi bi-@(item.InDispute ? "shield-check" : "exclamation-octagon")"></i>
+                                                </button>
+                                            </form>
+                                            @if (isReceivables && Model.Account.AvailableDepositAmount > 0m)
+                                            {
+                                                <form method="post" asp-page-handler="ApplyDeposits" class="d-inline">
+                                                    <input type="hidden" name="PartnerId" value="@Model.PartnerId" />
+                                                    <input type="hidden" name="Scope" value="@Model.Scope" />
+                                                    <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                                    <button type="submit" class="btn btn-sm btn-secondary" title="Imputer les acomptes">
+                                                        <i class="bi bi-piggy-bank"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                            <form method="post" asp-page-handler="Promise" class="d-inline d-flex gap-1">
+                                                <input type="hidden" name="PartnerId" value="@Model.PartnerId" />
+                                                <input type="hidden" name="Scope" value="@Model.Scope" />
+                                                <input type="hidden" name="documentId" value="@item.DocumentId" />
+                                                <input type="date" name="promiseToPayDate" value="@item.PromiseToPayDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" style="width:130px" />
+                                                <button type="submit" class="btn btn-sm btn-secondary" title="Promesse de paiement">
+                                                    <i class="bi bi-calendar-check"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="section-header">
+                <i class="bi bi-piggy-bank"></i>
+                <span>Acomptes & disponibilites</span>
+            </div>
+            @if (Model.Account.AvailablePayments.Count == 0)
+            {
+                <div class="empty-state">
+                    <p class="mb-0 small">Aucun acompte ou reglement disponible.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Ref.</th>
+                                <th class="text-end">Dispo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in Model.Account.AvailablePayments)
+                            {
+                                <tr>
+                                    <td class="small">@payment.PaymentDate.ToString("dd/MM/yy")</td>
+                                    <td><strong class="small">@payment.ReferenceNumber</strong></td>
+                                    <td class="text-end money small fw-semibold stat-value-pos">@DisplayFormatter.Money(payment.AvailableAmount, payment.CurrencyCode)</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-primary" asp-page="/Finance/AllocatePayment" asp-route-paymentId="@payment.PaymentId" title="Affecter">
+                                            <i class="bi bi-link-45deg"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* Historique reglements *@
+<div class="card mt-3">
+    <div class="section-header">
+        <i class="bi bi-clock-history"></i>
+        <span>Derniers reglements</span>
+        <a class="btn btn-secondary btn-sm ms-auto" asp-page="/Finance/Reminders">
+            <i class="bi bi-bell me-1"></i>File de relance
+        </a>
+    </div>
+    @if (Model.Account.RecentPayments.Count == 0)
+    {
+        <div class="empty-state">
+            <p class="mb-0 small">Aucun reglement historise.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Type</th>
+                        <th>Mode</th>
+                        <th class="text-end">Montant</th>
+                        <th class="text-end">Disponible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payment in Model.Account.RecentPayments)
+                    {
+                        <tr>
+                            <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                            <td><strong>@payment.ReferenceNumber</strong></td>
+                            <td>@payment.Type</td>
+                            <td>@payment.Method</td>
+                            <td class="text-end money fw-semibold">@DisplayFormatter.Money(payment.Amount, payment.CurrencyCode)</td>
+                            <td class="text-end money @(payment.AvailableAmount > 0 ? "stat-value-pos" : "")">@DisplayFormatter.Money(payment.AvailableAmount, payment.CurrencyCode)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="alert alert-info mt-3 mb-0">
+    <i class="bi bi-info-circle me-2"></i>
+    Une facture <strong>en litige</strong> sort de la relance automatique. Une <strong>promesse de paiement</strong> suspend les relances jusqu'a la date promise, tout en laissant le document visible dans la situation client.
+</div>

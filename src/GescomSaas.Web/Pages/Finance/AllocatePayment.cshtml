@@ -1,0 +1,117 @@
+@page "{paymentId:guid}"
+@model GescomSaas.Web.Pages.Finance.AllocatePaymentModel
+@{
+    ViewData["Title"] = "Affecter un reglement";
+    var paymentScope = Model.Payment!.Direction == GescomSaas.Domain.Enums.PaymentDirection.Outgoing ? "payables" : "receivables";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Affecter un reglement</h1>
+        <div class="page-header-sub">
+            <strong>@Model.Payment.ReferenceNumber</strong>
+            <span class="ms-2">— @Model.Payment.PartnerName</span>
+        </div>
+    </div>
+    <div>
+        <a class="btn btn-secondary"
+           asp-page="/Finance/CustomerAccount"
+           asp-route-partnerId="@Model.Payment.PartnerId"
+           asp-route-scope="@paymentScope">
+            <i class="bi bi-person-lines-fill me-1"></i>Situation du tiers
+        </a>
+    </div>
+</div>
+
+@* ── KPI tiles : Montant / Deja affecte / Disponible ── *@
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-blue"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Montant</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.Payment.Amount, Model.Payment.CurrencyCode)</div>
+                <div class="form-text mb-0">@Model.Payment.Type</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-amber"><i class="bi bi-link-45deg"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Deja affecte</div>
+                <div class="stat-card-value money">@DisplayFormatter.Money(Model.Payment.AllocatedAmount, Model.Payment.CurrencyCode)</div>
+                <div class="form-text mb-0">@Model.Payment.AllocationStatus</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon stat-icon-emerald"><i class="bi bi-wallet2"></i></div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Disponible</div>
+                <div class="stat-card-value money stat-value-pos">@DisplayFormatter.Money(Model.Payment.AvailableAmount, Model.Payment.CurrencyCode)</div>
+                <div class="form-text mb-0">solde mobilisable</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Formulaire d'affectation ── *@
+<div class="card">
+    <div class="section-header">
+        <i class="bi bi-link-45deg"></i>
+        <span>Nouvelle affectation</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="Input.CommercialDocumentId" class="form-label"></label>
+                    <select asp-for="Input.CommercialDocumentId" asp-items="Model.Documents" class="form-select">
+                        <option value="">Choisir une facture</option>
+                    </select>
+                    <span asp-validation-for="Input.CommercialDocumentId" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.Amount" class="form-label"></label>
+                    <input asp-for="Input.Amount" type="hidden" />
+                    <input type="text"
+                           id="Input_Amount_display"
+                           value="@DisplayFormatter.MoneyEditor(Model.Input.Amount)"
+                           class="form-control money"
+                           inputmode="decimal"
+                           data-format-kind="money"
+                           data-format-target="Input_Amount"
+                           data-format-currency-code="@Model.Payment.CurrencyCode" />
+                    <div class="form-text" data-format-preview-for="Input_Amount_display">
+                        Rendu : @DisplayFormatter.Money(Model.Input.Amount, Model.Payment.CurrencyCode)
+                    </div>
+                    <span asp-validation-for="Input.Amount" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Input.Notes" class="form-label"></label>
+                    <textarea asp-for="Input.Notes" rows="3" class="form-control"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a class="btn btn-secondary"
+                   asp-page="/Finance/CustomerAccount"
+                   asp-route-partnerId="@Model.Payment.PartnerId"
+                   asp-route-scope="@paymentScope">Annuler</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Enregistrer l'affectation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

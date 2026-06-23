@@ -1,6 +1,7 @@
 using GescomSaas.Application.Contracts;
 using GescomSaas.Application.Models;
 using GescomSaas.Domain.Enums;
+using GescomSaas.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +11,11 @@ namespace GescomSaas.Web.Pages.Finance;
 public class OpenItemsModel(
     GescomSaas.Infrastructure.Persistence.ApplicationDbContext dbContext,
     ICurrentTenantAccessor currentTenantAccessor,
-    ISettlementService settlementService) : CommercialPageModel(dbContext, currentTenantAccessor)
+    IUserPermissionService userPermissionService,
+    ISettlementService settlementService) : CommercialPermissionPageModel(dbContext, currentTenantAccessor, userPermissionService)
 {
+    protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.FinanceManage];
+
     [BindProperty(SupportsGet = true)]
     public string Scope { get; set; } = FinanceScope.Receivables;
 
@@ -38,6 +42,29 @@ public class OpenItemsModel(
         var tenantId = await GetTenantIdAsync();
         await settlementService.RegisterReminderAsync(tenantId, documentId, level, null, HttpContext.RequestAborted);
         StatusMessage = "Relance enregistree.";
+        return RedirectToPage(new { scope = Scope });
+    }
+
+    public async Task<IActionResult> OnPostApplyDepositsAsync(Guid documentId)
+    {
+        Scope = FinanceScope.Normalize(Scope);
+        if (FinanceScope.ToDirection(Scope) != PaymentDirection.Incoming)
+        {
+            return RedirectToPage(new { scope = Scope });
+        }
+
+        var tenantId = await GetTenantIdAsync();
+
+        try
+        {
+            var result = await settlementService.ApplyAvailableDepositsAsync(tenantId, documentId, HttpContext.RequestAborted);
+            StatusMessage = $"Acomptes imputes : {result.AppliedAmount:n2} sur {result.PaymentCount} acompte(s).";
+        }
+        catch (InvalidOperationException exception)
+        {
+            StatusMessage = exception.Message;
+        }
+
         return RedirectToPage(new { scope = Scope });
     }
 
