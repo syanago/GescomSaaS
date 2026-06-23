@@ -4,28 +4,49 @@
     ViewData["Title"] = "Parametres";
 }
 
-<section class="page-header-card">
+<div class="page-header">
     <div>
-        <span class="eyebrow">Parametres</span>
-        <h1>Parametres de la societe</h1>
-        <p class="muted-copy">Configurez l'identite de l'entreprise, la devise de caisse et les formats de presentation utilises dans LigCom.</p>
+        <h1 class="page-header-title">Parametres de la societe</h1>
+        <div class="page-header-sub">Configurez l'identite de l'entreprise, la devise de caisse et les formats de presentation utilises dans LigCom.</div>
     </div>
-</section>
+</div>
 
-<section class="card-grid">
-    <a class="module-card nav-card" asp-page="/Settings/Company">
-        <h3>Societe et formats</h3>
-        <p>Nom commercial, raison sociale, coordonnees, devise, symbole et precision d'affichage.</p>
-        <span>Ouvrir</span>
-    </a>
-    <a class="module-card nav-card" asp-page="/Settings/Numbering">
-        <h3>Numerotation</h3>
-        <p>Choisissez les regles de numerotation des referentiels et de chaque type de document.</p>
-        <span>Ouvrir</span>
-    </a>
-    <a class="module-card nav-card" asp-page="/Settings/SageImport">
-        <h3>Import Sage SQL</h3>
-        <p>Connexion source, perimetre, filtres, mapping et mode de transfert pour rapatrier totalement ou partiellement les donnees Sage Gescom.</p>
-        <span>Configurer</span>
-    </a>
-</section>
+<div class="row g-3">
+    @if (Model.Modules.Count == 0)
+    {
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="h5 mb-2">Aucun acces disponible</h3>
+                    <p class="text-muted mb-2">Ce compte n'a pas encore de droit de parametrage actif. Attribue-lui un profil ou un role autorisant les reglages voulus.</p>
+                    <span class="small text-muted">Profils et droits</span>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var module in Model.Modules)
+        {
+            string icon = module.Page switch
+            {
+                "/Settings/Company" => "bi-gear",
+                "/Settings/Numbering" => "bi-receipt-cutoff",
+                "/Settings/AccessProfiles" => "bi-shield-lock",
+                "/Settings/SageImport" => "bi-cloud-arrow-up",
+                "/Settings/StartupMode" => "bi-power",
+                "/Settings/Offline" => "bi-arrow-left-right",
+                _ => "bi-gear"
+            };
+            <div class="col-lg-6">
+                <a class="card h-100 text-decoration-none" asp-page="@module.Page">
+                    <div class="card-body">
+                        <h3 class="h5 mb-2"><i class="bi @icon me-2"></i>@module.Title</h3>
+                        <p class="text-muted mb-2">@module.Description</p>
+                        <span class="small text-primary">@module.ActionLabel <i class="bi bi-arrow-right ms-1"></i></span>
+                    </div>
+                </a>
+            </div>
+        }
+    }
+</div>

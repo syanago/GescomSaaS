@@ -1,0 +1,363 @@
+@*
+   _LayoutLigCom.cshtml — Shell principal LigCom (Untitled UI strict)
+
+   Active via _ViewStart.cshtml :    Layout = "_LayoutLigCom";
+
+   Nécessite :
+   - wwwroot/css/ligcom-untitled.css
+   - wwwroot/js/ligcom-shell.js
+   - Lucide CDN (icônes)
+*@
+@using Microsoft.Extensions.Options
+@using GescomSaas.Infrastructure.Configuration
+@inject IOptions<LigComRuntimeOptions> LigComRuntime
+@{
+    var serverStartsOffline = LigComRuntime.Value.Mode == LigComNodeMode.LocalNode
+        && LigComRuntime.Value.DatabaseProvider == LigComDatabaseProvider.Sqlite;
+}
+<!doctype html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "LigCom") · LigCom</title>
+
+    @* Détection thème AVANT le rendu pour éviter le flash blanc.
+       3 modes : 'system' (suit prefers-color-scheme) / 'light' / 'dark'.
+       Source de vérité : localStorage.lc-theme-mode (fallback ancien lc-theme). *@
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem('lc-theme-mode') || localStorage.getItem('lc-theme') || 'system';
+                var theme = (mode === 'light' || mode === 'dark')
+                    ? mode
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    @* Mode d'utilisation par defaut (parametre par l'administrateur, section Mode de demarrage).
+       Le serveur impose la base de donnees ; on aligne le badge du navigateur sur ce mode tant
+       que l'utilisateur n'a pas fait de choix explicite via le toggle protege par mot de passe. *@
+    <script>
+        (function () {
+            try {
+                var serverOffline = @(serverStartsOffline ? "true" : "false");
+                if (localStorage.getItem('lc-offline-forced') === null) {
+                    localStorage.setItem('lc-offline-forced', serverOffline ? '1' : '0');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    @* Inter via Google Fonts avec fallback automatique system-ui dans le CSS *@
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&display=swap" rel="stylesheet" />
+
+    @* Bootstrap servi en local (versions 5.3.3 dans wwwroot/lib) *@
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    @* Design system Untitled UI strict — tokens + composants *@
+    <link rel="stylesheet" href="~/css/ligcom-untitled.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="lc-shell" id="lc-shell" data-shell>
+
+        <partial name="_OfflineBanner" />
+
+        @* ============================== SIDEBAR ============================== *@
+        <aside class="lc-sidebar" id="lc-sidebar">
+            <div class="lc-sidebar__header">
+                <div class="lc-sidebar__logo">L</div>
+                <span class="lc-sidebar__brand">LigCom</span>
+                <button type="button" class="lc-icon-btn ms-auto d-lg-none" data-sidebar-close aria-label="Fermer">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <nav class="lc-sidebar__nav" aria-label="Navigation principale">
+
+                <div class="lc-sidebar__section">
+                    <a href="/" class="lc-nav-item lc-nav-item--active">
+                        <i data-lucide="layout-dashboard" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Tableau de bord</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Ventes</h6>
+                    <a href="/SalesDocuments/Index?type=Quote" class="lc-nav-item">
+                        <i data-lucide="file-text" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Devis</span>
+                        <span class="lc-nav-item__badge">12</span>
+                    </a>
+                    <a href="/SalesDocuments/Index?type=Order" class="lc-nav-item">
+                        <i data-lucide="shopping-cart" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Commandes</span>
+                    </a>
+                    <a href="/SalesDocuments/Index?type=DeliveryNote" class="lc-nav-item">
+                        <i data-lucide="truck" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Bons de livraison</span>
+                    </a>
+                    <a href="/SalesDocuments/Index?type=Invoice" class="lc-nav-item">
+                        <i data-lucide="receipt" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Factures</span>
+                        <span class="lc-nav-item__badge lc-nav-item__badge--danger">3</span>
+                    </a>
+                    <a href="/SalesDocuments/Index?type=CreditNote" class="lc-nav-item">
+                        <i data-lucide="corner-down-left" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Avoirs</span>
+                    </a>
+                    <a href="/Finance/Payments" class="lc-nav-item">
+                        <i data-lucide="banknote" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Paiements</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Achats</h6>
+                    <a href="/PurchaseDocuments/Index?type=PurchaseOrder" class="lc-nav-item">
+                        <i data-lucide="shopping-bag" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Commandes achats</span>
+                    </a>
+                    <a href="/PurchaseDocuments/Index?type=GoodsReceipt" class="lc-nav-item">
+                        <i data-lucide="package" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Réceptions</span>
+                    </a>
+                    <a href="/PurchaseDocuments/Index?type=PurchaseInvoice" class="lc-nav-item">
+                        <i data-lucide="file-input" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Factures achats</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Stock</h6>
+                    <a href="/Products/Index" class="lc-nav-item">
+                        <i data-lucide="box" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Articles</span>
+                    </a>
+                    <a href="/ProductCategories/Index" class="lc-nav-item">
+                        <i data-lucide="folder-tree" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Familles d'articles</span>
+                    </a>
+                    <a href="/StockDocuments/Index?type=Entry" class="lc-nav-item">
+                        <i data-lucide="package-plus" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Entrées</span>
+                    </a>
+                    <a href="/StockDocuments/Index?type=Exit" class="lc-nav-item">
+                        <i data-lucide="package-minus" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Sorties</span>
+                    </a>
+                    <a href="/StockDocuments/Index?type=Transfer" class="lc-nav-item">
+                        <i data-lucide="arrow-left-right" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Transferts</span>
+                    </a>
+                    <a href="/Inventory/Movements" class="lc-nav-item">
+                        <i data-lucide="activity" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Mouvements</span>
+                    </a>
+                    <a href="/Inventory/Index" class="lc-nav-item">
+                        <i data-lucide="clipboard-check" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Inventaire</span>
+                    </a>
+                    <a href="/Inventory/Adjustments" class="lc-nav-item">
+                        <i data-lucide="pencil-ruler" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Ajustements</span>
+                    </a>
+                    <a href="/Inventory/Lots" class="lc-nav-item">
+                        <i data-lucide="layers-3" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Lots</span>
+                    </a>
+                    <a href="/Inventory/SerialNumbers" class="lc-nav-item">
+                        <i data-lucide="barcode" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Numéros de série</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Tiers</h6>
+                    <a href="/Partners/Index?scope=customers" class="lc-nav-item">
+                        <i data-lucide="users" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Clients</span>
+                    </a>
+                    <a href="/Partners/Index?scope=suppliers" class="lc-nav-item">
+                        <i data-lucide="warehouse" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Fournisseurs</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Comptabilité</h6>
+                    <a href="/Finance/OpenItems" class="lc-nav-item">
+                        <i data-lucide="book-open" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Échéancier</span>
+                    </a>
+                    <a href="/Finance/Reminders" class="lc-nav-item">
+                        <i data-lucide="alert-circle" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Relances</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Rapports</h6>
+                    <a href="#" class="lc-nav-item">
+                        <i data-lucide="bar-chart-3" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Ventes</span>
+                    </a>
+                    <a href="#" class="lc-nav-item">
+                        <i data-lucide="package-search" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Stock</span>
+                    </a>
+                    <a href="#" class="lc-nav-item">
+                        <i data-lucide="file-spreadsheet" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">TVA</span>
+                    </a>
+                </div>
+
+                <div class="lc-sidebar__section">
+                    <h6 class="lc-sidebar__section-title">Paramètres</h6>
+                    <a href="/Settings/Index" class="lc-nav-item">
+                        <i data-lucide="settings" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Société &amp; préférences</span>
+                    </a>
+                    <a href="/Settings/Appearance" class="lc-nav-item">
+                        <i data-lucide="palette" class="lc-nav-item__icon"></i>
+                        <span class="lc-nav-item__label">Apparence</span>
+                    </a>
+                </div>
+
+            </nav>
+
+            <div class="lc-sidebar__footer">
+                <div class="lc-sidebar__company" data-company-switcher>
+                    <i data-lucide="building-2" style="width:16px;height:16px;flex-shrink:0;color:var(--text-tertiary)"></i>
+                    <span class="lc-sidebar__company-name">@(ViewData["CompanyName"] ?? "MaPME SARL")</span>
+                    <i data-lucide="chevrons-up-down" style="width:14px;height:14px;color:var(--text-quaternary)"></i>
+                </div>
+                <div class="lc-sidebar__exercise">
+                    <span class="lc-sidebar__exercise-dot"></span>
+                    <span class="lc-sidebar__footer-text">Exercice @(ViewData["FiscalYear"] ?? "2026")</span>
+                </div>
+                <div class="lc-sidebar__profile">
+                    <div class="lc-sidebar__avatar">CA</div>
+                    <div class="lc-sidebar__profile-text">
+                        <div class="lc-sidebar__profile-name">@(User?.Identity?.Name ?? "Charles Agounké")</div>
+                        <div class="lc-sidebar__profile-role">Gestionnaire</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="lc-sidebar-backdrop" data-sidebar-backdrop></div>
+
+        @* ============================== HEADER ============================== *@
+        <header class="lc-header">
+            <button type="button" class="lc-icon-btn d-lg-none" data-sidebar-open aria-label="Menu">
+                <i data-lucide="menu"></i>
+            </button>
+            <button type="button" class="lc-icon-btn d-none d-lg-grid" data-sidebar-collapse aria-label="Réduire le menu">
+                <i data-lucide="panel-left"></i>
+            </button>
+
+            <nav class="lc-header__breadcrumb d-none d-md-flex" aria-label="Fil d'Ariane">
+                <a href="/">Accueil</a>
+                <i data-lucide="chevron-right" class="lc-header__breadcrumb-sep"></i>
+                <span class="lc-header__breadcrumb-current">@(ViewData["Title"] ?? "Tableau de bord")</span>
+            </nav>
+
+            <div class="lc-header__search">
+                <i data-lucide="search" class="lc-header__search-icon"></i>
+                <input type="search" placeholder="Rechercher client, facture, article…" data-global-search aria-label="Recherche globale" />
+                <span class="lc-header__search-kbd">
+                    <kbd class="lc-kbd">Ctrl</kbd><kbd class="lc-kbd">K</kbd>
+                </span>
+            </div>
+
+            <div class="lc-header__actions">
+                <div class="lc-dropdown" data-dropdown>
+                    <button type="button" class="btn btn-primary btn-sm" data-dropdown-toggle>
+                        <i data-lucide="plus" style="width:14px;height:14px"></i>
+                        Nouveau
+                        <i data-lucide="chevron-down" style="width:14px;height:14px"></i>
+                    </button>
+                    <div class="lc-dropdown__menu">
+                        <a class="lc-dropdown__item" href="/SalesDocuments/Create?type=Invoice">
+                            <i data-lucide="receipt" style="width:16px;height:16px"></i>Facture
+                        </a>
+                        <a class="lc-dropdown__item" href="/SalesDocuments/Create?type=Quote">
+                            <i data-lucide="file-text" style="width:16px;height:16px"></i>Devis
+                        </a>
+                        <a class="lc-dropdown__item" href="/Partners/Create">
+                            <i data-lucide="user-plus" style="width:16px;height:16px"></i>Client
+                        </a>
+                        <div class="lc-dropdown__divider"></div>
+                        <a class="lc-dropdown__item" href="/Products/Create">
+                            <i data-lucide="box" style="width:16px;height:16px"></i>Article
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lc-dropdown" data-dropdown>
+                    <button type="button" class="lc-badge lc-badge--gray" data-dropdown-toggle style="cursor:pointer;height:32px">
+                        <strong>XOF</strong> · FCFA
+                        <i data-lucide="chevron-down" style="width:12px;height:12px"></i>
+                    </button>
+                    <div class="lc-dropdown__menu">
+                        <button type="button" class="lc-dropdown__item"><strong>XOF</strong> · FCFA <span class="ms-auto lc-badge lc-badge--primary">Actif</span></button>
+                        <button type="button" class="lc-dropdown__item"><strong>EUR</strong> · €</button>
+                        <button type="button" class="lc-dropdown__item"><strong>USD</strong> · $</button>
+                    </div>
+                </div>
+
+                <partial name="_OfflineSyncBadge" />
+
+                <button type="button" class="lc-icon-btn" data-theme-toggle aria-label="Thème">
+                    <i data-lucide="sun" data-theme-icon="light"></i>
+                    <i data-lucide="moon" data-theme-icon="dark" style="display:none"></i>
+                </button>
+
+                <button type="button" class="lc-icon-btn" aria-label="Notifications">
+                    <i data-lucide="bell"></i>
+                    <span class="lc-icon-btn__notif-dot"></span>
+                </button>
+
+                <div class="lc-dropdown" data-dropdown>
+                    <button type="button" class="lc-icon-btn" data-dropdown-toggle aria-label="Profil" style="background:var(--color-primary-50);color:var(--color-primary-700);font-weight:600">
+                        CA
+                    </button>
+                    <div class="lc-dropdown__menu">
+                        <a class="lc-dropdown__item" href="/Account/Manage"><i data-lucide="user" style="width:16px;height:16px"></i>Mon profil</a>
+                        <a class="lc-dropdown__item" href="/Settings/Index"><i data-lucide="settings" style="width:16px;height:16px"></i>Paramètres</a>
+                        <a class="lc-dropdown__item" href="/Settings/Appearance"><i data-lucide="palette" style="width:16px;height:16px"></i>Apparence</a>
+                        <div class="lc-dropdown__divider"></div>
+                        <button type="button" class="lc-dropdown__item" data-offline-toggle-shortcut>
+                            <i data-lucide="cloud-off" style="width:16px;height:16px"></i>
+                            <span style="flex:1">Travailler hors ligne</span>
+                            <span class="lc-badge lc-badge--gray" data-offline-status-pill style="font-size:10px;padding:0 6px">Auto</span>
+                        </button>
+                        <div class="lc-dropdown__divider"></div>
+                        <form method="post" asp-page="/Account/Logout"><button type="submit" class="lc-dropdown__item"><i data-lucide="log-out" style="width:16px;height:16px"></i>Déconnexion</button></form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        @* ============================== MAIN ============================== *@
+        <main class="lc-main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <partial name="_OfflineSyncDrawer" />
+    <partial name="_ConflictResolutionModal" />
+    <partial name="_OfflineModeAuthModal" />
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/lucide/lucide.min.js"></script>
+    <script src="~/js/ligcom-shell.js" asp-append-version="true"></script>
+    <script>lucide.createIcons();</script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
