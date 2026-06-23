@@ -1,0 +1,17 @@
+@*
+   _OfflineBanner.cshtml — Ruban haut de page quand hors ligne (fermable).
+
+   Comportement :
+   - Caché par défaut (le shell n'a pas la classe lc-shell--banner-on)
+   - JS (ligcom-shell.js) ajoute lc-shell--banner-on quand offline détecté
+   - Bouton X masque jusqu'à la prochaine bascule de connexion
+*@
+<div class="lc-offline-banner" data-offline-banner hidden>
+    <i data-lucide="wifi-off" style="width:16px;height:16px"></i>
+    <span>
+        Vous travaillez <strong>hors ligne</strong>. Les modifications seront synchronisées automatiquement au retour de la connexion.
+    </span>
+    <button type="button" class="lc-offline-banner__close" data-offline-banner-close aria-label="Masquer ce message">
+        <i data-lucide="x" style="width:16px;height:16px"></i>
+    </button>
+</div>

@@ -1,0 +1,109 @@
+@*
+   _ConflictResolutionModal.cshtml — Modal de résolution de conflit de synchronisation
+
+   Affichée quand un document a été modifié à la fois localement et sur le serveur
+   pendant la coupure réseau. Affiche les deux versions côte à côte avec les champs
+   en différence surlignés (.lc-diff__row--changed).
+
+   Activable depuis JS : window.LigCom.openConflict({ entityLabel, fields: [...] })
+*@
+<div class="lc-modal-backdrop" data-conflict-modal>
+    <div class="lc-modal" role="dialog" aria-labelledby="lc-conflict-title" aria-modal="true">
+
+        <header class="lc-modal__header">
+            <div class="lc-modal__icon">
+                <i data-lucide="git-merge" style="width:22px;height:22px"></i>
+            </div>
+            <h2 class="lc-modal__title" id="lc-conflict-title">Conflit de synchronisation</h2>
+            <p class="lc-modal__sub">
+                <strong data-conflict-entity>Facture FA-2026-0042</strong> a été modifiée à la fois sur cet appareil et sur le serveur pendant la coupure.
+                Choisis la version à conserver, ou fusionne manuellement.
+            </p>
+        </header>
+
+        <div class="lc-modal__body">
+            <div class="lc-diff" data-conflict-diff>
+
+                @* Colonne de gauche : ma version (locale) *@
+                <div class="lc-diff__col lc-diff__col--local">
+                    <div class="lc-diff__col-header">
+                        <i data-lucide="laptop" style="width:14px;height:14px"></i>
+                        Ma version (cet appareil)
+                        <span class="ms-auto form-text" style="font-weight:400">il y a 12 min</span>
+                    </div>
+                    <div class="lc-diff__row">
+                        <span class="lc-diff__label">Client</span>
+                        <span class="lc-diff__value">SARL Komlan &amp; Fils</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Montant TTC</span>
+                        <span class="lc-diff__value">1 250 000 FCFA</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Statut</span>
+                        <span class="lc-diff__value">Validée</span>
+                    </div>
+                    <div class="lc-diff__row">
+                        <span class="lc-diff__label">Date</span>
+                        <span class="lc-diff__value">27 avril 2026</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Notes</span>
+                        <span class="lc-diff__value">Livraison Lomé port — règlement 30 jours</span>
+                    </div>
+                </div>
+
+                @* Colonne de droite : version serveur *@
+                <div class="lc-diff__col lc-diff__col--server">
+                    <div class="lc-diff__col-header">
+                        <i data-lucide="server" style="width:14px;height:14px"></i>
+                        Version serveur
+                        <span class="ms-auto form-text" style="font-weight:400">il y a 4 min</span>
+                    </div>
+                    <div class="lc-diff__row">
+                        <span class="lc-diff__label">Client</span>
+                        <span class="lc-diff__value">SARL Komlan &amp; Fils</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Montant TTC</span>
+                        <span class="lc-diff__value">1 180 000 FCFA</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Statut</span>
+                        <span class="lc-diff__value">En préparation</span>
+                    </div>
+                    <div class="lc-diff__row">
+                        <span class="lc-diff__label">Date</span>
+                        <span class="lc-diff__value">27 avril 2026</span>
+                    </div>
+                    <div class="lc-diff__row lc-diff__row--changed">
+                        <span class="lc-diff__label">Notes</span>
+                        <span class="lc-diff__value">Acompte 30%, solde à la livraison</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="form-text" style="margin-top:12px">
+                <i data-lucide="info" style="width:14px;height:14px;vertical-align:-2px"></i>
+                Les champs surlignés en orange diffèrent entre les deux versions.
+            </div>
+        </div>
+
+        <footer class="lc-modal__footer">
+            <button type="button" class="btn btn-secondary" data-conflict-close>Annuler</button>
+            <button type="button" class="btn btn-secondary" data-conflict-action="merge">
+                <i data-lucide="git-merge" style="width:14px;height:14px"></i>
+                Fusionner manuellement
+            </button>
+            <button type="button" class="btn btn-secondary" data-conflict-action="keep-server">
+                <i data-lucide="server" style="width:14px;height:14px"></i>
+                Garder version serveur
+            </button>
+            <button type="button" class="btn btn-primary" data-conflict-action="keep-local">
+                <i data-lucide="laptop" style="width:14px;height:14px"></i>
+                Garder ma version
+            </button>
+        </footer>
+    </div>
+</div>

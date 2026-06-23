@@ -1,0 +1,257 @@
+@page
+@model GescomSaas.Web.Pages.OfflineBootstrapModel
+@{
+    ViewData["Title"] = "Initialisation de la base locale";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Initialiser la base SQLite locale</h1>
+        <div class="page-header-sub">Prepare le noeud local LigCom, recopie le tenant depuis le serveur central et cree un administrateur local</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-secondary" asp-page="/Index">
+            <i class="bi bi-house me-1"></i>Accueil
+        </a>
+        <a class="btn btn-secondary" asp-page="/Settings/Offline">
+            <i class="bi bi-arrow-left-right me-1"></i>Synchro
+        </a>
+    </div>
+</div>
+
+@if (Model.Result is not null)
+{
+    <div class="alert @(Model.Result.Succeeded ? "alert-success" : "alert-warning") mb-3">
+        <i class="bi bi-@(Model.Result.Succeeded ? "check-circle-fill" : "exclamation-triangle-fill") me-2"></i>
+        @Model.Result.Message
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.StartupMessage))
+{
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.StartupMessage
+    </div>
+}
+
+@if (Model.IsLocalNodeMode && Model.IsCentralBaseUrlSelfReferencing && !Model.IsDevelopment)
+{
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Cette instance locale pointe actuellement vers <strong>@Model.CurrentCentralBaseUrl</strong> comme serveur central, ce qui correspond a sa propre URL <strong>@Model.CurrentRequestBaseUrl</strong>.
+        Un noeud local ne peut pas s'initialiser en s'appelant lui-meme.
+    </div>
+}
+
+@if (Model.IsLocalNodeMode && Model.IsCentralBaseUrlSelfReferencing && Model.IsDevelopment)
+{
+    <div class="alert alert-info mb-3">
+        <i class="bi bi-info-circle me-2"></i>
+        Mode dev detecte : cette instance locale pointe vers <strong>@Model.CurrentCentralBaseUrl</strong>. LigCom va tenter un bootstrap de secours en lisant directement la base SQL Server centrale configuree dans <strong>DefaultConnection</strong>.
+    </div>
+}
+
+<div class="row g-3">
+    @* Etat local *@
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-broadcast"></i>
+                <span>Pre-requis du noeud</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Emplacement SQLite</strong>
+                            <div class="small text-muted">@Model.CurrentSqlitePath</div>
+                        </div>
+                        <span class="badge" style="background:var(--gc-brand-100);color:var(--gc-brand-hover)">Base locale</span>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Mode runtime</strong>
+                            <div class="small text-muted">@(Model.IsLocalNodeMode ? "LocalNode" : "Non compatible")</div>
+                        </div>
+                        <span class="badge @(Model.IsLocalNodeMode ? "" : "")" style="background:@(Model.IsLocalNodeMode ? "var(--gc-pill-green-bg)" : "#fef3c7"); color:@(Model.IsLocalNodeMode ? "var(--gc-pill-green-fg)" : "#92400e")">@(Model.IsLocalNodeMode ? "OK" : "A verifier")</span>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Provider de base</strong>
+                            <div class="small text-muted">@(Model.IsSqliteProvider ? "SQLite" : "Non compatible")</div>
+                        </div>
+                        <span class="badge" style="background:@(Model.IsSqliteProvider ? "var(--gc-pill-green-bg)" : "#fef3c7"); color:@(Model.IsSqliteProvider ? "var(--gc-pill-green-fg)" : "#92400e")">@(Model.IsSqliteProvider ? "OK" : "A verifier")</span>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Liaison central</strong>
+                            <div class="small text-muted">@(Model.IsOfflineConfigured ? "Configuration presente" : "CentralBaseUrl / SharedAccessKey manquants")</div>
+                        </div>
+                        <span class="badge" style="background:@(Model.IsOfflineConfigured ? "var(--gc-pill-green-bg)" : "#fef3c7"); color:@(Model.IsOfflineConfigured ? "var(--gc-pill-green-fg)" : "#92400e")">@(Model.IsOfflineConfigured ? "OK" : "A verifier")</span>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Base locale actuelle</strong>
+                            <div class="small text-muted">@Model.LocalTenantCount tenant(s), @Model.LocalUserCount utilisateur(s)</div>
+                        </div>
+                        <span class="badge" style="background:var(--gc-brand-100);color:var(--gc-brand-hover)">SQLite</span>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <strong class="d-block">Serveur central vise</strong>
+                            <div class="small text-muted">@(string.IsNullOrWhiteSpace(Model.CurrentCentralBaseUrl) ? "Non renseigne" : Model.CurrentCentralBaseUrl)</div>
+                        </div>
+                        <span class="badge" style="background:#e0f2fe;color:#075985">@(Model.IsCentralBaseUrlSelfReferencing ? "Meme instance" : "Distant")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Assistant d'initialisation *@
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-magic"></i>
+                <span>Assistant d'initialisation</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" asp-validation-summary="All"></div>
+
+                @if (!Model.IsLocalNodeMode || !Model.IsSqliteProvider)
+                {
+                    <div class="alert alert-warning">
+                        Cette page ne peut initialiser que les instances configurees en mode <strong>LocalNode</strong> avec <strong>SQLite</strong>. Active d'abord le noeud local ci-dessous, puis redemarre LigCom.
+                    </div>
+                    <form method="post" asp-page-handler="Activate">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" asp-for="Input.SqliteDatabasePath">Chemin de la base SQLite locale</label>
+                                <input asp-for="Input.SqliteDatabasePath" class="form-control" placeholder="Ex: D:\LigCom\local\ligcom-node.db" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="bootstrap-activation-central-url">URL du serveur central</label>
+                                <input id="bootstrap-activation-central-url" asp-for="ActivationCentralBaseUrl" class="form-control" placeholder="https://votre-serveur-central" />
+                                <div class="form-text">En mode dev, tu peux utiliser l'URL courante pour preparer le noeud local.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="bootstrap-activation-shared-key">Cle partagee</label>
+                                <input id="bootstrap-activation-shared-key" asp-for="ActivationSharedAccessKey" class="form-control" placeholder="Cle OfflineSync partagee" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="bootstrap-activation-node-id">Identifiant du noeud local</label>
+                                <input id="bootstrap-activation-node-id" asp-for="ActivationLocalNodeId" class="form-control" placeholder="Ex: SITE-ABIDJAN-01" />
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-power me-1"></i>Activer le mode noeud local
+                            </button>
+                        </div>
+                    </form>
+                    <hr />
+                    <form method="post" asp-page-handler="ReturnToCentral">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Revenir en mode central
+                        </button>
+                    </form>
+                }
+                else if (!Model.IsOfflineConfigured)
+                {
+                    <div class="alert alert-warning">
+                        La liaison vers le central n'est pas encore complete. Renseigne l'URL du central et la cle partagee.
+                    </div>
+                    <form method="post" asp-page-handler="Activate">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" asp-for="Input.SqliteDatabasePath">Chemin de la base SQLite locale</label>
+                                <input asp-for="Input.SqliteDatabasePath" class="form-control" placeholder="Ex: D:\LigCom\local\ligcom-node.db" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="bootstrap-activation-central-url-2">URL du serveur central</label>
+                                <input id="bootstrap-activation-central-url-2" asp-for="ActivationCentralBaseUrl" class="form-control" placeholder="https://votre-serveur-central" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="bootstrap-activation-shared-key-2">Cle partagee</label>
+                                <input id="bootstrap-activation-shared-key-2" asp-for="ActivationSharedAccessKey" class="form-control" placeholder="Cle OfflineSync partagee" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="bootstrap-activation-node-id-2">Identifiant du noeud local</label>
+                                <input id="bootstrap-activation-node-id-2" asp-for="ActivationLocalNodeId" class="form-control" placeholder="Ex: SITE-ABIDJAN-01" />
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Enregistrer la connexion
+                            </button>
+                        </div>
+                    </form>
+                    <hr />
+                    <form method="post" asp-page-handler="ReturnToCentral">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Revenir en mode central
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" asp-for="Input.SqliteDatabasePath">Emplacement SQLite</label>
+                                <input asp-for="Input.SqliteDatabasePath" class="form-control" placeholder="Ex: D:\LigCom\local\ligcom-node.db" />
+                                <div class="form-text">Si tu changes cet emplacement, LigCom demandera un redemarrage avant l'initialisation.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="Input.TenantSlug">Slug du tenant central</label>
+                                <input asp-for="Input.TenantSlug" class="form-control" placeholder="ex: ligcom-pilot" />
+                                <div class="form-text">Le slug du tenant, pas l'URL. Exemple : <strong>demo-distribution</strong>.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="Input.AdminEmail">Email de l'admin local</label>
+                                <input asp-for="Input.AdminEmail" class="form-control" placeholder="admin@tenant.local" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="Input.AdminFirstName">Prenom</label>
+                                <input asp-for="Input.AdminFirstName" class="form-control" placeholder="Admin" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="Input.AdminLastName">Nom</label>
+                                <input asp-for="Input.AdminLastName" class="form-control" placeholder="LigCom" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" asp-for="Input.AdminPassword">Mot de passe admin local</label>
+                                <input asp-for="Input.AdminPassword" type="password" class="form-control" placeholder="Choisir un mot de passe de secours" />
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-magic me-1"></i>Initialiser la base SQLite
+                            </button>
+                        </div>
+                        <div class="form-text mt-2">Copie tenant + admin local + profils standards</div>
+                    </form>
+                    <hr />
+                    <form method="post" asp-page-handler="ReturnToCentral">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Revenir en mode central
+                        </button>
+                    </form>
+
+                    @if (Model.RestartRequired)
+                    {
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Le chemin a ete modifie. Redemarre LigCom local pour charger le nouvel emplacement SQLite, puis reviens sur cette page.
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

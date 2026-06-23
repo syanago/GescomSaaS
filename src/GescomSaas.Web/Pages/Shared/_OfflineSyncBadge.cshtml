@@ -1,0 +1,20 @@
+@*
+   _OfflineSyncBadge.cshtml — Indicateur de synchronisation (header)
+
+   3 états gérés via [data-state] :
+   - online   : point vert, "En ligne"
+   - syncing  : point orange pulsant, "Synchronisation 3/12"
+   - offline  : point rouge, "Hors ligne — N en attente"
+
+   Cliquable → ouvre le drawer _OfflineSyncDrawer (#lc-sync-drawer)
+*@
+<button type="button"
+        class="lc-sync-status"
+        data-sync-status
+        data-state="online"
+        data-sync-open
+        aria-label="Statut de synchronisation"
+        aria-haspopup="dialog">
+    <span class="lc-sync-status__dot" aria-hidden="true"></span>
+    <span class="lc-sync-status__label">En ligne</span>
+</button>

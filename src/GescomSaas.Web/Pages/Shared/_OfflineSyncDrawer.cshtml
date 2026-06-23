@@ -1,0 +1,97 @@
+@*
+   _OfflineSyncDrawer.cshtml — Panneau latéral droit "File de synchronisation"
+
+   Ouvert par le badge [data-sync-open] dans le header.
+   Liste les modifications locales en attente de sync.
+
+   Le contenu est un placeholder : en prod, le JS lit IndexedDB et hydrate
+   la liste via [data-sync-queue].
+*@
+<div class="lc-drawer-backdrop" data-sync-backdrop></div>
+<aside class="lc-drawer" id="lc-sync-drawer" data-sync-drawer aria-labelledby="lc-sync-drawer-title" role="dialog">
+
+    <header class="lc-drawer__header">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--color-warning-50);color:var(--color-warning-700);display:grid;place-items:center;flex-shrink:0">
+            <i data-lucide="cloud-upload" style="width:18px;height:18px"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+            <h2 class="lc-drawer__title" id="lc-sync-drawer-title">File de synchronisation</h2>
+            <div class="form-text" data-sync-summary>3 modifications en attente</div>
+        </div>
+        <button type="button" class="lc-icon-btn" data-sync-close aria-label="Fermer">
+            <i data-lucide="x"></i>
+        </button>
+    </header>
+
+    @* === Toggle mode hors connexion forcé === *@
+    <div style="padding:14px 20px; border-bottom:1px solid var(--border-secondary); background:var(--bg-surface-1)">
+        <label class="lc-switch" style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; width:100%">
+            <input type="checkbox" data-offline-toggle />
+            <span class="lc-switch__track" style="margin-top:2px"><span class="lc-switch__thumb"></span></span>
+            <div style="flex:1; min-width:0">
+                <div style="font:var(--font-text-sm); font-weight:600; color:var(--text-primary)">Travailler hors ligne</div>
+                <div style="font:var(--font-text-xs); color:var(--text-tertiary); margin-top:2px">
+                    Force le mode hors connexion. Les modifications sont stockées localement et seront synchronisées au prochain retour en ligne.
+                </div>
+            </div>
+        </label>
+    </div>
+
+    <div class="lc-drawer__body" data-sync-queue>
+
+        @* ====== Item type 1 : facture en attente (timestamp + statut) ====== *@
+        <div class="lc-sync-item">
+            <div class="lc-sync-item__icon" style="background:var(--color-primary-50);color:var(--color-primary-700)">
+                <i data-lucide="receipt" style="width:18px;height:18px"></i>
+            </div>
+            <div class="lc-sync-item__body">
+                <div class="lc-sync-item__title">Facture FA-2026-0042 créée</div>
+                <div class="lc-sync-item__meta">
+                    <span class="lc-badge lc-badge--warning"><span class="lc-badge__dot"></span>En attente</span>
+                    <span class="lc-sync-item__time">il y a 2 min</span>
+                </div>
+            </div>
+        </div>
+
+        @* ====== Item type 2 : paiement en erreur (avec bouton Réessayer) ====== *@
+        <div class="lc-sync-item">
+            <div class="lc-sync-item__icon" style="background:var(--color-info-50);color:var(--color-info-700)">
+                <i data-lucide="banknote" style="width:18px;height:18px"></i>
+            </div>
+            <div class="lc-sync-item__body">
+                <div class="lc-sync-item__title">Paiement 250 000 FCFA enregistré</div>
+                <div class="lc-sync-item__meta">
+                    <span class="lc-badge lc-badge--error"><span class="lc-badge__dot"></span>Erreur 409</span>
+                    <span class="lc-sync-item__time">il y a 5 min</span>
+                </div>
+            </div>
+            <button type="button" class="lc-sync-item__retry" data-sync-retry>
+                <i data-lucide="refresh-cw" style="width:12px;height:12px;margin-right:4px"></i>Réessayer
+            </button>
+        </div>
+
+        @* ====== Item type 3 : article modifié (synchronisé OK) ====== *@
+        <div class="lc-sync-item">
+            <div class="lc-sync-item__icon" style="background:var(--color-success-50);color:var(--color-success-700)">
+                <i data-lucide="check" style="width:18px;height:18px"></i>
+            </div>
+            <div class="lc-sync-item__body">
+                <div class="lc-sync-item__title">Article ART-0125 mis à jour</div>
+                <div class="lc-sync-item__meta">
+                    <span class="lc-badge lc-badge--success"><span class="lc-badge__dot"></span>Synchronisé</span>
+                    <span class="lc-sync-item__time">il y a 12 min</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="border-top:1px solid var(--border-secondary);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary btn-sm" data-sync-clear-done>
+            <i data-lucide="trash-2" style="width:14px;height:14px"></i>Effacer terminés
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" data-sync-retry-all>
+            <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Tout réessayer
+        </button>
+    </div>
+</aside>

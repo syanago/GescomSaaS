@@ -1,0 +1,64 @@
+@*
+   _OfflineModeAuthModal.cshtml — Modal de re-authentification admin
+   pour basculer le mode hors connexion forcé.
+
+   Activée par le JS quand l'utilisateur clique sur le toggle "Travailler hors ligne".
+   POST → /api/v1/offline-mode/verify avec password.
+   Si OK → applique le forçage en localStorage.
+   Si KO → message d'erreur dans la modal.
+*@
+<div class="lc-modal-backdrop" id="lc-offline-auth-modal" data-offline-auth-modal>
+    <div class="lc-modal lc-modal--sm" role="dialog" aria-labelledby="lc-offline-auth-title" aria-modal="true">
+        <header class="lc-modal__header">
+            <div class="lc-feature-icon lc-feature-icon--warning">
+                <i data-lucide="shield-alert" style="width:22px;height:22px"></i>
+            </div>
+            <h2 class="lc-modal__title" id="lc-offline-auth-title">Confirmation administrateur</h2>
+            <p class="lc-modal__sub">
+                Le basculement du mode hors connexion est une action sensible.
+                Saisis le mot de passe de ton compte pour confirmer.
+            </p>
+        </header>
+
+        <form data-offline-auth-form>
+            <div class="lc-modal__body">
+                <div class="mb-3">
+                    <label for="lc-offline-auth-password" class="form-label">Mot de passe</label>
+                    <div class="lc-pwd">
+                        <input type="password"
+                               class="form-control"
+                               id="lc-offline-auth-password"
+                               name="password"
+                               autocomplete="current-password"
+                               required
+                               placeholder="•••••••••" />
+                        <button type="button" class="lc-pwd__toggle" data-pwd-toggle-inline aria-label="Afficher / masquer">
+                            <i data-lucide="eye" data-pwd-icon="open" style="width:16px;height:16px"></i>
+                            <i data-lucide="eye-off" data-pwd-icon="closed" style="width:16px;height:16px;display:none"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">
+                        L'action sera tracée avec ton identifiant.
+                    </div>
+                </div>
+
+                <div class="alert alert-danger d-none" data-offline-auth-error
+                     style="background:var(--color-error-50);border:1px solid var(--color-error-100);color:var(--color-error-700);padding:10px 12px;border-radius:var(--radius-md);font:var(--font-text-sm)">
+                    <i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:-2px"></i>
+                    <span data-offline-auth-error-msg>Mot de passe incorrect.</span>
+                </div>
+
+                <div class="form-text" data-offline-auth-target>
+                    Cible : <strong data-offline-auth-target-label>activer le mode hors ligne</strong>
+                </div>
+            </div>
+
+            <footer class="lc-modal__footer">
+                <button type="button" class="btn btn-secondary" data-offline-auth-cancel>Annuler</button>
+                <button type="submit" class="btn btn-primary" data-offline-auth-submit>
+                    <i data-lucide="check" style="width:14px;height:14px"></i>Confirmer
+                </button>
+            </footer>
+        </form>
+    </div>
+</div>
