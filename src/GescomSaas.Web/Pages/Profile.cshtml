@@ -1,0 +1,84 @@
+@page
+@model GescomSaas.Web.Pages.ProfileModel
+@{
+    ViewData["Title"] = "Mon profil";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header-title">Mon profil</h1>
+        <div class="page-header-sub">Consultez et modifiez vos informations personnelles.</div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@Model.StatusMessage</div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                     style="width:72px;height:72px;border-radius:50%;background:var(--color-primary-50,#eef2ff);color:var(--color-primary-700,#4338ca);font-weight:600;font-size:26px;">
+                    @Model.Initials
+                </div>
+                <h2 class="h5 mb-1">@Model.DisplayName</h2>
+                <div class="text-muted mb-3">@Model.Email</div>
+
+                <div class="text-start mt-3">
+                    <div class="small text-muted">Societe / tenant</div>
+                    <div class="fw-semibold mb-2">@Model.TenantName</div>
+                    <div class="small text-muted">Roles</div>
+                    <div>
+                        @if (Model.Roles.Count == 0)
+                        {
+                            <span class="text-muted">Aucun role</span>
+                        }
+                        else
+                        {
+                            foreach (var role in Model.Roles)
+                            {
+                                <span class="badge me-1" style="background:var(--gc-brand-100,#e0e7ff); color:var(--gc-brand-hover,#4338ca)">@role</span>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="section-header">
+                <i class="bi bi-person-gear"></i>
+                <span>Informations personnelles</span>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.FirstName">Prenom</label>
+                            <input class="form-control" asp-for="Input.FirstName" placeholder="Prenom" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.LastName">Nom</label>
+                            <input class="form-control" asp-for="Input.LastName" placeholder="Nom" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Adresse e-mail</label>
+                            <input class="form-control" value="@Model.Email" disabled />
+                            <div class="form-text">L'adresse e-mail sert d'identifiant de connexion et n'est pas modifiable ici.</div>
+                        </div>
+                        <div class="col-12 d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer</button>
+                            <a class="btn btn-secondary" href="/Identity/Account/Manage/ChangePassword"><i class="bi bi-key me-1"></i>Changer le mot de passe</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

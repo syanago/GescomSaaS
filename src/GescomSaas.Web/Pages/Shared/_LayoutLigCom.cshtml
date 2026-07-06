@@ -252,13 +252,13 @@
                     <span class="lc-sidebar__exercise-dot"></span>
                     <span class="lc-sidebar__footer-text">Exercice @(ViewData["FiscalYear"] ?? "2026")</span>
                 </div>
-                <div class="lc-sidebar__profile">
+                <a href="/Profile" class="lc-sidebar__profile" style="text-decoration:none;color:inherit;cursor:pointer" title="Mon profil">
                     <div class="lc-sidebar__avatar">CA</div>
                     <div class="lc-sidebar__profile-text">
                         <div class="lc-sidebar__profile-name">@(User?.Identity?.Name ?? "Charles Agounké")</div>
                         <div class="lc-sidebar__profile-role">Gestionnaire</div>
                     </div>
-                </div>
+                </a>
             </div>
         </aside>
 
@@ -340,7 +340,7 @@
                         CA
                     </button>
                     <div class="lc-dropdown__menu">
-                        <a class="lc-dropdown__item" href="/Account/Manage"><i data-lucide="user" style="width:16px;height:16px"></i>Mon profil</a>
+                        <a class="lc-dropdown__item" href="/Profile"><i data-lucide="user" style="width:16px;height:16px"></i>Mon profil</a>
                         <a class="lc-dropdown__item" href="/Settings/Index"><i data-lucide="settings" style="width:16px;height:16px"></i>Paramètres</a>
                         <a class="lc-dropdown__item" href="/Settings/Appearance"><i data-lucide="palette" style="width:16px;height:16px"></i>Apparence</a>
                         <div class="lc-dropdown__divider"></div>
