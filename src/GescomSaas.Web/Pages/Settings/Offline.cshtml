@@ -58,23 +58,37 @@ else
                     <span>Serveur Web <span class="text-muted fw-normal">— Instance en ligne (SQL Server)</span></span>
                 </div>
                 <div class="card-body">
-                    <form method="post" asp-page-handler="ActivateLocalNode">
+                    <form method="post" asp-page-handler="SaveSyncSettings">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="sync-enabled" name="SyncEnabled" value="true" @(Model.IsSyncEnabled ? "checked" : "") />
+                            <label class="form-check-label" for="sync-enabled">
+                                <strong>Activer la synchronisation</strong>
+                                @if (Model.IsSyncEnabled)
+                                {
+                                    <span class="badge ms-1" style="background:var(--gc-pill-green-bg,#dcfce7); color:var(--gc-pill-green-fg,#166534)">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge ms-1" style="background:#fee2e2; color:#991b1b">Desactivee</span>
+                                }
+                            </label>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label" for="sync-central-url"><i class="bi bi-link-45deg me-1"></i>URL du serveur web</label>
-                            <input id="sync-central-url" name="ActivationCentralBaseUrl" class="form-control"
-                                   value="@(string.IsNullOrWhiteSpace(Model.CurrentCentralBaseUrl) ? baseUrl : Model.CurrentCentralBaseUrl)"
+                            <input id="sync-central-url" name="SyncCentralBaseUrl" class="form-control"
+                                   value="@(string.IsNullOrWhiteSpace(Model.SyncCentralBaseUrl) ? baseUrl : Model.SyncCentralBaseUrl)"
                                    placeholder="https://votre-serveur (sans slash final)" />
-                            <div class="form-text">Adresse de l'instance LigCom hebergee (sans slash final).</div>
+                            <div class="form-text">Adresse du serveur central (sans slash final). Requise pour un noeud local.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="sync-shared-key"><i class="bi bi-key me-1"></i>Cle API partagee</label>
-                            <input id="sync-shared-key" name="ActivationSharedAccessKey" type="password" class="form-control"
-                                   value="@Model.ActivationSharedAccessKey" placeholder="Cle configuree — laisser vide pour ne pas modifier" />
-                            <div class="form-text text-success">Cle utilisee par les noeuds locaux dans l'en-tete X-LigCom-Offline-Key.</div>
+                            <input id="sync-shared-key" name="SyncSharedAccessKey" type="password" class="form-control"
+                                   value="" placeholder="@(Model.IsSyncEnabled ? "Cle configuree — laisser vide pour ne pas modifier" : "Definir une cle partagee")" />
+                            <div class="form-text text-success">Cle utilisee dans l'en-tete X-LigCom-Offline-Key. Laissez vide pour conserver la cle existante.</div>
                         </div>
-                        <input type="hidden" name="SqliteDatabasePath" value="@Model.SqliteDatabasePath" />
-                        <input type="hidden" name="ActivationLocalNodeId" value="@Model.ActivationLocalNodeId" />
+                        <input type="hidden" name="SyncLocalNodeId" value="@Model.SyncLocalNodeId" />
                         <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Enregistrer</button>
+                        <span class="form-text ms-2"><i class="bi bi-arrow-repeat me-1"></i>Redemarrage requis</span>
                     </form>
 
                     <hr />

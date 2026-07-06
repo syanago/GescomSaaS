@@ -90,6 +90,49 @@ internal static class LocalRuntimeSettingsStore
         await JsonSerializer.SerializeAsync(stream, payload, SerializerOptions, cancellationToken);
     }
 
+    /// <summary>
+    /// Enregistre les reglages de synchronisation (activation, URL du central, cle partagee,
+    /// identifiant de noeud) SANS modifier le mode d'execution de l'instance. Le mode et le
+    /// provider courants sont preserves tels quels. Applique au prochain redemarrage.
+    /// Si <paramref name="sharedAccessKey"/> est vide, la cle existante est conservee.
+    /// </summary>
+    public static async Task SaveSyncSettingsAsync(
+        IHostEnvironment hostEnvironment,
+        LigComNodeMode currentMode,
+        LigComDatabaseProvider currentProvider,
+        string currentSqliteDatabasePath,
+        bool enabled,
+        string centralBaseUrl,
+        string sharedAccessKey,
+        string localNodeId,
+        CancellationToken cancellationToken = default)
+    {
+        var payload = await ReadPayloadAsync(hostEnvironment, cancellationToken);
+
+        // Preserve le mode/provider courants pour ne pas basculer l'instance.
+        payload.LigComRuntime.Mode = currentMode.ToString();
+        payload.LigComRuntime.DatabaseProvider = currentProvider.ToString();
+        if (!string.IsNullOrWhiteSpace(currentSqliteDatabasePath))
+        {
+            payload.LigComRuntime.SqliteDatabasePath = currentSqliteDatabasePath.Trim();
+        }
+
+        payload.OfflineSync.Enabled = enabled;
+        payload.OfflineSync.CentralBaseUrl = centralBaseUrl.Trim();
+        if (!string.IsNullOrWhiteSpace(sharedAccessKey))
+        {
+            payload.OfflineSync.SharedAccessKey = sharedAccessKey.Trim();
+        }
+        if (!string.IsNullOrWhiteSpace(localNodeId))
+        {
+            payload.OfflineSync.LocalNodeId = localNodeId.Trim();
+        }
+
+        var filePath = GetOverrideFilePath(hostEnvironment);
+        await using var stream = File.Create(filePath);
+        await JsonSerializer.SerializeAsync(stream, payload, SerializerOptions, cancellationToken);
+    }
+
     public static Task ClearOverridesAsync(IHostEnvironment hostEnvironment, CancellationToken cancellationToken = default)
     {
         var filePath = GetOverrideFilePath(hostEnvironment);

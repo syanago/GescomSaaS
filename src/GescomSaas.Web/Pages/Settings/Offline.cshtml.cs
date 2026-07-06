@@ -78,7 +78,54 @@ public class OfflineModel(
     [BindProperty]
     public string ActivationLocalNodeId { get; set; } = string.Empty;
 
+    [BindProperty]
+    public bool SyncEnabled { get; set; }
+
+    [BindProperty]
+    public string SyncCentralBaseUrl { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string SyncSharedAccessKey { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string SyncLocalNodeId { get; set; } = string.Empty;
+
+    public bool IsSyncEnabled => offline.Enabled;
+
     public async Task OnGetAsync() => await LoadAsync();
+
+    public async Task<IActionResult> OnPostSaveSyncSettingsAsync()
+    {
+        if (SyncEnabled && string.IsNullOrWhiteSpace(SyncCentralBaseUrl))
+        {
+            StatusMessage = "L'URL du serveur central est obligatoire pour activer la synchronisation.";
+            return RedirectToPage(routeValues: BuildRouteValues());
+        }
+
+        var effectiveKey = string.IsNullOrWhiteSpace(SyncSharedAccessKey) ? offline.SharedAccessKey : SyncSharedAccessKey;
+        if (SyncEnabled && string.IsNullOrWhiteSpace(effectiveKey))
+        {
+            StatusMessage = "La cle API partagee est obligatoire pour activer la synchronisation.";
+            return RedirectToPage(routeValues: BuildRouteValues());
+        }
+
+        await LocalRuntimeSettingsStore.SaveSyncSettingsAsync(
+            hostEnvironment,
+            runtime.Mode,
+            runtime.DatabaseProvider,
+            runtime.SqliteDatabasePath,
+            SyncEnabled,
+            SyncCentralBaseUrl,
+            SyncSharedAccessKey,
+            SyncLocalNodeId,
+            HttpContext.RequestAborted);
+
+        RestartRequired = true;
+        StatusMessage = SyncEnabled
+            ? "Synchronisation activee et configuree. Redemarrez LigCom pour l'appliquer."
+            : "Synchronisation desactivee. Redemarrez LigCom pour l'appliquer.";
+        return RedirectToPage(routeValues: BuildRouteValues());
+    }
 
     public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
     {
@@ -318,6 +365,16 @@ public class OfflineModel(
         if (string.IsNullOrWhiteSpace(ActivationLocalNodeId))
         {
             ActivationLocalNodeId = CurrentLocalNodeId;
+        }
+
+        SyncEnabled = offline.Enabled;
+        if (string.IsNullOrWhiteSpace(SyncCentralBaseUrl))
+        {
+            SyncCentralBaseUrl = offline.CentralBaseUrl;
+        }
+        if (string.IsNullOrWhiteSpace(SyncLocalNodeId))
+        {
+            SyncLocalNodeId = CurrentLocalNodeId;
         }
     }
 
