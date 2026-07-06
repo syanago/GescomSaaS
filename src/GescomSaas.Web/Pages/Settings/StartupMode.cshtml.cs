@@ -29,11 +29,21 @@ public class StartupModeModel(
 
     protected override IReadOnlyCollection<string> RequiredPermissionKeys => [TenantPermissionKeys.SettingsOfflineSyncManage];
 
-    /// <summary>Mode actuellement charge par cette instance.</summary>
+    /// <summary>Mode actuellement CHARGE (en cours d'execution) par cette instance.</summary>
     public bool CurrentlyOffline => runtime.Mode == LigComNodeMode.LocalNode
         && runtime.DatabaseProvider == LigComDatabaseProvider.Sqlite;
 
+    /// <summary>Mode CONFIGURE pour le prochain demarrage (choix enregistre par l'admin).</summary>
+    public bool ConfiguredOffline { get; private set; }
+
+    /// <summary>Vrai si le choix enregistre differe du mode en cours d'execution (redemarrage en attente).</summary>
+    public bool ChangePending => ConfiguredOffline != CurrentlyOffline;
+
     public string CurrentDatabaseTarget => CurrentlyOffline
+        ? "SQLite (base locale)"
+        : "SQL Server (base centrale)";
+
+    public string ConfiguredDatabaseTarget => ConfiguredOffline
         ? "SQLite (base locale)"
         : "SQL Server (base centrale)";
 
@@ -43,9 +53,17 @@ public class StartupModeModel(
     [BindProperty]
     public string SelectedMode { get; set; } = string.Empty;
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        SelectedMode = CurrentlyOffline ? "offline" : "online";
+        await LoadConfiguredModeAsync();
+        SelectedMode = ConfiguredOffline ? "offline" : "online";
+    }
+
+    private async Task LoadConfiguredModeAsync()
+    {
+        // Le choix enregistre fait foi pour l'affichage ; a defaut d'override, on reflete le mode charge.
+        var configured = await LocalRuntimeSettingsStore.ReadConfiguredOfflineAsync(hostEnvironment, HttpContext.RequestAborted);
+        ConfiguredOffline = configured ?? CurrentlyOffline;
     }
 
     public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
@@ -63,12 +81,13 @@ public class StartupModeModel(
     public async Task<IActionResult> OnPostSaveAsync()
     {
         var wantsOffline = string.Equals(SelectedMode, "offline", StringComparison.OrdinalIgnoreCase);
+        await LoadConfiguredModeAsync();
 
-        if (wantsOffline == CurrentlyOffline)
+        if (wantsOffline == ConfiguredOffline)
         {
             StatusMessage = wantsOffline
-                ? "Le mode de demarrage est deja regle sur Hors ligne (SQLite)."
-                : "Le mode de demarrage est deja regle sur En ligne (SQL Server).";
+                ? "Le mode de demarrage est deja configure sur Hors ligne (SQLite)."
+                : "Le mode de demarrage est deja configure sur En ligne (SQL Server).";
             return RedirectToPage();
         }
 
@@ -78,10 +97,9 @@ public class StartupModeModel(
             sqliteDatabasePath: null,
             HttpContext.RequestAborted);
 
-        RestartRequired = true;
         StatusMessage = wantsOffline
-            ? "Mode de demarrage enregistre : Hors ligne (base SQLite locale). Redemarrez LigCom pour l'appliquer."
-            : "Mode de demarrage enregistre : En ligne (base SQL Server). Redemarrez LigCom pour l'appliquer.";
+            ? "Mode de demarrage enregistre : Hors ligne (base SQLite locale). Il sera applique au prochain redemarrage."
+            : "Mode de demarrage enregistre : En ligne (base SQL Server). Il sera applique au prochain redemarrage.";
         return RedirectToPage();
     }
 }

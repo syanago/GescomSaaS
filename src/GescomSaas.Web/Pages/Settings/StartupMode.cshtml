@@ -22,11 +22,23 @@
 <div class="card">
     <div class="card-body">
         <p class="text-muted mb-1">
-            Mode actuellement charge par cette instance :
+            Mode actuellement charge (en cours d'execution) :
             <strong>@(Model.CurrentlyOffline ? "Hors ligne" : "En ligne")</strong>
             (@Model.CurrentDatabaseTarget).
         </p>
-        <p class="small text-muted mb-4">
+        <p class="text-muted mb-1">
+            Mode configure pour le prochain demarrage :
+            <strong>@(Model.ConfiguredOffline ? "Hors ligne" : "En ligne")</strong>
+            (@Model.ConfiguredDatabaseTarget).
+        </p>
+        @if (Model.ChangePending)
+        {
+            <div class="alert alert-warning d-flex align-items-center gap-2 mt-2" role="alert">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Un changement est enregistre mais pas encore applique. Redemarrez LigCom pour passer en <strong>@(Model.ConfiguredOffline ? "Hors ligne" : "En ligne")</strong>.</span>
+            </div>
+        }
+        <p class="small text-muted mb-4 mt-2">
             Dans les deux cas, vous pourrez basculer a chaud entre les modes via le badge de statut et son toggle
             « Travailler hors ligne », en confirmant avec votre mot de passe administrateur.
         </p>
@@ -35,7 +47,7 @@
             <fieldset>
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="radio" name="SelectedMode" id="modeOnline" value="online"
-                           checked="@(!Model.CurrentlyOffline)" />
+                           checked="@(!Model.ConfiguredOffline)" />
                     <label class="form-check-label" for="modeOnline">
                         <strong>En ligne</strong>
                         <span class="d-block small text-muted">
@@ -46,7 +58,7 @@
 
                 <div class="form-check mb-4">
                     <input class="form-check-input" type="radio" name="SelectedMode" id="modeOffline" value="offline"
-                           checked="@Model.CurrentlyOffline" />
+                           checked="@Model.ConfiguredOffline" />
                     <label class="form-check-label" for="modeOffline">
                         <strong>Hors ligne</strong>
                         <span class="d-block small text-muted">

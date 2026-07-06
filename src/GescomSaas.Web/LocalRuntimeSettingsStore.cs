@@ -133,6 +133,31 @@ internal static class LocalRuntimeSettingsStore
         await JsonSerializer.SerializeAsync(stream, payload, SerializerOptions, cancellationToken);
     }
 
+    /// <summary>
+    /// Lit le mode de demarrage reellement CONFIGURE (dans l'override), independamment
+    /// du mode actuellement charge par l'instance. Retourne :
+    ///   - true  : configure en Hors ligne (LocalNode / SQLite)
+    ///   - false : configure en En ligne (Central / SQL Server)
+    ///   - null  : aucun override => c'est appsettings.json qui fait foi.
+    /// </summary>
+    public static async Task<bool?> ReadConfiguredOfflineAsync(IHostEnvironment hostEnvironment, CancellationToken cancellationToken = default)
+    {
+        var filePath = GetOverrideFilePath(hostEnvironment);
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        var payload = await ReadPayloadAsync(hostEnvironment, cancellationToken);
+        if (string.IsNullOrWhiteSpace(payload.LigComRuntime.Mode))
+        {
+            return null;
+        }
+
+        return string.Equals(payload.LigComRuntime.Mode, LigComNodeMode.LocalNode.ToString(), StringComparison.OrdinalIgnoreCase)
+            && string.Equals(payload.LigComRuntime.DatabaseProvider, LigComDatabaseProvider.Sqlite.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
     public static Task ClearOverridesAsync(IHostEnvironment hostEnvironment, CancellationToken cancellationToken = default)
     {
         var filePath = GetOverrideFilePath(hostEnvironment);
