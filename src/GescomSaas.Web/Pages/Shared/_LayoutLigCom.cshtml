@@ -14,6 +14,31 @@
 @{
     var serverStartsOffline = LigComRuntime.Value.Mode == LigComNodeMode.LocalNode
         && LigComRuntime.Value.DatabaseProvider == LigComDatabaseProvider.Sqlite;
+
+    var lcDisplayName = User?.FindFirst("display_name")?.Value;
+    if (string.IsNullOrWhiteSpace(lcDisplayName))
+    {
+        lcDisplayName = User?.Identity?.Name ?? "Utilisateur";
+    }
+    var lcNameParts = lcDisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var lcInitials = lcNameParts.Length >= 2
+        ? $"{lcNameParts[0][0]}{lcNameParts[1][0]}"
+        : (lcDisplayName.Length >= 2 ? lcDisplayName.Substring(0, 2) : lcDisplayName);
+    lcInitials = lcInitials.ToUpperInvariant();
+    if (string.IsNullOrWhiteSpace(lcInitials)) { lcInitials = "?"; }
+
+    var lcRole = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+    var lcRoleLabel = lcRole switch
+    {
+        "PlatformAdmin" => "Administrateur plateforme",
+        "TenantOwner" => "Propriétaire",
+        "SalesManager" => "Responsable ventes",
+        "FinanceManager" => "Responsable finance",
+        "InventoryManager" => "Responsable stock",
+        "PurchasingManager" => "Responsable achats",
+        "" => "Utilisateur",
+        _ => lcRole
+    };
 }
 <!doctype html>
 <html lang="fr" data-bs-theme="light">
@@ -253,10 +278,10 @@
                     <span class="lc-sidebar__footer-text">Exercice @(ViewData["FiscalYear"] ?? "2026")</span>
                 </div>
                 <a href="/Profile" class="lc-sidebar__profile" style="text-decoration:none;color:inherit;cursor:pointer" title="Mon profil">
-                    <div class="lc-sidebar__avatar">CA</div>
+                    <div class="lc-sidebar__avatar">@lcInitials</div>
                     <div class="lc-sidebar__profile-text">
-                        <div class="lc-sidebar__profile-name">@(User?.Identity?.Name ?? "Charles Agounké")</div>
-                        <div class="lc-sidebar__profile-role">Gestionnaire</div>
+                        <div class="lc-sidebar__profile-name">@lcDisplayName</div>
+                        <div class="lc-sidebar__profile-role">@lcRoleLabel</div>
                     </div>
                 </a>
             </div>
@@ -337,7 +362,7 @@
 
                 <div class="lc-dropdown" data-dropdown>
                     <button type="button" class="lc-icon-btn" data-dropdown-toggle aria-label="Profil" style="background:var(--color-primary-50);color:var(--color-primary-700);font-weight:600">
-                        CA
+                        @lcInitials
                     </button>
                     <div class="lc-dropdown__menu">
                         <a class="lc-dropdown__item" href="/Profile"><i data-lucide="user" style="width:16px;height:16px"></i>Mon profil</a>
