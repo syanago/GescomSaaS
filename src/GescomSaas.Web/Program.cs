@@ -45,7 +45,15 @@ builder.Services.Configure<OfflineSyncOptions>(
 var runtimeOptions = builder.Configuration.GetSection(LigComRuntimeOptions.SectionName).Get<LigComRuntimeOptions>()
     ?? new LigComRuntimeOptions();
 var connectionString = ResolveConnectionString(builder.Configuration, builder.Environment, runtimeOptions);
+// Securite : les cles de chiffrement ne survivent PAS a un redemarrage.
+// Le dossier est purge a chaque lancement => un nouveau trousseau est genere,
+// ce qui invalide tous les cookies d'authentification emis avant le redemarrage.
+// Consequence voulue : ecran de connexion systematique apres chaque redemarrage.
 var dataProtectionKeysPath = Path.Combine(builder.Environment.ContentRootPath, ".keys");
+if (Directory.Exists(dataProtectionKeysPath))
+{
+    try { Directory.Delete(dataProtectionKeysPath, recursive: true); } catch { /* best effort */ }
+}
 Directory.CreateDirectory(dataProtectionKeysPath);
 
 builder.Services.Configure<PlatformNotificationEmailOptions>(
@@ -70,6 +78,16 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
+
+// Securite : le cookie d'authentification expire apres 1h d'inactivite.
+// SlidingExpiration => chaque activite prolonge la session ; sans activite
+// pendant 1h, le cookie devient invalide et l'utilisateur doit se reconnecter.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    options.SlidingExpiration = true;
+});
+
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, ApplicationUserClaimsPrincipalFactory>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
