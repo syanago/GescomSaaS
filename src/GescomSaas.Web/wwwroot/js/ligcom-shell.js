@@ -176,6 +176,53 @@
         document.querySelector('[data-offline-auth-modal]')?.classList.remove('lc-modal-backdrop--open');
     }
 
+    // Ecran plein affiche pendant la bascule reelle de mode (le serveur redemarre).
+    // Le mode reel etant desormais gere serveur, on retire l'ancien drapeau client.
+    function showRestartOverlay(goingOffline) {
+        if (document.getElementById('lc-restart-overlay')) return;
+        try { localStorage.removeItem('lc-offline-forced'); } catch (e) {}
+        if (!document.getElementById('lc-spin-style')) {
+            const st = document.createElement('style');
+            st.id = 'lc-spin-style';
+            st.textContent = '@keyframes lc-spin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(st);
+        }
+        const ov = document.createElement('div');
+        ov.id = 'lc-restart-overlay';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,sans-serif';
+        ov.innerHTML =
+            '<div style="width:44px;height:44px;border:4px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:lc-spin 0.9s linear infinite;margin-bottom:20px"></div>' +
+            '<h2 style="margin:0 0 8px;font-weight:600">Bascule en mode ' + (goingOffline ? 'Hors ligne (SQLite)' : 'En ligne (SQL Server)') + '…</h2>' +
+            '<p style="margin:0;opacity:0.85;max-width:440px">L\'application redémarre pour appliquer le changement de base de données. Cette page se rechargera automatiquement.</p>' +
+            '<p id="lc-restart-hint" style="margin-top:16px;opacity:0.6;font-size:13px"></p>';
+        document.body.appendChild(ov);
+        waitForRestart();
+    }
+
+    function waitForRestart() {
+        const hint = document.getElementById('lc-restart-hint');
+        let sawDown = false;
+        let attempts = 0;
+        const timer = setInterval(function () {
+            attempts++;
+            fetch('/health/live', { cache: 'no-store' })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('not-ready');
+                    if (sawDown) { clearInterval(timer); window.location.href = '/'; }
+                })
+                .catch(function () {
+                    sawDown = true;
+                    if (hint) { hint.textContent = 'Redémarrage en cours…'; }
+                })
+                .finally(function () {
+                    if (sawDown && attempts > 10 && hint) {
+                        hint.textContent = 'Si l\'application ne revient pas seule (mode développement), relancez-la puis rechargez la page.';
+                    }
+                    if (attempts > 120) { clearInterval(timer); }
+                });
+        }, 1500);
+    }
+
     /**
      * Anti-rétrofuite : si l'utilisateur tente de passer le toggle directement
      * (par devtools, ancien code), on force le rollback à l'état réel.
@@ -192,9 +239,14 @@
         // Pill statut dans le menu profil
         const pill = document.querySelector('[data-offline-status-pill]');
         if (pill) {
-            pill.textContent = forced ? 'Forcé' : 'Auto';
+            pill.textContent = forced ? 'Hors ligne' : 'En ligne';
             pill.classList.toggle('lc-badge--warning', forced);
             pill.classList.toggle('lc-badge--gray', !forced);
+        }
+        // Libelle dynamique du raccourci (menu profil) : decrit l'action a venir.
+        const shortcutLabel = document.querySelector('[data-offline-toggle-shortcut] span:first-of-type');
+        if (shortcutLabel) {
+            shortcutLabel.textContent = forced ? 'Passer En ligne' : 'Passer Hors ligne';
         }
     }
 
@@ -324,18 +376,10 @@
             });
 
             if (r.ok) {
-                applyOfflineForced(targetForced);
+                // Bascule REELLE : le serveur a enregistre le nouveau mode et redemarre.
+                // On affiche un ecran d'attente puis on recharge une fois l'app revenue.
                 closeOfflineAuthModal();
-                if (window.LigComToast) {
-                    LigComToast.push({
-                        kind: 'success',
-                        title: targetForced ? 'Mode hors ligne activé' : 'Mode automatique restauré',
-                        desc: targetForced
-                            ? 'Les modifications restent locales. Désactive ce mode pour synchroniser.'
-                            : 'La synchronisation reprend selon l\'état de la connexion.',
-                        timeout: 4000
-                    });
-                }
+                showRestartOverlay(targetForced);
                 return;
             }
 

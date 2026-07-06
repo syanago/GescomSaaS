@@ -370,9 +370,9 @@
                         <a class="lc-dropdown__item" href="/Settings/Appearance"><i data-lucide="palette" style="width:16px;height:16px"></i>Apparence</a>
                         <div class="lc-dropdown__divider"></div>
                         <button type="button" class="lc-dropdown__item" data-offline-toggle-shortcut>
-                            <i data-lucide="cloud-off" style="width:16px;height:16px"></i>
-                            <span style="flex:1">Travailler hors ligne</span>
-                            <span class="lc-badge lc-badge--gray" data-offline-status-pill style="font-size:10px;padding:0 6px">Auto</span>
+                            <i data-lucide="@(serverStartsOffline ? "cloud" : "cloud-off")" style="width:16px;height:16px"></i>
+                            <span style="flex:1">@(serverStartsOffline ? "Passer En ligne" : "Passer Hors ligne")</span>
+                            <span class="lc-badge lc-badge--gray" data-offline-status-pill style="font-size:10px;padding:0 6px">@(serverStartsOffline ? "Hors ligne" : "En ligne")</span>
                         </button>
                         <div class="lc-dropdown__divider"></div>
                         <form method="post" asp-area="Identity" asp-page="/Account/Logout"><button type="submit" class="lc-dropdown__item"><i data-lucide="log-out" style="width:16px;height:16px"></i>Déconnexion</button></form>

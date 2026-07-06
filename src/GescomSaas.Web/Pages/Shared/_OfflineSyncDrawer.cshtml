@@ -7,6 +7,17 @@
    Le contenu est un placeholder : en prod, le JS lit IndexedDB et hydrate
    la liste via [data-sync-queue].
 *@
+@using Microsoft.Extensions.Options
+@using GescomSaas.Infrastructure.Configuration
+@inject IOptions<LigComRuntimeOptions> LigComRuntime
+@{
+    var drawerOffline = LigComRuntime.Value.Mode == LigComNodeMode.LocalNode
+        && LigComRuntime.Value.DatabaseProvider == LigComDatabaseProvider.Sqlite;
+    var drawerToggleLabel = drawerOffline ? "Passer En ligne" : "Passer Hors ligne";
+    var drawerToggleDesc = drawerOffline
+        ? "Rebascule l'application sur la base centrale SQL Server. Un redémarrage sera effectué."
+        : "Bascule l'application sur la base locale SQLite. Un redémarrage sera effectué.";
+}
 <div class="lc-drawer-backdrop" data-sync-backdrop></div>
 <aside class="lc-drawer" id="lc-sync-drawer" data-sync-drawer aria-labelledby="lc-sync-drawer-title" role="dialog">
 
@@ -29,9 +40,9 @@
             <input type="checkbox" data-offline-toggle />
             <span class="lc-switch__track" style="margin-top:2px"><span class="lc-switch__thumb"></span></span>
             <div style="flex:1; min-width:0">
-                <div style="font:var(--font-text-sm); font-weight:600; color:var(--text-primary)">Travailler hors ligne</div>
+                <div style="font:var(--font-text-sm); font-weight:600; color:var(--text-primary)">@drawerToggleLabel</div>
                 <div style="font:var(--font-text-xs); color:var(--text-tertiary); margin-top:2px">
-                    Force le mode hors connexion. Les modifications sont stockées localement et seront synchronisées au prochain retour en ligne.
+                    @drawerToggleDesc
                 </div>
             </div>
         </label>

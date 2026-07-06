@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace GescomSaas.Web.Api;
@@ -166,15 +167,18 @@ public static class RestApiEndpoints
     }
 
     /// <summary>
-    /// Verifie qu'un utilisateur a le droit + le mot de passe correct pour
-    /// basculer le mode hors ligne forcé. Le toggle reste persisté côté client
-    /// (localStorage) — cet endpoint ne fait que l'autorisation.
+    /// Bascule REELLE du mode d'execution via le toggle : apres verification du droit
+    /// et du mot de passe administrateur, ecrit l'override (Hors ligne / En ligne) puis
+    /// declenche un redemarrage de l'application. Sous un superviseur (IIS, service
+    /// Windows, Docker restart), l'instance repart automatiquement dans le nouveau mode.
     /// </summary>
     private static async Task<IResult> VerifyOfflineModeToggleAsync(
         OfflineModeVerifyRequest request,
         ClaimsPrincipal user,
         UserManager<ApplicationUser> userManager,
         IUserPermissionService permissionService,
+        IHostEnvironment hostEnvironment,
+        IHostApplicationLifetime applicationLifetime,
         CancellationToken cancellationToken)
     {
         if (request is null || string.IsNullOrEmpty(request.Password))
@@ -208,10 +212,25 @@ public static class RestApiEndpoints
             return Results.Json(new { ok = false, error = "Mot de passe incorrect." }, statusCode: 401);
         }
 
+        // Persiste le nouveau mode : Enable=true => Hors ligne (SQLite), false => En ligne (SQL Server).
+        await GescomSaas.Web.LocalRuntimeSettingsStore.SaveStartupModeAsync(
+            hostEnvironment,
+            offline: request.Enable,
+            sqliteDatabasePath: null,
+            cancellationToken);
+
+        // Redemarrage differe pour laisser la reponse partir avant l'arret du processus.
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(1500);
+            applicationLifetime.StopApplication();
+        });
+
         return Results.Ok(new
         {
             ok = true,
             enable = request.Enable,
+            restarting = true,
             authorizedBy = dbUser.UserName,
             authorizedAt = DateTime.UtcNow
         });
