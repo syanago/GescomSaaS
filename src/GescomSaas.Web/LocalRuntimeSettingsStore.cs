@@ -18,6 +18,76 @@ internal static class LocalRuntimeSettingsStore
         return Path.Combine(appDataPath, LigComRuntimeOptions.OverrideFileName);
     }
 
+    // ------------------------------------------------------------------
+    // Bascule "session" (toggle) : mode a usage unique, applique pour le
+    // prochain cycle de vie de l'application puis CONSOMME (supprime) au
+    // demarrage. N'affecte PAS le mode par defaut (overrides.json), qui
+    // reste la reference et est re-applique aux redemarrages suivants.
+    // ------------------------------------------------------------------
+    public const string SessionOverrideFileName = "ligcom-runtime.session.json";
+
+    public static string GetSessionFilePath(IHostEnvironment hostEnvironment)
+    {
+        var appDataPath = Path.Combine(hostEnvironment.ContentRootPath, "App_Data");
+        Directory.CreateDirectory(appDataPath);
+        return Path.Combine(appDataPath, SessionOverrideFileName);
+    }
+
+    /// <summary>Enregistre une bascule de mode a usage unique (toggle).</summary>
+    public static async Task SaveSessionModeAsync(IHostEnvironment hostEnvironment, bool offline, CancellationToken cancellationToken = default)
+    {
+        var payload = new SessionModePayload
+        {
+            Mode = (offline ? LigComNodeMode.LocalNode : LigComNodeMode.Central).ToString(),
+            DatabaseProvider = (offline ? LigComDatabaseProvider.Sqlite : LigComDatabaseProvider.SqlServer).ToString(),
+            InitializeDatabaseOnStartup = offline
+        };
+
+        var filePath = GetSessionFilePath(hostEnvironment);
+        await using var stream = File.Create(filePath);
+        await JsonSerializer.SerializeAsync(stream, payload, SerializerOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Lit la bascule de session si elle existe, PUIS supprime le fichier (usage unique).
+    /// Appelee au demarrage. Retourne null s'il n'y a pas de bascule en attente.
+    /// </summary>
+    public static SessionModeResult? ReadAndConsumeSessionMode(IHostEnvironment hostEnvironment)
+    {
+        var filePath = GetSessionFilePath(hostEnvironment);
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(filePath);
+            var payload = JsonSerializer.Deserialize<SessionModePayload>(json, SerializerOptions);
+            File.Delete(filePath);
+            if (payload is null || string.IsNullOrWhiteSpace(payload.Mode))
+            {
+                return null;
+            }
+
+            return new SessionModeResult(payload.Mode, payload.DatabaseProvider, payload.InitializeDatabaseOnStartup);
+        }
+        catch
+        {
+            try { File.Delete(filePath); } catch { /* best effort */ }
+            return null;
+        }
+    }
+
+    public sealed record SessionModeResult(string Mode, string DatabaseProvider, bool InitializeDatabaseOnStartup);
+
+    private sealed class SessionModePayload
+    {
+        public string Mode { get; set; } = string.Empty;
+        public string DatabaseProvider { get; set; } = string.Empty;
+        public bool InitializeDatabaseOnStartup { get; set; }
+    }
+
     public static async Task SaveSqliteDatabasePathAsync(IHostEnvironment hostEnvironment, string sqliteDatabasePath, CancellationToken cancellationToken = default)
     {
         var payload = await ReadPayloadAsync(hostEnvironment, cancellationToken);

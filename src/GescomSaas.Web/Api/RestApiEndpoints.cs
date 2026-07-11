@@ -212,11 +212,12 @@ public static class RestApiEndpoints
             return Results.Json(new { ok = false, error = "Mot de passe incorrect." }, statusCode: 401);
         }
 
-        // Persiste le nouveau mode : Enable=true => Hors ligne (SQLite), false => En ligne (SQL Server).
-        await GescomSaas.Web.LocalRuntimeSettingsStore.SaveStartupModeAsync(
+        // Bascule "session" a usage unique : Enable=true => Hors ligne (SQLite), false => En ligne.
+        // NB : n'ecrit PAS le mode par defaut (parametres) — la bascule est temporaire et sera
+        // consommee au prochain demarrage, puis on revient au mode par defaut enregistre.
+        await GescomSaas.Web.LocalRuntimeSettingsStore.SaveSessionModeAsync(
             hostEnvironment,
             offline: request.Enable,
-            sqliteDatabasePath: null,
             cancellationToken);
 
         // Redemarrage differe pour laisser la reponse partir avant l'arret du processus.

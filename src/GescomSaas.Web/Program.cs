@@ -37,13 +37,41 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 
 builder.Services.AddSingleton<Serilog.Core.ILogEventEnricher, TenantContextEnricher>();
 
-builder.Services.Configure<LigComRuntimeOptions>(
-    builder.Configuration.GetSection(LigComRuntimeOptions.SectionName));
 builder.Services.Configure<OfflineSyncOptions>(
     builder.Configuration.GetSection(OfflineSyncOptions.SectionName));
 
+// Mode par defaut (preference administrateur, override persistant) issu de la config.
 var runtimeOptions = builder.Configuration.GetSection(LigComRuntimeOptions.SectionName).Get<LigComRuntimeOptions>()
     ?? new LigComRuntimeOptions();
+
+// Bascule "session" du toggle : a usage unique. Si presente, elle prend le pas sur le
+// mode par defaut pour CE demarrage uniquement, puis est consommee (supprimee). Le mode
+// par defaut enregistre dans les parametres n'est donc jamais modifie par le toggle, et
+// il est re-applique aux redemarrages suivants (non declenches par le toggle).
+var sessionMode = GescomSaas.Web.LocalRuntimeSettingsStore.ReadAndConsumeSessionMode(builder.Environment);
+if (sessionMode is not null)
+{
+    if (Enum.TryParse<LigComNodeMode>(sessionMode.Mode, ignoreCase: true, out var sessionNodeMode))
+    {
+        runtimeOptions.Mode = sessionNodeMode;
+    }
+    if (Enum.TryParse<LigComDatabaseProvider>(sessionMode.DatabaseProvider, ignoreCase: true, out var sessionProvider))
+    {
+        runtimeOptions.DatabaseProvider = sessionProvider;
+    }
+    runtimeOptions.InitializeDatabaseOnStartup = runtimeOptions.InitializeDatabaseOnStartup || sessionMode.InitializeDatabaseOnStartup;
+}
+
+// IOptions<LigComRuntimeOptions> refletent le mode EFFECTIF (session appliquee), pas
+// uniquement la config brute — pour que badge, dashboard et pages soient coherents.
+builder.Services.Configure<LigComRuntimeOptions>(options =>
+{
+    options.Mode = runtimeOptions.Mode;
+    options.DatabaseProvider = runtimeOptions.DatabaseProvider;
+    options.InitializeDatabaseOnStartup = runtimeOptions.InitializeDatabaseOnStartup;
+    options.SqliteDatabasePath = runtimeOptions.SqliteDatabasePath;
+});
+
 var connectionString = ResolveConnectionString(builder.Configuration, builder.Environment, runtimeOptions);
 // Securite : les cles de chiffrement ne survivent PAS a un redemarrage.
 // Le dossier est purge a chaque lancement => un nouveau trousseau est genere,
