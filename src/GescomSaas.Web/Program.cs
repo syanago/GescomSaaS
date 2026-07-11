@@ -59,7 +59,10 @@ if (sessionMode is not null)
     {
         runtimeOptions.DatabaseProvider = sessionProvider;
     }
-    runtimeOptions.InitializeDatabaseOnStartup = runtimeOptions.InitializeDatabaseOnStartup || sessionMode.InitializeDatabaseOnStartup;
+    // La session est autoritaire, y compris pour le drapeau d'initialisation : on ne veut
+    // pas propager InitializeDatabaseOnStartup du mode par defaut (ex. SQLite) vers le mode
+    // bascule (ex. SQL Server), sinon un MigrateAsync non desire serait declenche.
+    runtimeOptions.InitializeDatabaseOnStartup = sessionMode.InitializeDatabaseOnStartup;
 }
 
 // IOptions<LigComRuntimeOptions> refletent le mode EFFECTIF (session appliquee), pas
