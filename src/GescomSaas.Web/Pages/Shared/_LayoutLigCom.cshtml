@@ -63,15 +63,13 @@
     </script>
 
     @* Mode d'utilisation par defaut (parametre par l'administrateur, section Mode de demarrage).
-       Le serveur impose la base de donnees ; on aligne le badge du navigateur sur ce mode tant
-       que l'utilisateur n'a pas fait de choix explicite via le toggle protege par mot de passe. *@
+       Le mode est autoritaire cote serveur (la base est fixee au demarrage) : on aligne
+       TOUJOURS le badge du navigateur sur ce mode, pour eviter tout etat local perime. *@
     <script>
         (function () {
             try {
                 var serverOffline = @(serverStartsOffline ? "true" : "false");
-                if (localStorage.getItem('lc-offline-forced') === null) {
-                    localStorage.setItem('lc-offline-forced', serverOffline ? '1' : '0');
-                }
+                localStorage.setItem('lc-offline-forced', serverOffline ? '1' : '0');
             } catch (e) { /* ignore */ }
         })();
     </script>
