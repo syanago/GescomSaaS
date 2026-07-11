@@ -4,6 +4,7 @@ using GescomSaas.Infrastructure.MultiTenancy;
 using GescomSaas.Infrastructure.Persistence;
 using GescomSaas.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GescomSaas.Infrastructure;
@@ -15,6 +16,14 @@ public static class DependencyInjection
         services.AddHttpClient();
         services.AddDbContext<ApplicationDbContext>(options =>
         {
+            // EF Core 9 : MigrateAsync leve PendingModelChangesWarning meme lorsque
+            // "ef migrations add" ne genere aucune operation (faux positif du differ de
+            // modele). On desactive donc le blocage pour permettre le demarrage avec
+            // MigrateAsync (mode SQL Server + InitializeDatabaseOnStartup). Aucune derive
+            // de schema reelle n'existe (migration generee vide, snapshot a jour).
+            options.ConfigureWarnings(warnings =>
+                warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+
             if (databaseProvider == LigComDatabaseProvider.Sqlite)
             {
                 options.UseSqlite(connectionString);
